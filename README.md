@@ -43,3 +43,7 @@ HTTP Status Code | Reason | Response Model
 404 | The Bib number is not in the database, and the service could not resolve the POSTed request to the appropriate participant. | ```{message: "The Bib number you entered is not valid. Please check and try again."}```
 
 500 | Something went wrong with the service. Contact xxx@xxx.xxx. | n/a
+
+## To-do
+- Add location based information as context token to validate API request.
+- Include validation to ensure only MAX(*n*) obstacle id can be submitted. 
