@@ -1,23 +1,23 @@
 # RESTful API
 
-##Overview
+## Overview
 Implementation notes
 
-##Philosophy
+## Philosophy
 
-##Endpoint
+## Endpoint
 [API_URL]
 
-###GET
+### GET
 tbc
 
-###POST
+### POST
 [API_URL]/post-result
 
-####Headers
+#### Headers
 Content-Type :  application/json
 
-####Body//definition
+#### Body//definition
 ```
 {
 	"bibNo" : 123, //(integer, mandatory) -- Bib NUMBER of the participant read from the scanned or manually entered code
@@ -38,15 +38,13 @@ Response Model/Schema
 }
 ```
 
-##Response Codes
+## Response Codes
 Response Class (Status 200)
 Results were successfully posted
 
-##Error messages
+## Error messages
 HTTP Status Code | Reason | Response Model
 400
 409 - what do we do if we accidentally send the wrong result?
 404 - 
-500 Internal Server Error - Please contact api@publons.com.
-
-
+500 Internal Server Error - Please contact xxx@xxx.xxx
