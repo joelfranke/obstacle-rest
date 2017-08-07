@@ -46,4 +46,4 @@ HTTP Status Code | Reason | Response Model
 
 ## To-do
 - Add location based information as context token to validate API request.
-- Include validation to ensure only MAX(*n*) obstacle id can be submitted. 
+- Include validation to ensure only MAX(*n*) obstacle ids can be submitted. 
