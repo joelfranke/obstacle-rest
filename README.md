@@ -36,6 +36,9 @@ Response Class (Status 200)
 ## Error messages
 HTTP Status Code | Reason | Response Model
 400 | Something is wrong with your request. Contact xxx@xxx.xxx. | n/a
+
 409 | The result for this participant on this obstacle has already been submitted and written to the database. | ```{message: "This result has already been recorded. Contact mission control if the result is incorrect."}```
+
 404 | The Bib number is not in the database, and the service could not resolve the POSTed request to the appropriate participant. | ```{message: "The Bib number you entered is not valid. Please check and try again."}```
+
 500 | Something went wrong with the service. Contact xxx@xxx.xxx. | n/a
