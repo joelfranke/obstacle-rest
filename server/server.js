@@ -89,7 +89,7 @@ app.get('/results/:id', (req, res) => {
     console.log(results.length);
     if (!results || results.length == 0) {
       console.log('Invalid bib number.');
-      return res.status(404).send();
+      return res.status(404).send(status404);
     }
     res.send({results});
   }, (e) => {
@@ -114,7 +114,7 @@ app.get('/participant/:id', (req, res) => {
 
     if (!participant) {
       console.log('Invalid bib number.');
-      return res.status(404).send();
+      return res.status(404).send(status404);
     }
     if (participant.isDavid === true){
       console.log('is david!');
