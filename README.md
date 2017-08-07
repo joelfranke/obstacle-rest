@@ -35,6 +35,7 @@ Response Class (Status 200)
 
 ## Error messages
 HTTP Status Code | Reason | Response Model
+
 400 | Something is wrong with your request. Contact xxx@xxx.xxx. | n/a
 
 409 | The result for this participant on this obstacle has already been submitted and written to the database. | ```{message: "This result has already been recorded. Contact mission control if the result is incorrect."}```
