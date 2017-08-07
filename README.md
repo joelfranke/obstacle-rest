@@ -18,8 +18,8 @@ Content-Type :  application/json
 ```
 {
 	"bibNo" : 123, //(integer, mandatory) -- Bib NUMBER of the participant read from the scanned or manually entered code
-	"obstID" : 11, //integer, mandatory) -- Obstacle NUMBER being recorded
-	"tier" : "G2", //(string, mandatory) -- Obstacle tier attempted set by the app user
+	"obstID" : 11, //integer, mandatory) -- Obstacle NUMBER being recorded; will be limited by total number of obstacles in database.
+	"tier" : "G2", //(string, mandatory) -- Obstacle tier (G1-G3) attempted set by the app user
 	"success" : true //(boolean, mandatory) -- BOOLEAN value recording whether the obstacle try was a success (true) or a failure (false)
 }
 ```
