@@ -13,6 +13,7 @@ var {team} = require('./models/teamTable');
 
 var status409  = ({message: "This result has already been recorded. Contact mission control if the result is incorrect."});
 var status404  = ({message: "The Bib number you entered is not valid. Please check and try again."});
+var resultsStatus404  = ({message: "The Bib number you entered is not valid or there is no result recorded for that Bib number. Please check and try again."});
 var app = express();
 const port = process.env.PORT;
 
@@ -89,7 +90,7 @@ app.get('/results/:id', (req, res) => {
     console.log(results.length);
     if (!results || results.length == 0) {
       console.log('Invalid bib number.');
-      return res.status(404).send(status404);
+      return res.status(404).send(resultsStatus404);
     }
     res.send({results});
   }, (e) => {
