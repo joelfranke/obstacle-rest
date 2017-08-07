@@ -11,30 +11,32 @@ var {eventResults} = require('./models/eventresults');
 var {obstacle} = require('./models/obstacle');
 var {team} = require('./models/teamTable');
 
+var status409  = ({message: "This result has already been recorded. Contact mission control if the result is incorrect."});
+var status404  = ({message: "The Bib number you entered is not valid. Please check and try again."});
 var app = express();
 const port = process.env.PORT;
 
 app.use(bodyParser.json());
 
 // Endpoint for POSTing results from tracker app
-// 404 code for bad bibNo not working
 app.post('/post-result', (req, res) => {
 
 Participant.findOne({bibNo: req.body.bibNo}).then((participant) => {
   var id = participant.id;
   var isDavid = participant.isDavid;
   var firstName = participant.firstName;
+  var lastName = participant.lastName;
 
   if (!participant) {
-    console.log('Invalid bib number.');
-    return res.status(404).send();
+    console.log(status404);
+    return res.status(404).send(status404);
   } else {
     //start of duplicate prevention block
     eventResults.findOne({bibNo: req.body.bibNo, obstID: req.body.obstID}).then((duplicate) => {
       if (duplicate) {
         console.log(duplicate);
-        console.log('This result has already been recorded. Contact mission control if the result is incorrect.');
-        return res.status(409).send();
+        console.log(status409);
+        return res.status(409).send(status409);
       } else {
         var obstResults = new eventResults({
           bibNo: req.body.bibNo,
@@ -44,11 +46,13 @@ Participant.findOne({bibNo: req.body.bibNo}).then((participant) => {
         });
         obstResults.save().then((doc) => {
           // would be nice to include the participant data here.
-          console.log(firstName);
-          res.send(doc);
+          var successfulPost = ({
+            message: `Result for ${firstName} ${lastName} (Bib: ${req.body.bibNo}) successfully posted.`
+          });
+          res.send(successfulPost);
         }, (e) => {
           res.status(400).send(e);
-          console.log(e);
+          //console.log('the first 400 is throwing an error');
         });
               if (isDavid === true){
                  if (req.body.success === false || req.body.tier !== "G3"){
@@ -65,7 +69,7 @@ Participant.findOne({bibNo: req.body.bibNo}).then((participant) => {
     }
   }
 ).catch((e) => {
-  res.status(400).send(e);
+  res.status(404).send(status404);
 });
 });
 //

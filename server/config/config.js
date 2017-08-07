@@ -1,5 +1,5 @@
 var env = process.env.NODE_ENV || 'development';
-var portVar = 3000;
+var portVar = 3006;
 
 if (env === 'development') {
   process.env.PORT = portVar;
