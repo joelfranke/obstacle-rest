@@ -1,9 +1,7 @@
 # RESTful API
 
 ## Overview
-Implementation notes
-
-## Philosophy
+This is a RESTful-based API (nodeJS) intended to capture and track real-time event-day results of an obstacle course race submitted to the API via an iOS app. The API will capture participant information as well as information related to the participant's attempt on a given obstacle.
 
 ## Endpoint
 [API_URL]
@@ -17,7 +15,7 @@ tbc
 #### Headers
 Content-Type :  application/json
 
-#### Body//definition
+#### Body //(dataType, mandatory/optional) -- Definition
 ```
 {
 	"bibNo" : 123, //(integer, mandatory) -- Bib NUMBER of the participant read from the scanned or manually entered code
@@ -26,25 +24,18 @@ Content-Type :  application/json
 	"success" : true //(boolean, mandatory) -- BOOLEAN value recording whether the obstacle try was a success (true) or a failure (false)
 }
 ```
-Response Model/Schema
+
+#### Response Model/Schema
+Response Class (Status 200)
 ```
 {
-    "__v": 0,
-    "bibNo": 123,
-    "obstID": 7,
-    "_id": "597911082af9f827a04f0084",
-    "success": true,
-    "tier": "G2"
+    "message": "Result for ${firsName} ${lastName} (Bib: ${bibNo}) successfully posted."
 }
 ```
 
-## Response Codes
-Response Class (Status 200)
-Results were successfully posted
-
 ## Error messages
 HTTP Status Code | Reason | Response Model
-400
-409 - what do we do if we accidentally send the wrong result?
-404 - 
-500 Internal Server Error - Please contact xxx@xxx.xxx
+400 | Something is wrong with your request. Contact xxx@xxx.xxx. | n/a
+409 | The result for this participant on this obstacle has already been submitted and written to the database. | ```{message: "This result has already been recorded. Contact mission control if the result is incorrect."}```
+404 | The Bib number is not in the database, and the service could not resolve the POSTed request to the appropriate participant. | ```{message: "The Bib number you entered is not valid. Please check and try again."}```
+500 | Something went wrong with the service. Contact xxx@xxx.xxx. | n/a
