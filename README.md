@@ -9,8 +9,7 @@ This is a RESTful-based API (nodeJS) intended to capture and track real-time eve
 ### GET
 tbc
 
-### POST
-[API_URL]/post-result
+### POST ([API_URL]/post-result)
 
 #### Headers
 Content-Type :  application/json
