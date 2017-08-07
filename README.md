@@ -1,7 +1,7 @@
 # RESTful API
 
 ## Overview
-This is a RESTful-based API (nodeJS) intended to capture and track real-time event-day results of an obstacle course race submitted to the API via an iOS app. The API will capture participant information as well as information related to the participant's attempt on a given obstacle.
+This is a RESTful-based API (nodeJS) intended to capture and track real-time event-day results of an obstacle course race submitted to the API via an iOS app. The API will capture information related to the participant's attempt on a given obstacle.
 
 ## Endpoint
 [API_URL]
