@@ -33,7 +33,7 @@ Response Class (Status 200)
 }
 ```
 
-## Error messages
+#### Error messages
 HTTP Status Code | Reason | Response Model
 
 400 | Something is wrong with your request. Contact xxx@xxx.xxx. | n/a
