@@ -6,7 +6,7 @@ This is a RESTful-based API (nodeJS) intended to capture and track real-time eve
 ## Endpoint
 [API_URL]
 
-### POST ([API_URL]/post-result)
+### POST result ([API_URL]/post-result)
 
 #### Headers
 Content-Type :  application/json
@@ -39,6 +39,51 @@ HTTP Status Code | Reason | Response Model
 404 | The Bib number is not in the database, and the service could not resolve the POSTed request to the appropriate participant. | ```{message: "The Bib number you entered is not valid. Please check and try again."}```
 
 500 | Something went wrong with the service. Contact xxx@xxx.xxx. | n/a
+
+### POST participant ([API_URL]/new-registration)
+
+#### Headers
+Content-Type :  application/json
+
+#### Body //(dataType, mandatory/optional) -- Definition
+```
+{
+	"bibNo" : 123, //(integer, mandatory) -- Bib NUMBER of the participant read from the scanned or manually entered code
+	"obstID" : 11, //integer, mandatory) -- Obstacle NUMBER being recorded; will be limited by total number of obstacles in database.
+	"tier" : "G2", //(string, mandatory) -- Obstacle tier (G1-G3) attempted set by the app user
+	"success" : true //(boolean, mandatory) -- BOOLEAN value recording whether the obstacle try was a success (true) or a failure (false)
+	
+{
+	"bibNo" : 123, //(integer, mandatory) -- Bib NUMBER of the participant read from the scanned or manually entered code
+	"heat": "7:30 AM", //(string, optional) -- time of heat; a heat time might be assigned, or it might be blank. In the event the participant is running with a team, this is driven by the team heat time.
+	"firstName": "Joel", //(string, mandatory) -- First name of participant
+    "lastName": "Franke", //(string, mandatory) -- Last name of participant
+    "email": "joelfranke@gmail.com",//(string, mandatory) -- email address of participant. No email validation takes place, must be unique. Email is used as the key lookup for a participant.
+    "teamID": "Test Team",//(string, optional) -- Team name
+    "gender": "M", //(string, optional) -- gender, "M" or "F" used, but no validation takes place.
+    "age": 31 // (integer, optional) -- age
+}
+```
+
+#### Response Model/Schema
+Response Class (Status 200)
+```
+{
+    "message": "${firstName} is registered."
+}
+```
+
+#### Error messages
+HTTP Status Code | Reason | Response Model
+
+400 | Something is wrong with your request. Contact xxx@xxx.xxx. | n/a
+
+409 | This email address has already been registered. | ```${email} already registered with bibNo: ${bibNo}.```
+
+404 | Something went wrong with the service. Contact xxx@xxx.xxx. | n/a
+
+500 | Something went wrong with the service. Contact xxx@xxx.xxx. | n/a
+
 
 
 ### GET (participant/result)
