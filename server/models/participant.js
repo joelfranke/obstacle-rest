@@ -30,7 +30,7 @@ var Participant = mongoose.model('Participant', {
     default: null
   },
   teamID: {
-    type: Number,
+    type: String,
     default: null
   }
 });

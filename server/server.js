@@ -10,14 +10,28 @@ var {Participant} = require('./models/participant');
 var {eventResults} = require('./models/eventresults');
 var {obstacle} = require('./models/obstacle');
 var {team} = require('./models/teamTable');
+var {counters} = require('./models/counters');
 
 var status409  = ({message: "This result has already been recorded. Contact mission control if the result is incorrect."});
 var status404  = ({message: "The Bib number you entered is not valid. Please check and try again."});
 var resultsStatus404  = ({message: "The Bib number you entered is not valid or there is no result recorded for that Bib number. Please check and try again."});
+
 var app = express();
 const port = process.env.PORT;
 
 app.use(bodyParser.json());
+
+// getNextSequence(name) {
+//    var ret = counters.findAndModify(
+//           {
+//             query: { _id: name },
+//             update: { $inc: { seq: 1 } },
+//             new: true
+//           }
+//    );
+//
+//    return ret.seq;
+// }
 
 // Endpoint for POSTing results from tracker app
 app.post('/post-result', (req, res) => {
@@ -43,12 +57,13 @@ Participant.findOne({bibNo: req.body.bibNo}).then((participant) => {
           bibNo: req.body.bibNo,
           obstID: req.body.obstID,
           tier: req.body.tier,
-          success: req.body.success
+          success: req.body.success//,
+          //ObjectId.getTimestamp()
         });
         obstResults.save().then((doc) => {
           // would be nice to include the participant data here.
           var successfulPost = ({
-            message: `Result for ${firstName} ${lastName} (Bib: ${req.body.bibNo}) successfully posted.`
+            message: `${firstName}`
           });
           res.send(successfulPost);
         }, (e) => {
