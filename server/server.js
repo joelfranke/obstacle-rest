@@ -49,8 +49,6 @@ Participant.findOne({bibNo: req.body.bibNo}).then((participant) => {
     //start of duplicate prevention block
     eventResults.findOne({bibNo: req.body.bibNo, obstID: req.body.obstID}).then((duplicate) => {
       if (duplicate) {
-        console.log(duplicate);
-        console.log(status409);
         return res.status(409).send(status409);
       } else {
         var obstResults = new eventResults({
@@ -98,6 +96,8 @@ app.get('/results', (req, res) => {
   });
 });
 
+
+
 // GET results by bib number
 app.get('/results/:id', (req, res) => {
   var id = req.params.id;
@@ -143,6 +143,46 @@ app.get('/participant/:id', (req, res) => {
     res.status(400).send(e);
   });
 });
+
+// Endpoint for POSTing new registrations to participant db
+app.post('/new-registration', (req, res) => {
+    //start of duplicate prevention
+    // may need email or first last name https://docs.mongodb.com/manual/reference/operator/query/or/
+    Participant.findOne({email: req.body.email}).then((duplicate) => {
+      var regName = req.body.firstName;
+      if (duplicate) {
+        return res.status(409).send(`${req.body.email} already registered with bibNo: ${duplicate.bibNo}.`);
+      }
+      else {
+          console.log(`attempting to write ${req.body.email} to db`);
+          var newRegistration = new Participant({
+          bibNo: req.body.bibNo,
+          heat: req.body.heat,
+          lastName: req.body.lastName,
+          firstName: req.body.firstName,
+          email: req.body.email,
+          teamID: req.body.teamID,
+          gender: req.body.gender,
+          age: req.body.age,
+          isDavid: true
+        });
+        newRegistration.save().then((doc) => {
+          var successfulPost = ({
+            message: `${regName} is registered.`
+          });
+          res.send(successfulPost);
+        }).catch((e) => {
+          console.log(e);
+          res.status(400).send(e);
+
+        });
+      }
+    })
+.catch((e) => {
+  res.status(404).send(status404);
+});
+});
+
 
 app.listen(port, () => {
   console.log(`API running on port: ${port}`);

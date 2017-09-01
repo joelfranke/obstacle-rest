@@ -21,6 +21,16 @@ var Participant = mongoose.model('Participant', {
     required: true,
     default: null
   },
+  email: {
+    type: String,
+    required: true,
+    default: null
+  },
+  heat: {
+    type: String,
+    required: false,
+    default: null
+  },
   age: {
     type: Number,
     default: null
@@ -30,6 +40,10 @@ var Participant = mongoose.model('Participant', {
     default: null
   },
   teamID: {
+    type: String,
+    default: null
+  },
+  gender: {
     type: String,
     default: null
   }
