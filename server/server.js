@@ -11,8 +11,9 @@ var {eventResults} = require('./models/eventresults');
 var {obstacle} = require('./models/obstacle');
 var {team} = require('./models/teamTable');
 var {counters} = require('./models/counters');
+var {dupeResults} = require('./models/duplicateresults');
 
-var status409  = ({message: "This result has already been recorded. Contact mission control if the result is incorrect."});
+var status409  = ({message: "This result has already been recorded. The result has been logged, but not tracked, and contact mission control if the result is incorrect."});
 var status404  = ({message: "The Bib number you entered is not valid. Please check and try again."});
 var resultsStatus404  = ({message: "The Bib number you entered is not valid or there is no result recorded for that Bib number. Please check and try again."});
 
@@ -46,10 +47,26 @@ Participant.findOne({bibNo: req.body.bibNo}).then((participant) => {
     console.log(status404);
     return res.status(404).send(status404);
   } else {
-    //start of duplicate prevention block
+    //start of duplicate handling
     eventResults.findOne({bibNo: req.body.bibNo, obstID: req.body.obstID}).then((duplicate) => {
       if (duplicate) {
-        return res.status(409).send(status409);
+        //if duplicate, throw a 409 error and write results to a new log table anyway
+        var obstResults = new dupeResults({
+          bibNo: req.body.bibNo,
+          obstID: req.body.obstID,
+          tier: req.body.tier,
+          success: req.body.success//,
+          //ObjectId.getTimestamp()
+        });
+        obstResults.save().then((doc) => {
+          // would be nice to include the participant data here.
+          var successfulPost = ({
+            message: `${firstName}`
+          });
+          return res.status(409).send(status409);
+        }, (e) => {
+          res.status(400).send(e);
+        });
       } else {
         var obstResults = new eventResults({
           bibNo: req.body.bibNo,
@@ -147,11 +164,11 @@ app.get('/participant/:id', (req, res) => {
 // Endpoint for POSTing new registrations to participant db
 app.post('/registration', (req, res) => {
     //start of pre-registration detection. If participant is pre-registered, add bibNo. If this is an event day registration, write the full information to the db.
+    //currently assumes unique firstName/lastName. Should be by ID.
     Participant.findOne({lastName: req.body.lastName, firstName: req.body.firstName}).then((preregistered) => {
       if (preregistered) {
         var id = preregistered.id;
         Participant.findByIdAndUpdate(id, {bibNo: req.body.bibNo}, {new: true}).then((participant) => {
-       console.log('bibNo assigned');
      }).catch((e) => {
           console.log('Something went wrong adding bibNo.');
         })
