@@ -145,13 +145,17 @@ app.get('/participant/:id', (req, res) => {
 });
 
 // Endpoint for POSTing new registrations to participant db
-app.post('/new-registration', (req, res) => {
-    //start of duplicate prevention
-    // may need email or first last name https://docs.mongodb.com/manual/reference/operator/query/or/
-    Participant.findOne({email: req.body.email}).then((duplicate) => {
-      var regName = req.body.firstName;
-      if (duplicate) {
-        return res.status(409).send(`${req.body.email} already registered with bibNo: ${duplicate.bibNo}.`);
+app.post('/registration', (req, res) => {
+    //start of pre-registration detection. If participant is pre-registered, add bibNo. If this is an event day registration, write the full information to the db.
+    Participant.findOne({lastName: req.body.lastName, firstName: req.body.firstName}).then((preregistered) => {
+      if (preregistered) {
+        var id = preregistered.id;
+        Participant.findByIdAndUpdate(id, {bibNo: req.body.bibNo}, {new: true}).then((participant) => {
+       console.log('bibNo assigned');
+     }).catch((e) => {
+          console.log('Something went wrong adding bibNo.');
+        })
+        return res.status(200).send(`${req.body.firstName} registered with bibNo: ${req.body.bibNo}.`);
       }
       else {
           console.log(`attempting to write ${req.body.email} to db`);
@@ -168,18 +172,17 @@ app.post('/new-registration', (req, res) => {
         });
         newRegistration.save().then((doc) => {
           var successfulPost = ({
-            message: `${regName} is registered.`
+            message: `${req.body.firstName} registered with bibNo: ${req.body.bibNo}.`
           });
           res.send(successfulPost);
         }).catch((e) => {
           console.log(e);
           res.status(400).send(e);
-
         });
       }
     })
 .catch((e) => {
-  res.status(404).send(status404);
+  res.status(404).send(e);
 });
 });
 

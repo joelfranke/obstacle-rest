@@ -40,7 +40,7 @@ HTTP Status Code | Reason | Response Model
 
 500 | Something went wrong with the service. Contact xxx@xxx.xxx. | n/a
 
-### POST participant ([API_URL]/new-registration)
+### POST participant ([API_URL]/registration)
 
 #### Headers
 Content-Type :  application/json
@@ -49,16 +49,10 @@ Content-Type :  application/json
 ```
 {
 	"bibNo" : 123, //(integer, mandatory) -- Bib NUMBER of the participant read from the scanned or manually entered code
-	"obstID" : 11, //integer, mandatory) -- Obstacle NUMBER being recorded; will be limited by total number of obstacles in database.
-	"tier" : "G2", //(string, mandatory) -- Obstacle tier (G1-G3) attempted set by the app user
-	"success" : true //(boolean, mandatory) -- BOOLEAN value recording whether the obstacle try was a success (true) or a failure (false)
-	
-{
-	"bibNo" : 123, //(integer, mandatory) -- Bib NUMBER of the participant read from the scanned or manually entered code
 	"heat": "7:30 AM", //(string, optional) -- time of heat; a heat time might be assigned, or it might be blank. In the event the participant is running with a team, this is driven by the team heat time.
 	"firstName": "Joel", //(string, mandatory) -- First name of participant
     "lastName": "Franke", //(string, mandatory) -- Last name of participant
-    "email": "joelfranke@gmail.com",//(string, mandatory) -- email address of participant. No email validation takes place, must be unique. Email is used as the key lookup for a participant.
+    "email": "joelfranke@gmail.com",//(string, optional) -- email address of participant. No email validation takes place, must be unique. Email is used as the key lookup for a participant.
     "teamID": "Test Team",//(string, optional) -- Team name
     "gender": "M", //(string, optional) -- gender, "M" or "F" used, but no validation takes place.
     "age": 31 // (integer, optional) -- age
@@ -69,7 +63,7 @@ Content-Type :  application/json
 Response Class (Status 200)
 ```
 {
-    "message": "${firstName} is registered."
+    "message": "${firstName} registered with bibNo: ${bibNo}."
 }
 ```
 
@@ -77,8 +71,6 @@ Response Class (Status 200)
 HTTP Status Code | Reason | Response Model
 
 400 | Something is wrong with your request. Contact xxx@xxx.xxx. | n/a
-
-409 | This email address has already been registered. | ```${email} already registered with bibNo: ${bibNo}.```
 
 404 | Something went wrong with the service. Contact xxx@xxx.xxx. | n/a
 
@@ -157,4 +149,4 @@ HTTP Status Code | Reason | Response Model
 
 ## To-do
 - Add location based information as context token to validate API request.
-- Include validation to ensure only MAX(*n*) obstacle ids can be submitted. 
+- Include validation to ensure only MAX(*n*) obstacle ids can be submitted.

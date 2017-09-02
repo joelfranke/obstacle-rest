@@ -23,7 +23,6 @@ var Participant = mongoose.model('Participant', {
   },
   email: {
     type: String,
-    required: true,
     default: null
   },
   heat: {
