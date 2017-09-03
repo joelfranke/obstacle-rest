@@ -52,13 +52,16 @@ Content-Type :  application/json
 	"bibNo" : 123, //(integer, mandatory) -- Bib NUMBER of the participant read from the scanned or manually entered code
 	"heat": "7:30 AM", //(string, optional) -- time of heat; a heat time might be assigned, or it might be blank. In the event the participant is running with a team, this is driven by the team heat time.
 	"firstName": "Joel", //(string, mandatory) -- First name of participant
-    "lastName": "Franke", //(string, mandatory) -- Last name of participant
-    "email": "joelfranke@gmail.com",//(string, optional) -- email address of participant. No email validation takes place, must be unique. Email is used as the key lookup for a participant.
-    "teamID": "Test Team",//(string, optional) -- Team name
-    "gender": "M", //(string, optional) -- gender, "M" or "F" used, but no validation takes place.
-    "birthdate": 01/31/1901 // (string, optional) -- birthdate in the format MM/dd/YYYY
-		"address1": 1600 Pennsylvania Ave // (string, optional) -- house number a street name
-		"address2": Washington, DC 20006 // (string, optional) -- City + State + zip, all in one field
+  "lastName": "Franke", //(string, mandatory) -- Last name of participant
+  "email": "joelfranke@gmail.com",//(string, optional) -- email address of participant. No email validation takes place, must be unique. Email is used as the key lookup for a participant.
+  "teamID": "Test Team",//(string, optional) -- Team name
+  "gender": "M", //(string, optional) -- gender, "M" or "F" used, but no validation takes place.
+  "birthdate": 01/31/1901, // (string, optional) -- birthdate in the format MM/dd/YYYY
+	"address1": 1600 Pennsylvania Ave, // (string, optional) -- house number a street name
+	"address2": Suite 100, // (string, optional) -- second address line
+	"city": Washington, // (string, optional) -- Address city
+	"state": DC // (string, optional) -- State value. No validation done on this field.
+	"zip": 20006 // (string, optional) -- Zip code. No validation done on this field.
 }
 ```
 

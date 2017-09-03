@@ -188,6 +188,9 @@ app.post('/registration', (req, res) => {
           birthdate: req.body.birthdate,
           address1: req.body.address1,
           address2: req.body.address2,
+          city: req.body.city,
+          state: req.body.state,
+          address2: req.body.zip,
           isDavid: true
         });
         newRegistration.save().then((doc) => {

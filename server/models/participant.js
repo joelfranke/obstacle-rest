@@ -42,6 +42,18 @@ var Participant = mongoose.model('Participant', {
     type: String,
     default: null
   },
+  city: {
+    type: String,
+    default: null
+  },
+  state: {
+    type: String,
+    default: null
+  },
+  zip: {
+    type: String,
+    default: null
+  },
   ageGroup: {
     type: String,
     default: null
