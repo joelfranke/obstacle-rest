@@ -30,8 +30,16 @@ var Participant = mongoose.model('Participant', {
     required: false,
     default: null
   },
-  age: {
-    type: Number,
+  birthdate: {
+    type: String,
+    default: null
+  },
+  address1: {
+    type: String,
+    default: null
+  },
+  address2: {
+    type: String,
     default: null
   },
   ageGroup: {

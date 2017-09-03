@@ -21,24 +21,10 @@ var app = express();
 const port = process.env.PORT;
 
 function getNextSequence(name) {
-  console.log('next sequence function started');
-  console.log(name);
     var nextSeq = counters.findOneAndUpdate({_id: name}, { $inc: { seq: 1 } }).then((nextcounter) => {return nextcounter.seq
-      //console.log(nextSeq.seq);
     });
     return nextSeq;
  }
-//function test block
-
-// var test = getNextSequence('results')
-// console.log(test);
-// test.then((next)=>{
-//   console.log(next);
-// }).catch((e) => {
-//   console.log('problem');
-// });
-
-//end function test block
 
 app.use(bodyParser.json());
 
@@ -71,7 +57,7 @@ Participant.findOne({bibNo: req.body.bibNo}).then((participant) => {
           var successfulPost = ({
             message: `${firstName}`
           });
-          return res.status(409).send(status409);
+          return res.status(409).send(firstName);
         }, (e) => {
           res.status(400).send(e);
         });
@@ -178,17 +164,20 @@ app.get('/participant/:id', (req, res) => {
 app.post('/registration', (req, res) => {
     //start of pre-registration detection. If participant is pre-registered, add bibNo. If this is an event day registration, write the full information to the db.
     //currently assumes unique firstName/lastName. Should be by ID.
+    var successfulPost = ({
+      message: `${req.body.firstName} registered with bibNo: ${req.body.bibNo}.`
+    });
+
     Participant.findOne({lastName: req.body.lastName, firstName: req.body.firstName}).then((preregistered) => {
       if (preregistered) {
         var id = preregistered.id;
         Participant.findByIdAndUpdate(id, {bibNo: req.body.bibNo}, {new: true}).then((participant) => {
      }).catch((e) => {
-          console.log('Something went wrong adding bibNo.');
+          console.log('Something went wrong updating bibNo.');
         })
-        return res.status(200).send(`${req.body.firstName} registered with bibNo: ${req.body.bibNo}.`);
+        return res.status(200).send(successfulPost);
       }
       else {
-          console.log(`attempting to write ${req.body.email} to db`);
           var newRegistration = new Participant({
           bibNo: req.body.bibNo,
           heat: req.body.heat,
@@ -197,13 +186,12 @@ app.post('/registration', (req, res) => {
           email: req.body.email,
           teamID: req.body.teamID,
           gender: req.body.gender,
-          age: req.body.age,
+          birthdate: req.body.birthdate,
+          address1: req.body.address1,
+          address2: req.body.address2,
           isDavid: true
         });
         newRegistration.save().then((doc) => {
-          var successfulPost = ({
-            message: `${req.body.firstName} registered with bibNo: ${req.body.bibNo}.`
-          });
           res.send(successfulPost);
         }).catch((e) => {
           console.log(e);
