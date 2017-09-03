@@ -65,7 +65,6 @@ Participant.findOne({bibNo: req.body.bibNo}).then((participant) => {
       } else {
 
         var getSeq = getNextSequence('results');
-        console.log(getSeq);
         getSeq.then((nextSeq) => {
           var obstResults = new eventResults({
             bibNo: req.body.bibNo,
@@ -75,9 +74,7 @@ Participant.findOne({bibNo: req.body.bibNo}).then((participant) => {
             bibFromBand: req.body.bibFromBand,
             resultID: nextSeq
           });
-          console.log(obstResults);
           obstResults.save().then((doc) => {
-            // would be nice to include the participant data here.
             var successfulPost = ({
               message: `${firstName}`
             });

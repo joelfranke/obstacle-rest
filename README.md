@@ -17,6 +17,7 @@ Content-Type :  application/json
 	"bibNo" : 123, //(integer, mandatory) -- Bib NUMBER of the participant read from the scanned or manually entered code
 	"obstID" : 11, //integer, mandatory) -- Obstacle NUMBER being recorded; will be limited by total number of obstacles in database.
 	"tier" : "G2", //(string, mandatory) -- Obstacle tier (G1-G3) attempted set by the app user
+	"bibFromBand" : true, //(boolean, optional) -- BOOLEAN value indicating whether the bibNo was manually entered (false) or scanned (true). Currently optional. Will be updated to mandatory.
 	"success" : true //(boolean, mandatory) -- BOOLEAN value recording whether the obstacle try was a success (true) or a failure (false)
 }
 ```
@@ -25,7 +26,7 @@ Content-Type :  application/json
 Response Class (Status 200)
 ```
 {
-    "message": "Result for ${firsName} ${lastName} (Bib: ${bibNo}) successfully posted."
+    "message": "${firsName}"
 }
 ```
 
@@ -55,7 +56,9 @@ Content-Type :  application/json
     "email": "joelfranke@gmail.com",//(string, optional) -- email address of participant. No email validation takes place, must be unique. Email is used as the key lookup for a participant.
     "teamID": "Test Team",//(string, optional) -- Team name
     "gender": "M", //(string, optional) -- gender, "M" or "F" used, but no validation takes place.
-    "age": 31 // (integer, optional) -- age
+    "birthdate": 01/31/1901 // (string, optional) -- birthdate in the format MM/dd/YYYY
+		"address1": 1600 Pennsylvania Ave // (string, optional) -- house number a street name
+		"address2": Washington, DC 20006 // (string, optional) -- City + State + zip, all in one field
 }
 ```
 
