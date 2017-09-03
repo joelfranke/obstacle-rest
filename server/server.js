@@ -103,18 +103,34 @@ Participant.findOne({bibNo: req.body.bibNo}).then((participant) => {
 });
 //
 //Complete GET ALL results
+// includes logic to send delta results based on an optional query value "q"
 app.get('/results', (req, res) => {
+var delta = req.query.d
+if (delta !==undefined) {
+  console.log(delta);
+  eventResults.find({ resultID: { $gt: delta } }).then((results) => {
+    res.send({results});
+  }, (e) => {
+    res.status(400).send(e);
+  });
+}
+
+else {
   eventResults.find().then((results) => {
     res.send({results});
   }, (e) => {
     res.status(400).send(e);
   });
+
+}
+//end of code block
 });
 
 
 
 // GET results by bib number
 app.get('/results/:id', (req, res) => {
+
   var id = req.params.id;
   eventResults.find({bibNo: id}).then((results) => {
     console.log(results.length);
@@ -200,11 +216,10 @@ app.post('/registration', (req, res) => {
           res.status(400).send(e);
         });
       }
-    })
-.catch((e) => {
+    }).catch((e) => {
   res.status(404).send(e);
-});
-});
+    });
+  });
 
 
 app.listen(port, () => {

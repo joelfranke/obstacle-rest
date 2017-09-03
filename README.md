@@ -21,6 +21,7 @@ Content-Type :  application/json
 	"success" : true //(boolean, mandatory) -- BOOLEAN value recording whether the obstacle try was a success (true) or a failure (false)
 }
 ```
+n.b. an autoincrementing value "resultID" will automatically be written to the result (for all non-duplicate results).
 
 #### Response Model/Schema
 Response Class (Status 200)
@@ -122,6 +123,7 @@ HTTP Status Code | Reason | Response Model
 
 #### Results
 - [API_URL]/results
+- [API_URL]/results?d=n (where the api will return all events with an resultID greater than n)
 - [API_URL]/results/[bibNo]
 
 ##### Response Model/Schema
@@ -136,6 +138,7 @@ Response Class (Status 200)
             "_id": "5988b2daeb9d5600119ec91a",
             "bibNo": 145,
             "obstID": 1,
+						"resultID": 44,
             "__v": 0,
             "success": true,
             "tier": "G3"
