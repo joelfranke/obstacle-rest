@@ -23,6 +23,11 @@ var eventResults = mongoose.model('results', {
     required: true,
     default: false
   },
+  bibFromBand: {
+    type: Boolean,
+    required: false,
+    default: true
+  },
   resultID: {
     type: Number,
     required: true

@@ -49,7 +49,8 @@ Participant.findOne({bibNo: req.body.bibNo}).then((participant) => {
           bibNo: req.body.bibNo,
           obstID: req.body.obstID,
           tier: req.body.tier,
-          success: req.body.success
+          success: req.body.success,
+          bibFromBand: req.body.bibFromBand
         });
 
         obstResults.save().then((doc) => {
@@ -57,7 +58,7 @@ Participant.findOne({bibNo: req.body.bibNo}).then((participant) => {
           var successfulPost = ({
             message: `${firstName}`
           });
-          return res.status(409).send(firstName);
+          return res.status(409).send(successfulPost);
         }, (e) => {
           res.status(400).send(e);
         });
@@ -71,6 +72,7 @@ Participant.findOne({bibNo: req.body.bibNo}).then((participant) => {
             obstID: req.body.obstID,
             tier: req.body.tier,
             success: req.body.success,
+            bibFromBand: req.body.bibFromBand,
             resultID: nextSeq
           });
           console.log(obstResults);
