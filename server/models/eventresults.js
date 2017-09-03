@@ -22,6 +22,10 @@ var eventResults = mongoose.model('results', {
     type: Boolean,
     required: true,
     default: false
+  },
+  resultID: {
+    type: Number,
+    required: true
   }
 });
 

@@ -20,19 +20,27 @@ var resultsStatus404  = ({message: "The Bib number you entered is not valid or t
 var app = express();
 const port = process.env.PORT;
 
-app.use(bodyParser.json());
+function getNextSequence(name) {
+  console.log('next sequence function started');
+  console.log(name);
+    var nextSeq = counters.findOneAndUpdate({_id: name}, { $inc: { seq: 1 } }).then((nextcounter) => {return nextcounter.seq
+      //console.log(nextSeq.seq);
+    });
+    return nextSeq;
+ }
+//function test block
 
-// getNextSequence(name) {
-//    var ret = counters.findAndModify(
-//           {
-//             query: { _id: name },
-//             update: { $inc: { seq: 1 } },
-//             new: true
-//           }
-//    );
-//
-//    return ret.seq;
-// }
+// var test = getNextSequence('results')
+// console.log(test);
+// test.then((next)=>{
+//   console.log(next);
+// }).catch((e) => {
+//   console.log('problem');
+// });
+
+//end function test block
+
+app.use(bodyParser.json());
 
 // Endpoint for POSTing results from tracker app
 app.post('/post-result', (req, res) => {
@@ -55,9 +63,9 @@ Participant.findOne({bibNo: req.body.bibNo}).then((participant) => {
           bibNo: req.body.bibNo,
           obstID: req.body.obstID,
           tier: req.body.tier,
-          success: req.body.success//,
-          //ObjectId.getTimestamp()
+          success: req.body.success
         });
+
         obstResults.save().then((doc) => {
           // would be nice to include the participant data here.
           var successfulPost = ({
@@ -68,22 +76,27 @@ Participant.findOne({bibNo: req.body.bibNo}).then((participant) => {
           res.status(400).send(e);
         });
       } else {
-        var obstResults = new eventResults({
-          bibNo: req.body.bibNo,
-          obstID: req.body.obstID,
-          tier: req.body.tier,
-          success: req.body.success//,
-          //ObjectId.getTimestamp()
-        });
-        obstResults.save().then((doc) => {
-          // would be nice to include the participant data here.
-          var successfulPost = ({
-            message: `${firstName}`
+
+        var getSeq = getNextSequence('results');
+        console.log(getSeq);
+        getSeq.then((nextSeq) => {
+          var obstResults = new eventResults({
+            bibNo: req.body.bibNo,
+            obstID: req.body.obstID,
+            tier: req.body.tier,
+            success: req.body.success,
+            resultID: nextSeq
           });
-          res.send(successfulPost);
-        }, (e) => {
-          res.status(400).send(e);
-          //console.log('the first 400 is throwing an error');
+          console.log(obstResults);
+          obstResults.save().then((doc) => {
+            // would be nice to include the participant data here.
+            var successfulPost = ({
+              message: `${firstName}`
+            });
+            res.send(successfulPost);
+          }, (e) => {
+            res.status(400).send(e);
+          });
         });
               if (isDavid === true){
                  if (req.body.success === false || req.body.tier !== "G3"){
