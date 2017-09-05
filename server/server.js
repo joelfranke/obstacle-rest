@@ -3,7 +3,7 @@ require('./config/config');
 const _ = require('lodash');
 const express = require('express');
 const bodyParser = require('body-parser');
-//const compression = require('compression');
+const moment = require('moment-timezone');
 const {ObjectID} = require('mongodb');
 
 var {mongoose} = require('./db/mongoose');
@@ -27,10 +27,11 @@ function getNextSequence(name) {
  }
 
 app.use(bodyParser.json());
-//app.use(compression());
 
 // Endpoint for POSTing results from tracker app
 app.post('/post-result', (req, res) => {
+
+
 
 Participant.findOne({bibNo: req.body.bibNo}).then((participant) => {
   var id = participant.id;
@@ -44,6 +45,9 @@ Participant.findOne({bibNo: req.body.bibNo}).then((participant) => {
   } else {
     //start of duplicate handling
     eventResults.findOne({bibNo: req.body.bibNo, obstID: req.body.obstID}).then((duplicate) => {
+
+      var timestamp = moment().tz('America/New_York').format();
+
       if (duplicate) {
         //if duplicate, throw a 409 error and write results to a new log table anyway
         var obstResults = new dupeResults({
@@ -51,7 +55,8 @@ Participant.findOne({bibNo: req.body.bibNo}).then((participant) => {
           obstID: req.body.obstID,
           tier: req.body.tier,
           success: req.body.success,
-          bibFromBand: req.body.bibFromBand
+          bibFromBand: req.body.bibFromBand,
+          timestamp: timestamp
         });
 
         obstResults.save().then((doc) => {
@@ -73,6 +78,7 @@ Participant.findOne({bibNo: req.body.bibNo}).then((participant) => {
             tier: req.body.tier,
             success: req.body.success,
             bibFromBand: req.body.bibFromBand,
+            timestamp: timestamp,
             resultID: nextSeq
           });
           obstResults.save().then((doc) => {

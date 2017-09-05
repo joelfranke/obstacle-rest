@@ -18,6 +18,10 @@ var dupeResults = mongoose.model('duplicateresults', {
     required: true,
     default: null
   },
+  timestamp: {
+      type: Date,
+      required: true
+    },
   success: {
     type: Boolean,
     required: true,

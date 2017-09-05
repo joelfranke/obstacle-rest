@@ -28,6 +28,10 @@ var eventResults = mongoose.model('results', {
     required: false,
     default: true
   },
+  timestamp: {
+    type: Date,
+    required: true
+  },
   resultID: {
     type: Number,
     required: true
