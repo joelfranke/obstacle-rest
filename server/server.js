@@ -3,6 +3,7 @@ require('./config/config');
 const _ = require('lodash');
 const express = require('express');
 const bodyParser = require('body-parser');
+const compression = require('compression');
 const {ObjectID} = require('mongodb');
 
 var {mongoose} = require('./db/mongoose');
@@ -26,6 +27,7 @@ function getNextSequence(name) {
  }
 
 app.use(bodyParser.json());
+app.use(compression());
 
 // Endpoint for POSTing results from tracker app
 app.post('/post-result', (req, res) => {
