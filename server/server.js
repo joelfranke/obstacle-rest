@@ -14,8 +14,7 @@ var {counters} = require('./models/counters');
 var {dupeResults} = require('./models/duplicateresults');
 
 var status409  = ({message: "This result has already been recorded. The result has been logged, but not tracked, and contact mission control if the result is incorrect."});
-var status404  = ({message: "The Bib number you entered is not valid. Please check and try again."});
-var resultsStatus404  = ({message: "The Bib number you entered is not valid or there is no result recorded for that Bib number. Please check and try again."});
+var status404  = ({message: "Check request and try again."});
 
 var app = express();
 const port = process.env.PORT;
@@ -38,7 +37,7 @@ Participant.findOne({bibNo: req.body.bibNo}).then((participant) => {
   var lastName = participant.lastName;
 
   if (!participant) {
-    console.log(status404);
+    //console.log(status404);
     return res.status(404).send(status404);
   } else {
     //start of duplicate handling
@@ -86,7 +85,7 @@ Participant.findOne({bibNo: req.body.bibNo}).then((participant) => {
               if (isDavid === true){
                  if (req.body.success === false || req.body.tier !== "G3"){
                    Participant.findByIdAndUpdate(id, {isDavid: false}, {new: true}).then((participant) => {
-                  console.log('Alas, failure is inevitable');
+                  //console.log('Alas, failure is inevitable');
                 }).catch((e) => {
                      console.log('Something went wrong.');
                    })
@@ -107,7 +106,7 @@ Participant.findOne({bibNo: req.body.bibNo}).then((participant) => {
 app.get('/results', (req, res) => {
 var delta = req.query.d
 if (delta !==undefined) {
-  console.log(delta);
+  //console.log(delta);
   eventResults.find({ resultID: { $gt: delta } }).then((results) => {
     res.send({results});
   }, (e) => {
@@ -133,10 +132,10 @@ app.get('/results/:id', (req, res) => {
 
   var id = req.params.id;
   eventResults.find({bibNo: id}).then((results) => {
-    console.log(results.length);
+    //console.log(results.length);
     if (!results || results.length == 0) {
-      console.log('Invalid bib number.');
-      return res.status(404).send(resultsStatus404);
+      //console.log('Invalid bib number.');
+      return res.status(404).send(status404);
     }
     res.send({results});
   }, (e) => {
@@ -160,14 +159,14 @@ app.get('/participant/:id', (req, res) => {
   Participant.findOne({bibNo: id}).then((participant) => {
 
     if (!participant) {
-      console.log('Invalid bib number.');
+      //console.log('Invalid bib number.');
       return res.status(404).send(status404);
     }
     if (participant.isDavid === true){
-      console.log('is david!');
+      //console.log('is david!');
       res.send({participant});
     } else {
-      console.log('is not david...');
+      //console.log('is not david...');
       res.send({participant});
     }
   }).catch((e) => {
@@ -188,7 +187,7 @@ app.post('/registration', (req, res) => {
         var id = preregistered.id;
         Participant.findByIdAndUpdate(id, {bibNo: req.body.bibNo}, {new: true}).then((participant) => {
      }).catch((e) => {
-          console.log('Something went wrong updating bibNo.');
+          //console.log('Something went wrong updating bibNo.');
         })
         return res.status(200).send(successfulPost);
       }
@@ -212,7 +211,7 @@ app.post('/registration', (req, res) => {
         newRegistration.save().then((doc) => {
           res.send(successfulPost);
         }).catch((e) => {
-          console.log(e);
+          //console.log(e);
           res.status(400).send(e);
         });
       }
