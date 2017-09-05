@@ -3,7 +3,7 @@ require('./config/config');
 const _ = require('lodash');
 const express = require('express');
 const bodyParser = require('body-parser');
-const moment = require('moment-timezone');
+//const moment = require('moment-timezone');
 const {ObjectID} = require('mongodb');
 
 var {mongoose} = require('./db/mongoose');
@@ -46,8 +46,8 @@ Participant.findOne({bibNo: req.body.bibNo}).then((participant) => {
     //start of duplicate handling
     eventResults.findOne({bibNo: req.body.bibNo, obstID: req.body.obstID}).then((duplicate) => {
 
-      var timestamp = moment().tz('America/New_York').format();
-
+      //var timestamp = moment().tz('America/New_York').format();
+      var timestamp = Date.now()
       if (duplicate) {
         //if duplicate, throw a 409 error and write results to a new log table anyway
         var obstResults = new dupeResults({
