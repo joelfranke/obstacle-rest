@@ -151,7 +151,23 @@ app.get('/results/:id', (req, res) => {
 
 // Full GET query of participant table
 app.get('/participant', (req, res) => {
-  Participant.find().then((participants) => {
+	var getList;
+	var qFirstName = req.query.firstName;
+	var qLastName = req.query.lastName;
+	
+	
+	if (qLastName !==undefined){
+		if (qFirstName !==undefined){
+			getList = Participant.find({ firstName: qFirstName, lastName: qLastName });
+		} else {
+		getList = Participant.find({ lastName: qLastName  });
+		}
+	} else {
+		getList = Participant.find();
+	}
+	getList.then((participants) => {
+	// original find request below
+	//Participant.find().then((participants) => {
     res.send({participants});
   }, (e) => {
     res.status(400).send(e);
