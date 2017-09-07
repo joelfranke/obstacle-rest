@@ -90,6 +90,8 @@ Data for participants or event results will be returned as one or more objects.
 
 #### Participant
 - [API_URL]/participant
+	- includes support for query parameters "lastName" or "lastName" + "firstName"
+	- ex. [API_URL]/participant?lastName=smith&firstName=John
 - [API_URL]/participant/[bibNo]
 
 ##### Response Model/Schema
@@ -99,16 +101,27 @@ Data for participants or event results will be returned as one or more objects.
 Response Class (Status 200)
 ```
 {
-    "participant": {
-        "_id": "59889977734d1d32c6857d25",
-        "bibNo": 145,
-        "isDavid": true,
-        "teamID": 111,
-        "ageGroup": "F31-40",
-        "age": 31,
-        "firstName": "joy",
-        "lastName": "franke"
-    }
+    "participants": [
+        {
+            "_id": "59a9734c449b2a3da64cba48",
+            "bibNo": 102,
+            "age": 21,
+            "isDavid": true,
+            "gender": "M",
+            "teamID": "Team Name",
+            "ageGroup": null,
+            "zip": 08080,
+            "state": NJ,
+            "city": Sewell,
+            "address2": null,
+            "address1": null,
+            "birthdate": null,
+            "heat": "7:30 AM",
+            "email": "email@gmail.com",
+            "firstName": "John",
+            "lastName": "Smith"
+        }
+    ]
 }
 ```
 
