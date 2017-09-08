@@ -5,6 +5,8 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const {ObjectID} = require('mongodb');
 
+//testing block
+var {email} = require('./config/email');
 var {mongoose} = require('./db/mongoose');
 var {Participant} = require('./models/participant');
 var {eventResults} = require('./models/eventresults');
@@ -19,6 +21,7 @@ var status404  = ({message: "Check request and try again."});
 var app = express();
 const port = process.env.PORT;
 
+//move this to new config file config
 function getNextSequence(name) {
     var nextSeq = counters.findOneAndUpdate({_id: name}, { $inc: { seq: 1 } }).then((nextcounter) => {return nextcounter.seq
     });
@@ -29,8 +32,6 @@ app.use(bodyParser.json());
 
 // Endpoint for POSTing results from tracker app
 app.post('/post-result', (req, res) => {
-
-
 
 Participant.findOne({bibNo: req.body.bibNo}).then((participant) => {
   var id = participant.id;
@@ -62,6 +63,11 @@ Participant.findOne({bibNo: req.body.bibNo}).then((participant) => {
           var successfulPost = ({
             message: `${firstName}`
           });
+
+          //following function emails if duplicate result is found
+          email(JSON.stringify(obstResults));
+          //end of email block
+
           return res.status(409).send(successfulPost);
         }, (e) => {
           res.status(400).send(e);
@@ -159,7 +165,7 @@ app.get('/participant', (req, res) => {
 		if (qFirstName !==undefined){
 			getList = Participant.find({ firstName: qFirstName, lastName: qLastName });
 		} else {
-		getList = Participant.find({ lastName: qLastName  });
+		getList = Participant.find({ lastName: qLastName  }).collation( { locale: 'en', strength: 2 } );
 		}
 	} else {
 		getList = Participant.find();
