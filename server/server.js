@@ -154,8 +154,7 @@ app.get('/participant', (req, res) => {
 	var getList;
 	var qFirstName = req.query.firstName;
 	var qLastName = req.query.lastName;
-	
-	
+
 	if (qLastName !==undefined){
 		if (qFirstName !==undefined){
 			getList = Participant.find({ firstName: qFirstName, lastName: qLastName });
