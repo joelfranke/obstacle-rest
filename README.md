@@ -91,13 +91,14 @@ Data for participants or event results will be returned as one or more objects.
 
 #### Participant
 - [API_URL]/participant
-	- includes support for query parameters "lastName" or "lastName" + "firstName"
-	- ex. [API_URL]/participant?lastName=smith&firstName=John
+	- includes support for query parameters "lastName" or "bday"
+	- ex. [API_URL]/participant?lastName=smith
+	- ex. [API_URL]/participant?bday=1/31/2017
 - [API_URL]/participant/[bibNo]
 
 ##### Response Model/Schema
 
-[API_URL]/participant/145
+[API_URL]/participant*
 
 Response Class (Status 200)
 ```
@@ -116,7 +117,7 @@ Response Class (Status 200)
             "city": Sewell,
             "address2": null,
             "address1": null,
-            "birthdate": null,
+            "birthdate": 1/31/2017,
             "heat": "7:30 AM",
             "email": "email@gmail.com",
             "firstName": "John",

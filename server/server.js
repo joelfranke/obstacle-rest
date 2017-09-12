@@ -6,7 +6,7 @@ const bodyParser = require('body-parser');
 const {ObjectID} = require('mongodb');
 
 //testing block
-var {email} = require('./config/email');
+//var {email} = require('./config/email');
 var {mongoose} = require('./db/mongoose');
 var {Participant} = require('./models/participant');
 var {eventResults} = require('./models/eventresults');
@@ -65,7 +65,7 @@ Participant.findOne({bibNo: req.body.bibNo}).then((participant) => {
           });
 
           //following function emails if duplicate result is found
-          email(JSON.stringify(obstResults));
+          //email(JSON.stringify(obstResults));
           //end of email block
 
           return res.status(409).send(successfulPost);
@@ -158,16 +158,16 @@ app.get('/results/:id', (req, res) => {
 // Full GET query of participant table
 app.get('/participant', (req, res) => {
 	var getList;
-	var qFirstName = req.query.firstName;
+	//var qFirstName = req.query.firstName;
 	var qLastName = req.query.lastName;
+  var birth = req.query.bday;
 
 	if (qLastName !==undefined){
-		if (qFirstName !==undefined){
-			getList = Participant.find({ firstName: qFirstName, lastName: qLastName });
-		} else {
-		getList = Participant.find({ lastName: qLastName  }).collation( { locale: 'en', strength: 2 } );
-		}
-	} else {
+      getList = Participant.find({ lastName: qLastName  }).collation( { locale: 'en', strength: 2 } );
+	} else if (birth !==undefined){
+      getList = Participant.find({ birthdate: birth  });
+	}
+  else {
 		getList = Participant.find();
 	}
 	getList.then((participants) => {
