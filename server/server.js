@@ -38,6 +38,9 @@ Participant.findOne({bibNo: req.body.bibNo}).then((participant) => {
   var isDavid = participant.isDavid;
   var firstName = participant.firstName;
   var lastName = participant.lastName;
+  var successfulPost = ({
+    message: `${firstName}`
+  });
 
   if (!participant) {
     //console.log(status404);
@@ -48,31 +51,44 @@ Participant.findOne({bibNo: req.body.bibNo}).then((participant) => {
 
       var timestamp = Date.now()
       if (duplicate) {
-        //if duplicate, throw a 409 error and write results to a new log table anyway
-        var obstResults = new dupeResults({
-          bibNo: req.body.bibNo,
-          obstID: req.body.obstID,
-          tier: req.body.tier,
-          success: req.body.success,
-          bibFromBand: req.body.bibFromBand,
-          timestamp: timestamp
-        });
-
-        obstResults.save().then((doc) => {
-          // would be nice to include the participant data here.
-          var successfulPost = ({
-            message: `${firstName}`
-          });
-
-          //following function emails if duplicate result is found
-          //email(JSON.stringify(obstResults));
-          //end of email block
-
-          return res.status(409).send(successfulPost);
-        }, (e) => {
+        // testing block
+        var resultDiff = (((((timestamp - duplicate._id.getTimestamp())% 86400000) % 3600000) / 60000));
+        if (resultDiff <= 2) {
+          //update this with the actual req.body.* fields incl timestamp
+          eventResults.findByIdAndUpdate(duplicate._id, {success: req.body.success, timestamp: timestamp, tier: req.body.tier}, {new: true}).then((doc) => {
+          return res.status(200).send(successfulPost);
+     }).catch((e) => {
           res.status(400).send(e);
-        });
+        })
       } else {
+          // end testing block
+
+                //if duplicate and greater than 2 minutes after the first recorded result, throw a 409 error but write results to a new log table anyway
+                var obstResults = new dupeResults({
+                  bibNo: req.body.bibNo,
+                  obstID: req.body.obstID,
+                  tier: req.body.tier,
+                  success: req.body.success,
+                  bibFromBand: req.body.bibFromBand,
+                  timestamp: timestamp
+                });
+
+                obstResults.save().then((doc) => {
+
+                  //following function emails if duplicate result is found
+                  //email(JSON.stringify(obstResults));
+                  //end of email block
+
+                  return res.status(409).send(successfulPost);
+                }, (e) => {
+                  res.status(400).send(e);
+                });
+      }
+
+        // end of duplicate handler
+      }
+      // start of new result logging
+      else {
 
         var getSeq = getNextSequence('results');
         getSeq.then((nextSeq) => {

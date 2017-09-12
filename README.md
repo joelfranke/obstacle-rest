@@ -18,11 +18,14 @@ Content-Type :  application/json
 	"obstID" : 11, //integer, mandatory) -- Obstacle NUMBER being recorded; will be limited by total number of obstacles in database.
 	"tier" : "G2", //(string, mandatory) -- Obstacle tier (G1-G3) attempted set by the app user
 	"bibFromBand" : true, //(boolean, optional) -- BOOLEAN value indicating whether the bibNo was manually entered (false) or scanned (true). Currently optional. Will be updated to mandatory.
-	"timestamp" : "2017-09-08T01:34:39.391Z", //(DATE, mandatory) DATE object that is automatically written to the db that indicates when an object has been added.
+	"timestamp" : "2017-09-08T01:34:39.391Z", //(DATE, mandatory) DATE object that is automatically written to the db that indicates when an object has been updated.
 	"success" : true //(boolean, mandatory) -- BOOLEAN value recording whether the obstacle try was a success (true) or a failure (false)
 }
 ```
-n.b. an autoincrementing value "resultID" will automatically be written to the result (for all non-duplicate results).
+n.b. - an autoincrementing value "resultID" will automatically be written to the result (for all non-duplicate results).
+
+##### Duplicate handling
+An unlimited number of updates to a result that has already been submitted will be permitted within 2 minutes of the posting of the original result. The "success" and "tier" fields can be changed. No other fields can be changed.
 
 #### Response Model/Schema
 Response Class (Status 200)
