@@ -72,7 +72,7 @@ Participant.findOne({bibNo: req.body.bibNo}).then((participant) => {
                   bibFromBand: req.body.bibFromBand,
                   timestamp: timestamp
                 });
-                console.log('Duplicate logged: ' + JSON.stringify(obstResults, null, 2));
+                console.log('Duplicate logged: ' + JSON.stringify(obstResults));
                 obstResults.save().then((doc) => {
 
                   //following function emails if duplicate result is found
