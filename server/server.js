@@ -5,8 +5,6 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const {ObjectID} = require('mongodb');
 
-//testing block
-//var {email} = require('./config/email');
 var {mongoose} = require('./db/mongoose');
 var {Participant} = require('./models/participant');
 var {eventResults} = require('./models/eventresults');

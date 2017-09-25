@@ -31,7 +31,7 @@ An unlimited number of updates to a result that has already been submitted will 
 Response Class (Status 200)
 ```
 {
-    "message": "${firsName}"
+    "message": "${firstName}"
 }
 ```
 
