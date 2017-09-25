@@ -28,6 +28,12 @@ function getNextSequence(name) {
 
 app.use(bodyParser.json());
 
+app.use(function(req, res, next) {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+  next();
+});
+
 // Endpoint for POSTing results from tracker app
 app.post('/post-result', (req, res) => {
 
