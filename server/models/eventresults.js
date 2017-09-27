@@ -14,9 +14,10 @@ var eventResults = mongoose.model('results', {
     trim: true
   },
   tier: {
-    type: String,
+    type: Number,
     required: true,
-    default: null
+    minlength: 1,
+    trim: true
   },
   success: {
     type: Boolean,

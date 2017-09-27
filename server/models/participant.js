@@ -32,6 +32,7 @@ var Participant = mongoose.model('Participant', {
   },
   birthdate: {
     type: String,
+    required: true,
     default: null
   },
   address1: {
@@ -59,6 +60,10 @@ var Participant = mongoose.model('Participant', {
     default: null
   },
   teamID: {
+    type: String,
+    default: null
+  },
+  phone: {
     type: String,
     default: null
   },

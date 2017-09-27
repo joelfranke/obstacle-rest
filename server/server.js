@@ -28,11 +28,14 @@ function getNextSequence(name) {
 
 app.use(bodyParser.json());
 
+//Testing block to avoid cross origin scripting issues
 app.use(function(req, res, next) {
   res.header("Access-Control-Allow-Origin", "*");
   res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
   next();
 });
+//
+
 
 // Endpoint for POSTing results from tracker app
 app.post('/post-result', (req, res) => {
@@ -42,8 +45,10 @@ Participant.findOne({bibNo: req.body.bibNo}).then((participant) => {
   var isDavid = participant.isDavid;
   var firstName = participant.firstName;
   var lastName = participant.lastName;
+  var bibNo = participant.bibNo
   var successfulPost = ({
-    message: `${firstName}`
+    message: `${firstName}`,
+    bibNo: `${bibNo}`
   });
 
   if (!participant) {
@@ -106,9 +111,10 @@ Participant.findOne({bibNo: req.body.bibNo}).then((participant) => {
             resultID: nextSeq
           });
           obstResults.save().then((doc) => {
-            var successfulPost = ({
-              message: `${firstName}`
-            });
+            // var successfulPost = ({
+            //   message: `${firstName}`,
+            //   bibNo: `${bibNo}`
+            // });
             res.send(successfulPost);
           }, (e) => {
             res.status(400).send(e);

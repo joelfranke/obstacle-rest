@@ -16,7 +16,7 @@ Content-Type :  application/json
 {
 	"bibNo" : 123, //(integer, mandatory) -- Bib NUMBER of the participant read from the scanned or manually entered code
 	"obstID" : 11, //integer, mandatory) -- Obstacle NUMBER being recorded; will be limited by total number of obstacles in database.
-	"tier" : "G2", //(string, mandatory) -- Obstacle tier (G1-G3) attempted set by the app user
+	"tier" : "2", //(integer, mandatory) -- Obstacle tier (1-3) attempted set by the app user
 	"bibFromBand" : true, //(boolean, optional) -- BOOLEAN value indicating whether the bibNo was manually entered (false) or scanned (true). Currently optional. Will be updated to mandatory.
 	"timestamp" : "2017-09-08T01:34:39.391Z", //(DATE, mandatory) DATE object that is automatically written to the db that indicates when an object has been updated.
 	"success" : true //(boolean, mandatory) -- BOOLEAN value recording whether the obstacle try was a success (true) or a failure (false)
@@ -31,7 +31,8 @@ An unlimited number of updates to a result that has already been submitted will 
 Response Class (Status 200)
 ```
 {
-    "message": "${firstName}"
+    "message": "${firstName}",
+		bibNo: "${bibNo}"
 }
 ```
 
@@ -67,6 +68,7 @@ Content-Type :  application/json
 	"city": Washington, // (string, optional) -- Address city
 	"state": DC // (string, optional) -- State value. No validation done on this field.
 	"zip": 20006 // (string, optional) -- Zip code. No validation done on this field.
+	"phone": (856)555-5555 // (string, optional) -- Phone number. No validation done on this field.
 }
 ```
 

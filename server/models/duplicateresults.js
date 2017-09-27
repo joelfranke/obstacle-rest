@@ -14,9 +14,10 @@ var dupeResults = mongoose.model('duplicateresults', {
     trim: true
   },
   tier: {
-    type: String,
+    type: Number,
     required: true,
-    default: null
+    minlength: 1,
+    trim: true
   },
   timestamp: {
       type: Date,
