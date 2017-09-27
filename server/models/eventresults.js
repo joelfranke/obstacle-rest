@@ -33,6 +33,9 @@ var eventResults = mongoose.model('results', {
     type: Date,
     required: true
   },
+  deviceTime: {
+    type: String
+  },
   resultID: {
     type: Number,
     required: true

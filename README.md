@@ -19,6 +19,7 @@ Content-Type :  application/json
 	"tier" : "2", //(integer, mandatory) -- Obstacle tier (1-3) attempted set by the app user
 	"bibFromBand" : true, //(boolean, optional) -- BOOLEAN value indicating whether the bibNo was manually entered (false) or scanned (true). Currently optional. Will be updated to mandatory.
 	"timestamp" : "2017-09-08T01:34:39.391Z", //(DATE, mandatory) DATE object that is automatically written to the db that indicates when an object has been updated.
+	"deviceTime" : "2017-09-08T01:34:39.391Z", //(String, optional) String timestamp from the local device submitting the event result. Set to optional to facilitate testing. 
 	"success" : true //(boolean, mandatory) -- BOOLEAN value recording whether the obstacle try was a success (true) or a failure (false)
 }
 ```

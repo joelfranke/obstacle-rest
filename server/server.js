@@ -79,7 +79,8 @@ Participant.findOne({bibNo: req.body.bibNo}).then((participant) => {
                   tier: req.body.tier,
                   success: req.body.success,
                   bibFromBand: req.body.bibFromBand,
-                  timestamp: timestamp
+                  timestamp: timestamp,
+                  deviceTime: req.body.deviceTime
                 });
                 console.log('Duplicate logged: ' + JSON.stringify(obstResults));
                 obstResults.save().then((doc) => {
@@ -108,6 +109,7 @@ Participant.findOne({bibNo: req.body.bibNo}).then((participant) => {
             success: req.body.success,
             bibFromBand: req.body.bibFromBand,
             timestamp: timestamp,
+            deviceTime: req.body.deviceTime,
             resultID: nextSeq
           });
           obstResults.save().then((doc) => {

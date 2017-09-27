@@ -23,6 +23,9 @@ var dupeResults = mongoose.model('duplicateresults', {
       type: Date,
       required: true
     },
+    deviceTime: {
+      type: String
+    },
   success: {
     type: Boolean,
     required: true,
