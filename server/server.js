@@ -45,7 +45,8 @@ Participant.findOne({bibNo: req.body.bibNo}).then((participant) => {
   var isDavid = participant.isDavid;
   var firstName = participant.firstName;
   var lastName = participant.lastName;
-  var bibNo = participant.bibNo
+  var bibNo = participant.bibNo;
+  var obstID = req.body.obstID;
 
   var successfulPost = ({
     message: `${firstName}`,
@@ -57,9 +58,9 @@ Participant.findOne({bibNo: req.body.bibNo}).then((participant) => {
     //console.log(status404);
     return res.status(404).send(status404);
   } else {
-    var obstID = req.body.obstID
+
     //start of duplicate handling
-    eventResults.findOne({bibNo: req.body.bibNo, obstID: obstID}).then((duplicate) => {
+    eventResults.findOne({bibNo: req.body.bibNo, obstID: req.body.obstID}).then((duplicate) => {
 
       var timestamp = Date.now()
       if (duplicate) {
