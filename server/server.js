@@ -48,7 +48,8 @@ Participant.findOne({bibNo: req.body.bibNo}).then((participant) => {
   var bibNo = participant.bibNo
   var successfulPost = ({
     message: `${firstName}`,
-    bibNo: `${bibNo}`
+    bibNo: `${bibNo}`,
+    obstID: `${obstID}`
   });
 
   if (!participant) {
