@@ -46,6 +46,8 @@ Participant.findOne({bibNo: req.body.bibNo}).then((participant) => {
   var firstName = participant.firstName;
   var lastName = participant.lastName;
   var bibNo = participant.bibNo
+  var obstID = participant.obstID
+  
   var successfulPost = ({
     message: `${firstName}`,
     bibNo: `${bibNo}`,
