@@ -16,7 +16,7 @@ Content-Type :  application/json
 {
 	"bibNo" : 123, //(integer, mandatory) -- Bib NUMBER of the participant read from the scanned or manually entered code
 	"obstID" : 11, //integer, mandatory) -- Obstacle NUMBER being recorded; will be limited by total number of obstacles in database.
-	"tier" : "2", //(integer, mandatory) -- Obstacle tier (1-3) attempted set by the app user
+	"tier" : 2, //(integer, mandatory) -- Obstacle tier (1-3) attempted set by the app user
 	"bibFromBand" : true, //(boolean, optional) -- BOOLEAN value indicating whether the bibNo was manually entered (false) or scanned (true). Currently optional. Will be updated to mandatory.
 	"timestamp" : "2017-09-08T01:34:39.391Z", //(DATE, mandatory) DATE object that is automatically written to the db that indicates when an object has been updated.
 	"deviceTime" : "2017-09-08T01:34:39.391Z", //(String, optional) String timestamp from the local device submitting the event result. Set to optional to facilitate testing.
@@ -43,7 +43,7 @@ HTTP Status Code | Reason | Response Model
 
 400 | Something is wrong with your request. Contact xxx@xxx.xxx. | n/a
 
-404 | The Bib number is not in the database, and the service could not resolve the POSTed request to the appropriate participant. | ```{message: "The Bib number you entered is not valid. Please check and try again."}```
+404 | The Bib number is not in the database, and the service could not resolve the POSTed request to the appropriate participant. | ```{message: "BibNo not found.", bibNo:{$bibNo}}```
 
 500 | Something went wrong with the service. Contact xxx@xxx.xxx. | n/a
 
@@ -161,7 +161,7 @@ Response Class (Status 200)
 						"resultID": 44,
             "__v": 0,
             "success": true,
-            "tier": "G3"
+            "tier": 3
         }
     ]
 }

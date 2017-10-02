@@ -13,7 +13,6 @@ var {team} = require('./models/teamTable');
 var {counters} = require('./models/counters');
 var {dupeResults} = require('./models/duplicateresults');
 
-var status409  = ({message: "This result has already been recorded. The result has been logged, but not tracked, and contact mission control if the result is incorrect."});
 var status404  = ({message: "Check request and try again."});
 
 var app = express();
@@ -39,6 +38,7 @@ app.use(function(req, res, next) {
 
 // Endpoint for POSTing results from tracker app
 app.post('/post-result', (req, res) => {
+  var status404  = ({message: "BibNo not found.", bibNo: req.body.bibNo});
 
 Participant.findOne({bibNo: req.body.bibNo}).then((participant) => {
   var id = participant.id;
@@ -55,7 +55,6 @@ Participant.findOne({bibNo: req.body.bibNo}).then((participant) => {
   });
 
   if (!participant) {
-    //console.log(status404);
     return res.status(404).send(status404);
   } else {
 
@@ -71,6 +70,7 @@ Participant.findOne({bibNo: req.body.bibNo}).then((participant) => {
           eventResults.findByIdAndUpdate(duplicate._id, {success: req.body.success, timestamp: timestamp, tier: req.body.tier}, {new: true}).then((doc) => {
           return res.status(200).send(successfulPost);
      }).catch((e) => {
+          console.log(e);
           res.status(400).send(e);
         })
       } else {
@@ -95,6 +95,7 @@ Participant.findOne({bibNo: req.body.bibNo}).then((participant) => {
 
                   return res.status(409).send(successfulPost);
                 }, (e) => {
+                  console.log(e);
                   res.status(400).send(e);
                 });
       }
@@ -123,6 +124,7 @@ Participant.findOne({bibNo: req.body.bibNo}).then((participant) => {
             // });
             res.send(successfulPost);
           }, (e) => {
+            console.log(e);
             res.status(400).send(e);
           });
         });
@@ -154,6 +156,7 @@ if (delta !==undefined) {
   eventResults.find({ resultID: { $gt: delta } }).then((results) => {
     res.send({results});
   }, (e) => {
+    console.log(e);
     res.status(400).send(e);
   });
 }
@@ -162,6 +165,7 @@ else {
   eventResults.find().then((results) => {
     res.send({results});
   }, (e) => {
+    console.log(e);
     res.status(400).send(e);
   });
 
