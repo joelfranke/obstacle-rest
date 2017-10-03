@@ -43,7 +43,7 @@ HTTP Status Code | Reason | Response Model
 
 400 | Something is wrong with your request. Contact xxx@xxx.xxx. | n/a
 
-404 | The Bib number is not in the database, and the service could not resolve the POSTed request to the appropriate participant. | ```{message: "BibNo not found.", bibNo:{$bibNo}}```
+404 | The Bib number is not in the database, and the service could not resolve the POSTed request to the appropriate participant. | ```{message: "BibNo not found.", bibNo:{$bibNo}, obstID: ${obstID}}```
 
 500 | Something went wrong with the service. Contact xxx@xxx.xxx. | n/a
 
@@ -62,13 +62,13 @@ Content-Type :  application/json
   "email": "joelfranke@gmail.com",//(string, optional) -- email address of participant. No email validation takes place, must be unique. Email is used as the key lookup for a participant.
   "teamID": "Test Team",//(string, optional) -- Team name
   "gender": "M", //(string, optional) -- gender, "M" or "F" used, but no validation takes place.
-  "birthdate": 01/31/1901, // (string, optional) -- birthdate in the format MM/dd/YYYY
-	"address1": 1600 Pennsylvania Ave, // (string, optional) -- house number a street name
-	"address2": Suite 100, // (string, optional) -- second address line
-	"city": Washington, // (string, optional) -- Address city
-	"state": DC // (string, optional) -- State value. No validation done on this field.
-	"zip": 20006 // (string, optional) -- Zip code. No validation done on this field.
-	"phone": (856)555-5555 // (string, optional) -- Phone number. No validation done on this field.
+  "birthdate": "01/31/1901", // (string, optional) -- birthdate in the format MM/dd/YYYY
+	"address1": "1600 Pennsylvania Ave", // (string, optional) -- house number a street name
+	"address2": "Suite 100", // (string, optional) -- second address line
+	"city": "Washington", // (string, optional) -- Address city
+	"state": "DC" // (string, optional) -- State value. No validation done on this field.
+	"zip": "20006" // (string, optional) -- Zip code. No validation done on this field.
+	"phone": ""(856)555-5555" // (string, optional) -- Phone number. No validation done on this field.
 }
 ```
 
@@ -126,7 +126,8 @@ Response Class (Status 200)
             "heat": "7:30 AM",
             "email": "email@gmail.com",
             "firstName": "John",
-            "lastName": "Smith"
+            "lastName": "Smith",
+						"phone": "(856)555-5555"
         }
     ]
 }
