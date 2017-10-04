@@ -130,7 +130,7 @@ Participant.findOne({bibNo: req.body.bibNo}).then((participant) => {
           });
         });
               if (isDavid === true){
-                 if (req.body.success === false || req.body.tier !== "G3"){
+                 if (req.body.success === false || req.body.tier !== 3){
                    Participant.findByIdAndUpdate(id, {isDavid: false}, {new: true}).then((participant) => {
                   //console.log('Alas, failure is inevitable');
                 }).catch((e) => {
