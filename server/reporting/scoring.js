@@ -2,7 +2,7 @@ var aggJSON = [];
 
 function getResults(callback) {
 
-  var jsonData = "http://blooming-ridge-76065.herokuapp.com/results";
+  var jsonData = "https://blooming-ridge-76065.herokuapp.com/results";
 //Need to get data and filter first, then
 //Include success aggregation
 //Include aggregate count of event results
