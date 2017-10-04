@@ -4,6 +4,7 @@ const _ = require('lodash');
 const express = require('express');
 const bodyParser = require('body-parser');
 const {ObjectID} = require('mongodb');
+const path = require('path');
 
 var {mongoose} = require('./db/mongoose');
 var {Participant} = require('./models/participant');
@@ -273,6 +274,7 @@ app.post('/registration', (req, res) => {
           isDavid: true
         });
         newRegistration.save().then((doc) => {
+          console.log(newRegistration);
           res.send(successfulPost);
         }).catch((e) => {
           //console.log(e);
@@ -283,6 +285,9 @@ app.post('/registration', (req, res) => {
   res.status(404).send(e);
     });
   });
+
+// Binds the root directory to display html results page
+app.use('/', express.static(path.join(__dirname, 'reporting')))
 
 
 app.listen(port, () => {
