@@ -268,6 +268,7 @@ app.post('/registration', (req, res) => {
           address2: req.body.address2,
           city: req.body.city,
           state: req.body.state,
+          phone: req.body.phone,
           zip: req.body.zip,
           isDavid: true
         });
