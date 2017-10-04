@@ -78,7 +78,7 @@ totScore = g1 + (g2 * 3) + (g3 * 5);
 }
 
 function getPerson (bibNo,g1,g2,g3,totScore,totEvents) {
-  var persURL = "http://blooming-ridge-76065.herokuapp.com/participant/" + bibNo;
+  var persURL = "https://blooming-ridge-76065.herokuapp.com/participant/" + bibNo;
   $.getJSON( persURL, function( json ) {
     var isDavid = json.participant.isDavid;
     console.log(isDavid)
