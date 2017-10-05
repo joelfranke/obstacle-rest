@@ -240,13 +240,12 @@ app.get('/participant/:id', (req, res) => {
 
 // Endpoint for POSTing new registrations to participant db
 app.post('/registration', (req, res) => {
-    //start of pre-registration detection. If participant is pre-registered, add bibNo. If this is an event day registration, write the full information to the db.
-    //currently assumes unique firstName/lastName. Should be by ID.
+    //start of pre-registration detection. If participant is pre-registered (has _id), add bibNo. If this is an event day registration, write the full information to the db.
     var successfulPost = ({
       message: `${req.body.firstName} registered with bibNo: ${req.body.bibNo}.`
     });
 
-    Participant.findOne({lastName: req.body.lastName, firstName: req.body.firstName}).then((preregistered) => {
+    Participant.findOne({_id: req.body._id}).then((preregistered) => {
       if (preregistered) {
         var id = preregistered.id;
         Participant.findByIdAndUpdate(id, {bibNo: req.body.bibNo}, {new: true}).then((participant) => {

@@ -55,6 +55,7 @@ Content-Type :  application/json
 #### Body //(dataType, mandatory/optional) -- Definition
 ```
 {
+	"_id" : "59a9734c449b2a3da64cbead", //(string, optional [mandatory for updating existing registrant]) -- db object id STRING from GET /participant response, must be passed with "bibNo" and "firstName" for an existing registrant.
 	"bibNo" : 123, //(integer, mandatory) -- Bib NUMBER of the participant read from the scanned or manually entered code
 	"heat": "7:30 AM", //(string, optional) -- time of heat; a heat time might be assigned, or it might be blank. In the event the participant is running with a team, this is driven by the team heat time.
 	"firstName": "Joel", //(string, mandatory) -- First name of participant
