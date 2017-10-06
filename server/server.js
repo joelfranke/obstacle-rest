@@ -288,6 +288,8 @@ app.post('/registration', (req, res) => {
 // Binds the root directory to display html results page
 app.use('/', express.static(path.join(__dirname, 'reporting')))
 
+// Binds the root directory to display html individual results page
+app.use('/individual', express.static(path.join(__dirname, 'individual')))
 
 app.listen(port, () => {
   console.log(`API running on port: ${port}`);

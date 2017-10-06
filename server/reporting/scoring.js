@@ -81,15 +81,16 @@ function getPerson (bibNo,g1,g2,g3,totScore,totEvents) {
   var persURL = "https://blooming-ridge-76065.herokuapp.com/participant/" + bibNo;
   $.getJSON( persURL, function( json ) {
     var isDavid = json.participant.isDavid;
-    console.log(isDavid)
-    if (isDavid == true){
-      var participantName = json.participant.lastName + ', ' + json.participant.firstName+"*";
-    } else {
-      var participantName = json.participant.lastName + ', ' + json.participant.firstName;
-    }
-
     var teamName = json.participant.teamID;
     var bibNo = json.participant.bibNo
+    console.log(isDavid)
+    if (isDavid == true){
+      var participantName = "<a href='/individual/?id=" +bibNo+"'>" + json.participant.lastName + ', ' + json.participant.firstName+"</a>*";
+    } else {
+      var participantName = "<a href='/individual/?id=" +bibNo+"'>" + json.participant.lastName + ', ' + json.participant.firstName+"</a>";
+    }
+
+
     var resultArray = [];
 
     if (totEvents == 12){
