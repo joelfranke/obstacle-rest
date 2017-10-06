@@ -6,7 +6,8 @@ function getResults(participantID,callback) {
 
   $.getJSON( personData, function( personJson ) {
     var teamID = personJson.participant.teamID;
-    if (teamID != null || teamID !=""){
+    //currently the below code to evaluate teamID is not working
+    if (teamID !== null || teamID !== ""){
       var participantName = "<b>"+personJson.participant.lastName + ', ' + personJson.participant.firstName+"</b> ("+personJson.participant.teamID+")";
     } else {
       var participantName = "<b>"+personJson.participant.lastName + ', ' + personJson.participant.firstName+"</b>"
@@ -18,10 +19,17 @@ function getResults(participantID,callback) {
   $.getJSON( jsonData, function( json ) {
 
     for (var item in json.results) {
+
       var obstID = json.results[item].obstID;
       var tier = json.results[item].tier;
       var deviceTime = json.results[item].deviceTime;
       var success = json.results[item].success;
+      //update to include invidual score
+      if (success == true){
+        success = 	"&#x2714;"
+      } else {
+        success = "&#x2715;"
+      }
       var indivResultArray = [];
       indivResultArray.push(obstID,tier,success,deviceTime);
       aggIndvJSON.push(indivResultArray);
@@ -38,7 +46,7 @@ function createPage (aggIndvJSON){
           data: aggIndvJSON,
           scrollY: "500px",
           scrollCollapse: true,
-          order: [[3 , "desc" ]],
+          order: [[3 , "asc" ]],
           bStateSave: true,
           paging: false,
           processing: true,
@@ -50,8 +58,8 @@ function createPage (aggIndvJSON){
           columns: [
               { title: "Obstacle" },
               { title: "Tier" },
-              { title: "Success" },
-              { title: "Time" }
+              { title: "Result" },
+              { title: "Time completed" }
           ]
       });
     });
