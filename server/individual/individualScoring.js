@@ -1,8 +1,8 @@
 var aggJSON = [];
 var aggIndvJSON = [];
 function getResults(participantID,callback) {
-  var jsonData = "http://blooming-ridge-76065.herokuapp.com/results/" + participantID;
-  var personData = "http://blooming-ridge-76065.herokuapp.com/participant/" + participantID;
+  var jsonData = "https://blooming-ridge-76065.herokuapp.com/results/" + participantID;
+  var personData = "https://blooming-ridge-76065.herokuapp.com/participant/" + participantID;
 
   $.getJSON( personData, function( personJson ) {
     var teamID = personJson.participant.teamID;
