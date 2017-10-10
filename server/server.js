@@ -39,9 +39,8 @@ app.use(function(req, res, next) {
 
 // Endpoint for POSTing results from tracker app
 app.post('/post-result', (req, res) => {
-  var status404  = ({message: "BibNo not found.", bibNo: req.body.bibNo, obstID: req.body.obstID});
-
-Participant.findOne({bibNo: req.body.bibNo}).then((participant) => {
+    var status404  = ({message: "BibNo not found.", bibNo: req.body.bibNo, obstID: req.body.obstID});
+    Participant.findOne({bibNo: req.body.bibNo}).then((participant) => {
   var id = participant.id;
   var isDavid = participant.isDavid;
   var firstName = participant.firstName;
@@ -119,10 +118,6 @@ Participant.findOne({bibNo: req.body.bibNo}).then((participant) => {
             resultID: nextSeq
           });
           obstResults.save().then((doc) => {
-            // var successfulPost = ({
-            //   message: `${firstName}`,
-            //   bibNo: `${bibNo}`
-            // });
             res.send(successfulPost);
           }, (e) => {
             console.log(e);

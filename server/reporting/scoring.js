@@ -3,11 +3,6 @@ var aggJSON = [];
 function getResults(callback) {
 
   var jsonData = "https://blooming-ridge-76065.herokuapp.com/results";
-//Need to get data and filter first, then
-//Include success aggregation
-//Include aggregate count of event results
-//
-
 
 	d3.json(jsonData, function(data) {
 	var nested_data = d3.nest()
@@ -54,18 +49,6 @@ for (var item in nested_data) {
             totEvents = totEvents + tierScore
           }
         }
-
-        //testing
-
-      // if (tierKey != null && tierKey == 1){
-      //   g1 = tierValue;
-      // }
-      // if (tierKey != null && tierKey == 2){
-      //   g2 = tierValue;
-      // }
-      // if (tierKey != null && tierKey == 3){
-      //   g3 = tierValue;
-      // }
     }
 
 totScore = g1 + (g2 * 3) + (g3 * 5);
@@ -133,16 +116,17 @@ function createPage (aggJSON){
               { title: "Progress" }
           ]
       });
+      document.getElementById("loadingGIF").style.visibility = "hidden";
     });
 
 }
 
-//1.4sec delay hardcoded to allow person results to load
+//12sec delay hardcoded to allow person results to load
 getResults(function(){
   setTimeout(function(){
     createPage(aggJSON);
-}, 1400);
-
+}, 12000);
 });
-//results reload every two minutes (120000ms)
-var i = setInterval(function() { location.reload(); }, 120000);
+
+//results reload every two minutes (180000ms)
+var i = setInterval(function() { location.reload(); }, 180000);
