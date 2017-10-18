@@ -176,6 +176,7 @@ app.get('/results', (req, res) => {
 
 app.get('/scoring', (req, res) => {
 //start of code block
+console.log('calculating scores');
 var scores = [];
 //get unique bib numbers with at least one event result
 eventResults.distinct("bibNo").then((event) => {
