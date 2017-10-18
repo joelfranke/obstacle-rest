@@ -146,8 +146,8 @@ app.post('/post-result', (req, res) => {
 //Complete GET ALL results
 // includes logic to send delta results based on an optional query value "q"
 app.get('/results', (req, res) => {
-var delta = req.query.d
-if (delta !==undefined) {
+  var delta = req.query.d
+  if (delta !==undefined) {
   //console.log(delta);
   eventResults.find({ resultID: { $gt: delta } }).then((results) => {
     res.send({results});
@@ -155,9 +155,9 @@ if (delta !==undefined) {
     console.log(e);
     res.status(400).send(e);
   });
-}
+  }
 
-else {
+  else {
   eventResults.find().then((results) => {
     res.send({results});
   }, (e) => {
@@ -165,10 +165,106 @@ else {
     res.status(400).send(e);
   });
 
-}
+  }
 //end of code block
 });
 
+
+//start testing
+
+
+
+app.get('/scoring', (req, res) => {
+//start of code block
+var scores = [];
+//get unique bib numbers with at least one event result
+eventResults.distinct("bibNo").then((event) => {
+  var uniqueBib = event.length;
+  for(var bib in event){
+    var bibNo = event[bib];
+    //get people metadata
+    Participant.findOne({bibNo: bibNo}).then((participant) => {
+      var personBib = participant.bibNo
+      var isDavid = participant.isDavid;
+      var firstName = participant.firstName;
+      var lastName = participant.lastName;
+      var teamName = participant.teamID;
+
+
+      if (isDavid == true){
+        var participantName = "<a href='/individual/?id=" +personBib+"'>" + lastName + ', ' + firstName+"</a>*";
+        } else {
+          var participantName = "<a href='/individual/?id=" +personBib+"'>" + lastName + ', ' + firstName+"</a>";
+        }
+
+        eventResults.find({bibNo: personBib}).then((events) => {
+          var g1 = 0;
+          var g2 = 0;
+          var g3 = 0;
+          var totScore = 0;
+          var totEvents = 0
+          for(var event in events){
+            var success = events[event].success;
+            var tier = events[event].tier;
+            if (success == true){
+              if (tier ==1){
+                g1 = g1 + 1;
+              }
+              if (tier == 2){
+                g2 = g2 + 1;
+              }
+              if (tier == 3){
+                g3 = g3 + 1;
+              }
+              totEvents = totEvents + 1
+            } else {
+              totEvents = totEvents + 1
+            }
+          }
+
+          totScore = (g1*1.000001) + (g2*3.0001) + (g3*5.01);
+          if (totEvents == 12) {
+            totEvents = 'Course Complete';
+          } else {
+            totEvents = totEvents + '/12';
+          }
+          var score = {
+            person: participantName,
+            bibNo: personBib,
+            teamID: teamName,
+            g1:g1,
+            g2:g2,
+            g3:g3,
+            score:totScore,
+            progress:totEvents
+          }
+          scores.push(score);
+          var uniqueScores=scores.length
+          if (uniqueScores == uniqueBib){
+            res.send(scores);
+          }
+          //console.log(uniqueBib,uniqueScores);
+        }, (e) => {
+          res.status(400).send(e);
+        }); //console.log(scores);
+    });
+  }
+
+  //end of scoring
+  }, (e) => {
+    console.log(e);
+    res.status(400).send(e);
+    // original code
+  });
+
+
+//end of code block
+});
+
+
+
+
+//END TEST
 
 
 // GET results by bib number

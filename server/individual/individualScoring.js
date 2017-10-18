@@ -17,8 +17,8 @@ var obstIndex = [{obstID: 1, value: "Water Carry"},
 
 
 function getResults(participantID,callback) {
-  var jsonData = "https://blooming-ridge-76065.herokuapp.com/results/" + participantID;
-  var personData = "https://blooming-ridge-76065.herokuapp.com/participant/" + participantID;
+  var jsonData = "/results/" + participantID;
+  var personData = "/participant/" + participantID;
 
   $.getJSON( personData, function( personJson ) {
     var teamID = personJson.participant.teamID;
