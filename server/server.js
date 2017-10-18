@@ -241,6 +241,7 @@ eventResults.distinct("bibNo").then((event) => {
           }
           scores.push(score);
           var uniqueScores=scores.length
+          console.log(uniqueScores,uniqueBib);
           if (uniqueScores == uniqueBib){
             console.log('scores calculated');
             res.send(scores);
