@@ -180,11 +180,13 @@ console.log('calculating scores');
 var scores = [];
 //get unique bib numbers with at least one event result
 eventResults.distinct("bibNo").then((event) => {
+  console.log('events pulled');
   var uniqueBib = event.length;
   for(var bib in event){
     var bibNo = event[bib];
     //get people metadata
     Participant.findOne({bibNo: bibNo}).then((participant) => {
+      console.log('looking up person');
       var personBib = participant.bibNo
       var isDavid = participant.isDavid;
       var firstName = participant.firstName;
@@ -199,6 +201,7 @@ eventResults.distinct("bibNo").then((event) => {
         }
 
         eventResults.find({bibNo: personBib}).then((events) => {
+          console.log('calculating person score');
           var g1 = 0;
           var g2 = 0;
           var g3 = 0;
