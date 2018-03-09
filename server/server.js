@@ -13,18 +13,21 @@ var {obstacle} = require('./models/obstacle');
 var {team} = require('./models/teamTable');
 var {counters} = require('./models/counters');
 var {dupeResults} = require('./models/duplicateresults');
+//var {security} = require('./models/security');
 
 var status404  = ({message: "Check request and try again."});
 
 var app = express();
 const port = process.env.PORT;
 
-//move this to new config file config
+//move these to new config file config
 function getNextSequence(name) {
     var nextSeq = counters.findOneAndUpdate({_id: name}, { $inc: { seq: 1 } }).then((nextcounter) => {return nextcounter.seq
     });
     return nextSeq;
  }
+
+ //
 
 app.use(bodyParser.json());
 
@@ -68,6 +71,7 @@ app.post('/post-result', (req, res) => {
         if (resultDiff <= 2) {
           //update this with the actual req.body.* fields incl timestamp
           eventResults.findByIdAndUpdate(duplicate._id, {success: req.body.success, timestamp: timestamp, tier: req.body.tier}, {new: true}).then((doc) => {
+            //need to send to an update david function
           return res.status(200).send(successfulPost);
      }).catch((e) => {
           console.log(e);
@@ -124,6 +128,7 @@ app.post('/post-result', (req, res) => {
             res.status(400).send(e);
           });
         });
+          //move this to an async update david function
               if (isDavid === true){
                  if (req.body.success === false || req.body.tier !== 3){
                    Participant.findByIdAndUpdate(id, {isDavid: false}, {new: true}).then((participant) => {
@@ -171,8 +176,6 @@ app.get('/results', (req, res) => {
 
 
 //start testing
-
-
 
 app.get('/scoring', (req, res) => {
 //start of code block
