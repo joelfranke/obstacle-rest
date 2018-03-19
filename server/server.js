@@ -5,6 +5,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const {ObjectID} = require('mongodb');
 const path = require('path');
+const compression = require('compression');
 
 var {mongoose} = require('./db/mongoose');
 var {Participant} = require('./models/participant');
@@ -13,25 +14,19 @@ var {obstacle} = require('./models/obstacle');
 var {team} = require('./models/teamTable');
 var {counters} = require('./models/counters');
 var {dupeResults} = require('./models/duplicateresults');
+// incorporate token as new document/field in counters db
 //var {security} = require('./models/security');
 
 var status404  = ({message: "Check request and try again."});
+var invalidToken = ({message: "Invalid or missing token."});
 
 var app = express();
+
 const port = process.env.PORT;
-
-//move these to new config file config
-function getNextSequence(name) {
-    var nextSeq = counters.findOneAndUpdate({_id: name}, { $inc: { seq: 1 } }).then((nextcounter) => {return nextcounter.seq
-    });
-    return nextSeq;
- }
-
- //
 
 app.use(bodyParser.json());
 
-//Testing block to avoid cross origin scripting issues
+// required to avoid cross origin scripting issues
 app.use(function(req, res, next) {
   res.header("Access-Control-Allow-Origin", "*");
   res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
@@ -39,115 +34,223 @@ app.use(function(req, res, next) {
 });
 //
 
+// use compression
+app.use(compression());
+//
+
+//general use functions
+function getNextSequence(name) {
+    var nextSeq = counters.findOneAndUpdate({_id: name}, { $inc: { seq: 1 } }).then((nextcounter) => {return nextcounter.seq
+    });
+    return nextSeq;
+ }
+
+function checkAuth(token) {
+   // should be a salted hash...
+      var tokenCheck = counters.findOne({ token: token}).then((key) => {
+      if (!key) {
+         return false
+       } else {
+         return true
+       }
+     });
+     return tokenCheck;
+  }
+ //
+
+ function getPerson(getList,res){
+
+  getList.then((participants) => {
+  // original find request below
+     res.send({participants});
+   }, (e) => {
+     res.status(400).send(e);
+   });
+ }
+
+
+function registration(req,res){
+  //start of pre-registration detection. If participant is pre-registered (has _id), add bibNo. If this is an event day registration, write the full information to the db.
+  var successfulPost = ({
+    message: `${req.body.firstName} registered with bibNo: ${req.body.bibNo}.`
+  });
+
+  Participant.findOne({_id: req.body._id}).then((preregistered) => {
+    if (preregistered) {
+      var id = preregistered.id;
+      Participant.findByIdAndUpdate(id, {bibNo: req.body.bibNo}, {new: true}).then((participant) => {
+   }).catch((e) => {
+        //console.log('Something went wrong updating bibNo.');
+      })
+      return res.status(200).send(successfulPost);
+    }
+    else {
+        var newRegistration = new Participant({
+        bibNo: req.body.bibNo,
+        heat: req.body.heat,
+        lastName: req.body.lastName,
+        firstName: req.body.firstName,
+        email: req.body.email,
+        teamID: req.body.teamID,
+        gender: req.body.gender,
+        birthdate: req.body.birthdate,
+        address1: req.body.address1,
+        address2: req.body.address2,
+        city: req.body.city,
+        state: req.body.state,
+        phone: req.body.phone,
+        zip: req.body.zip,
+        isDavid: true
+      });
+      newRegistration.save().then((doc) => {
+        console.log(newRegistration);
+        res.send(successfulPost);
+      }).catch((e) => {
+        //console.log(e);
+        res.status(400).send(e);
+      });
+    }
+  }).catch((e) => {
+res.status(404).send(e);
+  });
+}
+
+
+ //log event function
+function logEvent(body,res){
+
+  var status404  = ({message: "BibNo not found.", bibNo: body.bibNo, obstID: body.obstID});
+  Participant.findOne({bibNo: body.bibNo}).then((participant) => {
+    var id = participant.id;
+    var isDavid = participant.isDavid;
+    var firstName = participant.firstName;
+    var lastName = participant.lastName;
+    var bibNo = participant.bibNo;
+    var obstID = body.obstID;
+
+    var successfulPost = ({
+      message: `${firstName}`,
+      bibNo: `${bibNo}`,
+      obstID: `${obstID}`
+    });
+
+if (!participant) {
+  return res.status(404).send(status404);
+} else {
+
+  //start of duplicate handling
+  eventResults.findOne({bibNo: body.bibNo, obstID: body.obstID}).then((duplicate) => {
+
+    var timestamp = Date.now()
+    if (duplicate) {
+      // testing block
+      var resultDiff = (((((timestamp - duplicate._id.getTimestamp())% 86400000) % 3600000) / 60000));
+      if (resultDiff <= 2) {
+        //update this with the actual req.body.* fields incl timestamp
+        eventResults.findByIdAndUpdate(duplicate._id, {success: body.success, timestamp: timestamp, tier: body.tier}, {new: true}).then((doc) => {
+          //need to send to an update david function
+        return res.status(200).send(successfulPost);
+   }).catch((e) => { //
+        console.log(e);
+        res.status(400).send(e);
+      })
+    } else {
+        // end testing block
+
+              //if duplicate and greater than 2 minutes after the first recorded result, throw a 409 error but write results to a new log table anyway
+              var obstResults = new dupeResults({
+                bibNo: body.bibNo,
+                obstID: body.obstID,
+                tier: body.tier,
+                success: body.success,
+                bibFromBand: body.bibFromBand,
+                timestamp: timestamp,
+                deviceTime: body.deviceTime
+              });
+              console.log('Duplicate logged: ' + JSON.stringify(obstResults));
+              obstResults.save().then((doc) => {
+
+                return res.status(409).send(successfulPost);
+              }, (e) => {
+                console.log(e);
+                res.status(400).send(e);
+              });
+    }
+
+      // end of duplicate handler
+    }
+    // start of new result logging
+    else {
+
+      var getSeq = getNextSequence('results');
+      getSeq.then((nextSeq) => {
+        var obstResults = new eventResults({
+          bibNo: body.bibNo,
+          obstID: body.obstID,
+          tier: body.tier,
+          success: body.success,
+          bibFromBand: body.bibFromBand,
+          timestamp: timestamp,
+          deviceTime: body.deviceTime,
+          resultID: nextSeq
+        });
+        obstResults.save().then((doc) => {
+          res.send(successfulPost);
+        }, (e) => {
+          console.log(e);
+          res.status(400).send(e);
+        });
+      });
+        //move this to an async update david function
+            if (isDavid === true){
+               if (body.success === false || body.tier !== 3){
+                 Participant.findByIdAndUpdate(id, {isDavid: false}, {new: true}).then((participant) => {
+              }).catch((e) => {
+                   console.log('Something went wrong.');
+                 })
+               }
+            }
+
+    }
+  })
+  }
+}
+).catch((e) => {
+res.status(404).send(status404);
+});
+}
+ //
+
 
 // Endpoint for POSTing results from tracker app
 app.post('/post-result', (req, res) => {
-    var status404  = ({message: "BibNo not found.", bibNo: req.body.bibNo, obstID: req.body.obstID});
-    Participant.findOne({bibNo: req.body.bibNo}).then((participant) => {
-  var id = participant.id;
-  var isDavid = participant.isDavid;
-  var firstName = participant.firstName;
-  var lastName = participant.lastName;
-  var bibNo = participant.bibNo;
-  var obstID = req.body.obstID;
 
-  var successfulPost = ({
-    message: `${firstName}`,
-    bibNo: `${bibNo}`,
-    obstID: `${obstID}`
-  });
+  // check token
+  var key = req.query.k
+  var body = req.body
 
-  if (!participant) {
-    return res.status(404).send(status404);
-  } else {
-
-    //start of duplicate handling
-    eventResults.findOne({bibNo: req.body.bibNo, obstID: req.body.obstID}).then((duplicate) => {
-
-      var timestamp = Date.now()
-      if (duplicate) {
-        // testing block
-        var resultDiff = (((((timestamp - duplicate._id.getTimestamp())% 86400000) % 3600000) / 60000));
-        if (resultDiff <= 2) {
-          //update this with the actual req.body.* fields incl timestamp
-          eventResults.findByIdAndUpdate(duplicate._id, {success: req.body.success, timestamp: timestamp, tier: req.body.tier}, {new: true}).then((doc) => {
-            //need to send to an update david function
-          return res.status(200).send(successfulPost);
-     }).catch((e) => {
-          console.log(e);
-          res.status(400).send(e);
-        })
-      } else {
-          // end testing block
-
-                //if duplicate and greater than 2 minutes after the first recorded result, throw a 409 error but write results to a new log table anyway
-                var obstResults = new dupeResults({
-                  bibNo: req.body.bibNo,
-                  obstID: req.body.obstID,
-                  tier: req.body.tier,
-                  success: req.body.success,
-                  bibFromBand: req.body.bibFromBand,
-                  timestamp: timestamp,
-                  deviceTime: req.body.deviceTime
-                });
-                console.log('Duplicate logged: ' + JSON.stringify(obstResults));
-                obstResults.save().then((doc) => {
-
-                  //following function emails if duplicate result is found
-                  //email(JSON.stringify(obstResults));
-                  //end of email block
-
-                  return res.status(409).send(successfulPost);
-                }, (e) => {
-                  console.log(e);
-                  res.status(400).send(e);
-                });
-      }
-
-        // end of duplicate handler
-      }
-      // start of new result logging
-      else {
-
-        var getSeq = getNextSequence('results');
-        getSeq.then((nextSeq) => {
-          var obstResults = new eventResults({
-            bibNo: req.body.bibNo,
-            obstID: req.body.obstID,
-            tier: req.body.tier,
-            success: req.body.success,
-            bibFromBand: req.body.bibFromBand,
-            timestamp: timestamp,
-            deviceTime: req.body.deviceTime,
-            resultID: nextSeq
-          });
-          obstResults.save().then((doc) => {
-            res.send(successfulPost);
-          }, (e) => {
-            console.log(e);
-            res.status(400).send(e);
-          });
-        });
-          //move this to an async update david function
-              if (isDavid === true){
-                 if (req.body.success === false || req.body.tier !== 3){
-                   Participant.findByIdAndUpdate(id, {isDavid: false}, {new: true}).then((participant) => {
-                  //console.log('Alas, failure is inevitable');
-                }).catch((e) => {
-                     console.log('Something went wrong.');
-                   })
-                 }
-              }
-
-      }
-    })
-    }
+  if (key !==undefined) {
+    var tokenCheck = checkAuth(key);
+    tokenCheck.then((token) => {
+      console.log(token);
+        if (token ===false){
+          return res.status(401).send(invalidToken);
+        } else {
+          logEvent(body,res)// call remaining script as function
+        }
+    }).catch((e) => {
+      res.status(500).send(e);
+      })
+    ;}
+    else {
+      //invert comments below to make token optional/mandatory
+      logEvent(body,res)
+    //return res.status(401).send(invalidToken);
   }
-).catch((e) => {
-  res.status(404).send(status404);
+//end token check
 });
-});
-//
+
+
 //Complete GET ALL results
 // includes logic to send delta results based on an optional query value "q"
 app.get('/results', (req, res) => {
@@ -174,9 +277,7 @@ app.get('/results', (req, res) => {
 //end of code block
 });
 
-
-//start testing
-
+//main scoring endpoint
 app.get('/scoring', (req, res) => {
 //start of code block
 var scores = [];
@@ -246,38 +347,27 @@ eventResults.distinct("bibNo").then((event) => {
           if (uniqueScores == uniqueBib){
             res.send(scores);
           }
-          //console.log(uniqueBib,uniqueScores);
         }, (e) => {
           res.status(400).send(e);
-        }); //console.log(scores);
+        });
     });
   }
 
-  //end of scoring
+
   }, (e) => {
     console.log(e);
     res.status(400).send(e);
-    // original code
   });
 
-
-//end of code block
+//end of scoring code block
 });
-
-
-
-
-//END TEST
-
 
 // GET results by bib number
 app.get('/results/:id', (req, res) => {
 
   var id = req.params.id;
   eventResults.find({bibNo: id}).then((results) => {
-    //console.log(results.length);
     if (!results || results.length == 0) {
-      //console.log('Invalid bib number.');
       return res.status(404).send(status404);
     }
     res.send({results});
@@ -287,96 +377,68 @@ app.get('/results/:id', (req, res) => {
 });
 
 // Full GET query of participant table
+// add token to this call because of personal data
 app.get('/participant', (req, res) => {
 	var getList;
-	//var qFirstName = req.query.firstName;
 	var qLastName = req.query.lastName;
   var birth = req.query.bday;
+  var bibNo = req.query.bibNo;
+  var key = req.query.k
 
 	if (qLastName !==undefined){
       getList = Participant.find({ lastName: qLastName  }).collation( { locale: 'en', strength: 2 } );
 	} else if (birth !==undefined){
       getList = Participant.find({ birthdate: birth  });
-	}
+	} else if (bibNo !== undefined){
+    getList = Participant.find({ bibNo: bibNo  });
+  }
   else {
 		getList = Participant.find();
 	}
-	getList.then((participants) => {
-	// original find request below
-	//Participant.find().then((participants) => {
-    res.send({participants});
-  }, (e) => {
-    res.status(400).send(e);
-  });
+
+  if (key !==undefined) {
+    var tokenCheck = checkAuth(key);
+    tokenCheck.then((token) => {
+        if (token ===false){
+          return res.status(401).send(invalidToken);
+        } else {
+          getPerson(getList,res)// call remaining script as function
+        }
+    }).catch((e) => {
+      res.status(500).send(e);
+      })
+    ;}
+    else {
+      //invert comments below to make token optional/mandatory
+      getPerson(getList,res)
+    //return res.status(401).send(invalidToken);
+  }
 });
 
-// GET request by bib number
-app.get('/participant/:id', (req, res) => {
-  var id = req.params.id;
-
-  Participant.findOne({bibNo: id}).then((participant) => {
-
-    if (!participant) {
-      //console.log('Invalid bib number.');
-      return res.status(404).send(status404);
-    }
-    if (participant.isDavid === true){
-      //console.log('is david!');
-      res.send({participant});
-    } else {
-      //console.log('is not david...');
-      res.send({participant});
-    }
-  }).catch((e) => {
-    res.status(400).send(e);
-  });
-});
 
 // Endpoint for POSTing new registrations to participant db
 app.post('/registration', (req, res) => {
-    //start of pre-registration detection. If participant is pre-registered (has _id), add bibNo. If this is an event day registration, write the full information to the db.
-    var successfulPost = ({
-      message: `${req.body.firstName} registered with bibNo: ${req.body.bibNo}.`
-    });
+    var key = req.query.k
+    var body = req.body
 
-    Participant.findOne({_id: req.body._id}).then((preregistered) => {
-      if (preregistered) {
-        var id = preregistered.id;
-        Participant.findByIdAndUpdate(id, {bibNo: req.body.bibNo}, {new: true}).then((participant) => {
-     }).catch((e) => {
-          //console.log('Something went wrong updating bibNo.');
+    if (key !==undefined) {
+      var tokenCheck = checkAuth(key);
+      tokenCheck.then((token) => {
+        console.log(token);
+          if (token ===false){
+            return res.status(401).send(invalidToken);
+          } else {
+            registration(req,res)// call remaining script as function
+          }
+      }).catch((e) => {
+        res.status(500).send(e);
         })
-        return res.status(200).send(successfulPost);
-      }
+      ;}
       else {
-          var newRegistration = new Participant({
-          bibNo: req.body.bibNo,
-          heat: req.body.heat,
-          lastName: req.body.lastName,
-          firstName: req.body.firstName,
-          email: req.body.email,
-          teamID: req.body.teamID,
-          gender: req.body.gender,
-          birthdate: req.body.birthdate,
-          address1: req.body.address1,
-          address2: req.body.address2,
-          city: req.body.city,
-          state: req.body.state,
-          phone: req.body.phone,
-          zip: req.body.zip,
-          isDavid: true
-        });
-        newRegistration.save().then((doc) => {
-          console.log(newRegistration);
-          res.send(successfulPost);
-        }).catch((e) => {
-          //console.log(e);
-          res.status(400).send(e);
-        });
-      }
-    }).catch((e) => {
-  res.status(404).send(e);
-    });
+        //invert comments below to make token optional/mandatory
+        registration(req,res)
+      //return res.status(401).send(invalidToken);
+    }
   });
 
 // Binds the root directory to display html results page
