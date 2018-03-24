@@ -18,14 +18,16 @@ var obstIndex = [{obstID: 1, value: "Water Carry"},
 
 function getResults(participantID,callback) {
   var jsonData = "/results/" + participantID;
-  var personData = "/participant/" + participantID;
+  var personData = "/participant?bibNo=" + participantID;
 
   $.getJSON( personData, function( personJson ) {
-    var teamID = personJson.participant.teamID;
+
+    var personData = personJson.participants[0];
+    var teamID = personData.teamID;
     if (teamID !== null && teamID !== ""){
-      var participantName = "<b>"+personJson.participant.lastName + ', ' + personJson.participant.firstName+"</b> ("+personJson.participant.teamID+")";
+      var participantName = "<b>"+personData.lastName + ', ' + personData.firstName+"</b> ("+personData.teamID+")";
     } else {
-      var participantName = "<b>"+personJson.participant.lastName + ', ' + personJson.participant.firstName+"</b>"
+      var participantName = "<b>"+personData.lastName + ', ' + personData.firstName+"</b>"
     }
       var participantDiv = document.getElementById('participant-div');
       participantDiv.innerHTML += participantName;
@@ -63,7 +65,6 @@ function getResults(participantID,callback) {
       aggIndvJSON.push(indivResultArray);
     }
   })
-  console.log(aggIndvJSON);
   callback(aggIndvJSON);
 }
 
@@ -104,7 +105,7 @@ function getParameterByName(name, url) {
 }
 
 var participantID = getParameterByName('id');
-//0.4sec delay hardcoded to allow person results to load
+//0.5sec delay hardcoded to allow person results to load
 getResults(participantID,function(){
   setTimeout(function(){
     createPage(aggIndvJSON);
@@ -113,3 +114,4 @@ getResults(participantID,function(){
 });
 //results reload every two minutes (120000ms)
 var i = setInterval(function() { location.reload(); }, 120000);
+//var i = setInterval(getResults(), 5000);

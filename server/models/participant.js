@@ -70,7 +70,19 @@ var Participant = mongoose.model('Participant', {
   gender: {
     type: String,
     default: null
-  }
+  },
+  startTime: {
+    type: String,
+    default: null
+  },
+  finishTime: {
+    type: String,
+    default: null
+  },
+  ropeClimb: {
+      type: String,
+      default: null
+    }
 });
 
 module.exports = {Participant};
