@@ -399,42 +399,18 @@ app.get('/results', (req, res) => {
 //main scoring endpoint
 app.get('/scoring', (req, res) => {
   //gender
-  var g = req.query.g
+  //var g = req.query.g
   //isDavid
-  var d = req.query.d
+  //var d = req.query.d
   //BibNo
-  var bibNo = req.query.bibNo
+  //var bibNo = req.query.bibNo
   //# results to return
-  var n = req.query.n
+  //var n = req.query.n
 
   var scores = [];
-  // 
-  //
-  // if (g || d || bibNo ||n){
-  //     var filter = {
-  //       g: null,
-  //       d: false,
-  //       bibNo: null,
-  //       n: null
-  //     }
-  //     if (g){
-  //       filter.g = g.toUpperCase();
-  //     }
-  //     if(d){
-  //       filter.d=true;
-  //     }
-  //     if (bibNo){
-  //       filter.bibNo=bibNo;
-  //     }
-  //     if (n){
-  //       filter.n=n;
-  //     }
-      //run code with filters
-      console.log(filter);
+
       getScore(scores,res)
-  } else {
-      getScore(scores,res)
-  }
+
 });
 
 // GET results by bib number
