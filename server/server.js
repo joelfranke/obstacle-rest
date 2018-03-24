@@ -408,30 +408,30 @@ app.get('/scoring', (req, res) => {
   var n = req.query.n
 
   var scores = [];
-
-
-  if (g || d || bibNo ||n){
-      var filter = {
-        g: null,
-        d: false,
-        bibNo: null,
-        n: null
-      }
-      if (g){
-        filter.g = g.toUpperCase();
-      }
-      if(d){
-        filter.d=true;
-      }
-      if (bibNo){
-        filter.bibNo=bibNo;
-      }
-      if (n){
-        filter.n=n;
-      }
+  // 
+  //
+  // if (g || d || bibNo ||n){
+  //     var filter = {
+  //       g: null,
+  //       d: false,
+  //       bibNo: null,
+  //       n: null
+  //     }
+  //     if (g){
+  //       filter.g = g.toUpperCase();
+  //     }
+  //     if(d){
+  //       filter.d=true;
+  //     }
+  //     if (bibNo){
+  //       filter.bibNo=bibNo;
+  //     }
+  //     if (n){
+  //       filter.n=n;
+  //     }
       //run code with filters
       console.log(filter);
-      getScore(scores,res,filter)
+      getScore(scores,res)
   } else {
       getScore(scores,res)
   }
