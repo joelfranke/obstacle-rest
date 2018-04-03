@@ -178,6 +178,17 @@ HTTP Status Code | Reason | Response Model
 
 500 | Something went wrong with the service. Contact xxx@xxx.xxx. | n/a
 
-## To-do
-- Add location based information as context token to validate API request.
-- Include validation to ensure only MAX(*n*) obstacle ids can be submitted.
+### POST Time result ([API_URL]/timing&k={API_KEY})
+
+#### Headers
+Content-Type :  application/json
+
+#### Body //(dataType, mandatory/optional) -- Definition
+```
+{
+	"bibNo" : 123, //(integer, mandatory) -- Bib NUMBER of the participant read from the scanned or manually entered code
+	"location" : "start", //string, mandatory) -- One of "start", "finish", "rope", case sensitive
+	"time" : 2 //(string, mandatory) -- timestamp or elapsed time to be written to database
+
+}
+```
