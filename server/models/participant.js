@@ -72,16 +72,38 @@ var Participant = mongoose.model('Participant', {
     default: null
   },
   startTime: {
-    type: String,
-    default: null
+	time:{
+		type: String,
+		default: null
+		},
+	bibFromBand:{
+		type: Boolean,
+		default: null
+		}
   },
   finishTime: {
-    type: String,
-    default: null
+	time:{
+		type: String,
+		default: null
+		},
+	bibFromBand:{
+		type: Boolean,
+		default: null
+		}
   },
-  ropeClimb: {
-      type: String,
-      default: null
+  tiebreaker: {
+    time:{
+		type: String,
+		default: null
+		},
+	timestamp:{
+		type: String,
+		default: null
+		},
+	bibFromBand:{
+		type: Boolean,
+		default: null
+		}
     }
 });
 

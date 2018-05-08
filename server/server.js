@@ -35,6 +35,13 @@ function checkAuth(token) {
      return tokenCheck;
   }
 
+function buildQuery(req) {
+
+     console.log('building query')
+     var query = 'asdf'
+     return query;
+    }
+
   function getNextSequence(name) {
       var nextSeq = counters.findOneAndUpdate({_id: name}, { $inc: { seq: 1 } }).then((nextcounter) => {return nextcounter.seq
       });
@@ -51,7 +58,7 @@ function checkAuth(token) {
      });
    }
 
-   function getScore(scores,res,filter){
+   function getScore(scores,res,query){
      eventResults.distinct("bibNo").then((event) => {
        var uniqueBib = event.length;
        for(var bib in event){
@@ -246,6 +253,8 @@ function checkAuth(token) {
       var time = body.time;
       var firstName = participant.firstName;
       var isDavid = participant.isDavid;
+	  var bibFromBand = body.bibFromBand;
+	  
       var update;
      //existing code
       var successfulPost = ({
@@ -257,13 +266,13 @@ function checkAuth(token) {
       if (!participant) {
         return res.status(404).send(status404);
        } else {
-
          if (location === 'start'){
-           update = {startTime: time};
+           update = {'startTime.time': time, 'startTime.bibFromBand':bibFromBand};
          } else if (location === 'finish'){
-            update = {finishTime: time};
-         } else if (location === 'rope'){
-           update = {ropeClimb: time};
+            update = {'finishTime.time': time, 'finishTime.bibFromBand':bibFromBand};
+         } else if (location === 'tiebreaker'){
+		var timestamp = Date.now()
+           update = {'tiebreaker.time': time, 'tiebreaker.bibFromBand':bibFromBand,'tiebreaker.timestamp':timestamp};
          } else {
            res.status(400).send(e);
          }
@@ -271,6 +280,7 @@ function checkAuth(token) {
          //no duplicate handling, will need to be added here
          Participant.findOneAndUpdate({ bibNo:bibNo }, { $set: update }, {returnNewDocument : true}).then((participant) => {
            if (participant){
+			   console.log(participant)
              return res.status(200).send(successfulPost);
            }
            }).catch((e) => {
@@ -356,7 +366,7 @@ app.post('/post-result', (req, res) => {
   if (key !==undefined) {
     var tokenCheck = checkAuth(key);
     tokenCheck.then((token) => {
-      console.log(token);
+      //console.log(token);
         if (token ===false){
           return res.status(401).send(invalidToken);
         } else {
@@ -397,19 +407,49 @@ app.get('/results', (req, res) => {
 });
 
 //main scoring endpoint
+// needs edits
 app.get('/scoring', (req, res) => {
-  //gender
-  //var g = req.query.g
-  //isDavid
-  //var d = req.query.d
-  //BibNo
-  //var bibNo = req.query.bibNo
-  //# results to return
-  //var n = req.query.n
 
-  var scores = [];
+  // //function to build query and then build scores
 
-      getScore(scores,res)
+  if (key !==undefined) {
+    var buildQuery = buildQuery(key);
+    buildQuery.then((query) => {
+      //console.log(token);
+      var scores = [];
+      getScore(scores,query,res)
+    }).catch((e) => {
+      res.status(500).send(e);
+      })
+    ;}
+    else {
+      //invert comments below to make token optional/mandatory
+      getScore(scores,res,query)
+    //return res.status(401).send(invalidToken);
+  }
+var buildQuery = buildQuery(req,res);
+
+  buildQuery.then((query) => {
+    var scores = [];
+    getScore(scores,query,res)
+  }).catch((e) => {
+      console.log(e);
+    })
+  // //gender
+  // var g = req.query.g
+  // //isDavid
+  // var d = req.query.d
+  // //BibNo
+  // var bibNo = req.query.bibNo
+  // //# results to return
+  // var n = req.query.n
+  //
+  //
+  //
+  // var query
+  // var scores = [];
+
+      getScore(scores,query,res)
 
 });
 
@@ -472,7 +512,7 @@ app.post('/registration', (req, res) => {
     if (key !==undefined) {
       var tokenCheck = checkAuth(key);
       tokenCheck.then((token) => {
-        console.log(token);
+        //console.log(token);
           if (token ===false){
             return res.status(401).send(invalidToken);
           } else {
@@ -497,7 +537,7 @@ app.post('/timing', (req, res) => {
     if (key !==undefined) {
       var tokenCheck = checkAuth(key);
       tokenCheck.then((token) => {
-        console.log(token);
+        //console.log(token);
           if (token ===false){
             return res.status(401).send(invalidToken);
           } else {
