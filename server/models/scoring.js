@@ -7,6 +7,11 @@ var Scoring = mongoose.model('score', {
     minlength: 1,
     trim: true
   },
+  participant: {
+    type: String,
+    required: true,
+    default: null
+  },
   firstName: {
     type: String,
     required: true

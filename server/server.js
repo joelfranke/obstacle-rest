@@ -52,7 +52,10 @@ function updateScore(bibNo){
            var lastName = participant.lastName;
            var teamName = participant.teamID;
 		   var isDavid = participant.isDavid;
+            var participantName = "<a href='/individual/?id=" +personBib+"'>" + lastName + ', ' + firstName+"</a>";
 
+		   
+		   
              eventResults.find({bibNo: personBib}).then((events) => {
                var g1 = 0;
                var g2 = 0;
@@ -87,6 +90,7 @@ function updateScore(bibNo){
 			if (newScore == true){
 				// if this is the first result for the participant, write a new score.
 				var score = new Scoring({
+				participant: participantName,
                  firstName: firstName,
 				 lastName: lastName,
 				 gender: gender,
