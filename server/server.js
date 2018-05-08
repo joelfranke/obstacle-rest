@@ -24,7 +24,7 @@ var invalidToken = ({message: "Invalid or missing token."});
 var app = express();
 
 function updateScore(bibNo){
-	console.log(`Updating score for ${bibNo}`)
+	//console.log(`Updating score for ${bibNo}`)
 	var newScore
 	// this call is duplicated later. this should check the scoring table and send a true/false flag to the scoring function to insert new or update an existing
 	Scoring.find({bibNo: bibNo}).then((scores) => {
@@ -258,7 +258,8 @@ function checkAuth(token) {
       var successfulPost = ({
         message: `${firstName}`,
         bibNo: `${bibNo}`,
-        obstID: `${obstID}`
+        obstID: `${obstID}`,
+		tier: `${body.tier}`,
       });
 
    if (!participant) {
@@ -522,10 +523,13 @@ app.get('/results', (req, res) => {
 //main scoring endpoint
 // needs edits
 app.get('/scoring', (req, res) => {
+//need to add sorting to the results
+
 
   var gender = req.query.gender
   if (gender !==undefined) {
-  Scoring.find({ gender: gender }).then((results) => {
+
+  Scoring.find({ gender: gender}).then((results) => {
     res.send({results});
   }, (e) => {
     console.log(e);
