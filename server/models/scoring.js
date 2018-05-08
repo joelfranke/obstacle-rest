@@ -52,6 +52,10 @@ var Scoring = mongoose.model('score', {
     type: Number,
     required: true
   },
+    updatedOn: {
+    type: Date,
+    required: true
+  },
     progress: {
     type: String,
 	required: true

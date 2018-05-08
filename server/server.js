@@ -24,16 +24,13 @@ var invalidToken = ({message: "Invalid or missing token."});
 var app = express();
 
 function updateScore(bibNo){
-	//console.log(`Updating score for ${bibNo}`)
 	var newScore
-	// this call is duplicated later. this should check the scoring table and send a true/false flag to the scoring function to insert new or update an existing
 	Scoring.find({bibNo: bibNo}).then((scores) => {
 		 if(!scores || scores.length ==0){
 			 newScore = true
 		 } else {
 			 newScore = false
 		 }
-		//console.log(scores,newScore)
 	}, (e) => {
     console.log('trouble')
   });
@@ -45,6 +42,7 @@ function updateScore(bibNo){
 	// start of getting all participant data
 	Participant.findOne({bibNo: bibNo}).then((participant) => {
 
+			var timestamp = Date.now()
            var gender = participant.gender;
            var personBib = participant.bibNo;
            var isDavid = participant.isDavid;
@@ -52,11 +50,8 @@ function updateScore(bibNo){
            var lastName = participant.lastName;
            var teamName = participant.teamID;
 		   var isDavid = participant.isDavid;
-            var participantName = "<a href='/individual/?id=" +personBib+"'>" + lastName + ', ' + firstName+"</a>";
-
-		   
-		   
-             eventResults.find({bibNo: personBib}).then((events) => {
+           var participantName = "<a href='/individual/?id=" +personBib+"'>" + lastName + ', ' + firstName+"</a>";
+           eventResults.find({bibNo: personBib}).then((events) => {
                var g1 = 0;
                var g2 = 0;
                var g3 = 0;
@@ -101,6 +96,7 @@ function updateScore(bibNo){
                  g2:g2,
                  g3:g3,
                  score:totScore,
+				 updatedOn: timestamp,
                  progress:totEvents
           });
           score.save().then((doc) => {
@@ -112,7 +108,7 @@ function updateScore(bibNo){
 			} else {
 			// if this is an update to a person's score, update 
 			
-			Scoring.findOneAndUpdate({ bibNo:bibNo }, { $set: {'g1':g1,'g2':g2,'g3':g3,'score':totScore,'progress':totEvents}} , {returnNewDocument : true}).then((doc) => {
+			Scoring.findOneAndUpdate({ bibNo:bibNo }, { $set: {'g1':g1,'g2':g2,'g3':g3,'score':totScore,'updatedOn': timestamp,'progress':totEvents}} , {returnNewDocument : true}).then((doc) => {
 			//console.log(doc)
 			}, (e) => {
             console.log(e);
@@ -527,13 +523,34 @@ app.get('/results', (req, res) => {
 //main scoring endpoint
 // needs edits
 app.get('/scoring', (req, res) => {
-//need to add sorting to the results
+// only one parameter is considered (regardless of how many are passed), in this order, gender, teams, recent
 
 
   var gender = req.query.gender
+  var recent = req.query.recent
+  var teams = req.query.teams
+  //console.log(req.query)
+  
   if (gender !==undefined) {
-
+	// get by gender
   Scoring.find({ gender: gender}).then((results) => {
+    res.send({results});
+  }, (e) => {
+    console.log(e);
+    res.status(400).send(e);
+    });
+  
+  }
+  else if (teams == 'true'){
+	//get team scoring and send
+  }
+  else if (recent == 'true'){
+	 // looking at 30 minutes ago currently
+
+	Scoring.find({ 
+		progress: 'Course Complete', 
+		updatedOn: { $gte: new Date(Date.now() - 180000).toISOString() }}).then((results) => {
+		console.log(results)
     res.send({results});
   }, (e) => {
     console.log(e);
@@ -541,6 +558,7 @@ app.get('/scoring', (req, res) => {
     });
   }
   else {
+	  // get all and send
   Scoring.find().then((results) => {
     res.send({results});
   }, (e) => {
