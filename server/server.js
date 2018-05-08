@@ -16,11 +16,121 @@ var {obstacle} = require('./models/obstacle');
 var {team} = require('./models/teamTable');
 var {counters} = require('./models/counters');
 var {dupeResults} = require('./models/duplicateresults');
+var {Scoring} = require('./models/scoring');
 
 var status404  = ({message: "Check request and try again."});
 var invalidToken = ({message: "Invalid or missing token."});
 
 var app = express();
+
+function updateScore(bibNo){
+	console.log(`Updating score for ${bibNo}`)
+	var newScore
+	// this call is duplicated later. this should check the scoring table and send a true/false flag to the scoring function to insert new or update an existing
+	Scoring.find({bibNo: bibNo}).then((scores) => {
+		 if(!scores || scores.length ==0){
+			 newScore = true
+		 } else {
+			 newScore = false
+		 }
+		//console.log(scores,newScore)
+	}, (e) => {
+    console.log('trouble')
+  });
+	eventResults.find({bibNo: bibNo}).then((results) => {
+    if (!results || results.length == 0) {
+      console.log('Invalid bibNo passed to scoring function')
+    }
+	//
+	// start of getting all participant data
+	Participant.findOne({bibNo: bibNo}).then((participant) => {
+
+           var gender = participant.gender;
+           var personBib = participant.bibNo;
+           var isDavid = participant.isDavid;
+           var firstName = participant.firstName;
+           var lastName = participant.lastName;
+           var teamName = participant.teamID;
+		   var isDavid = participant.isDavid;
+
+             eventResults.find({bibNo: personBib}).then((events) => {
+               var g1 = 0;
+               var g2 = 0;
+               var g3 = 0;
+               var totScore = 0;
+               var totEvents = 0
+               for(var event in events){
+                 var success = events[event].success;
+                 var tier = events[event].tier;
+                 if (success == true){
+                   if (tier ==1){
+                     g1 = g1 + 1;
+                   }
+                   if (tier == 2){
+                     g2 = g2 + 1;
+                   }
+                   if (tier == 3){
+                     g3 = g3 + 1;
+                   }
+                   totEvents = totEvents + 1
+                 } else {
+                   totEvents = totEvents + 1
+                 }
+               }
+
+               totScore = (g1*1.000001) + (g2*3.0001) + (g3*5.01);
+               if (totEvents == 12) {
+                 totEvents = 'Course Complete';
+               } else {
+                 totEvents = totEvents + '/12';
+               }
+			if (newScore == true){
+				// if this is the first result for the participant, write a new score.
+				var score = new Scoring({
+                 firstName: firstName,
+				 lastName: lastName,
+				 gender: gender,
+                 bibNo: personBib,
+				 isDavid: isDavid,
+                 teamID: teamName,
+                 g1:g1,
+                 g2:g2,
+                 g3:g3,
+                 score:totScore,
+                 progress:totEvents
+          });
+          score.save().then((doc) => {
+			//console.log(doc)
+          }, (e) => {
+            console.log(e);
+            //log the error
+          });
+			} else {
+			// if this is an update to a person's score, update 
+			
+			Scoring.findOneAndUpdate({ bibNo:bibNo }, { $set: {'g1':g1,'g2':g2,'g3':g3,'score':totScore,'progress':totEvents}} , {returnNewDocument : true}).then((doc) => {
+			//console.log(doc)
+			}, (e) => {
+            console.log(e);
+            //log the error
+			});
+
+				
+			}
+
+             }, (e) => {
+               res.status(400).send(e);
+             });
+         });
+	
+	
+	//
+  }, (e) => {
+    res.status(400).send(e);
+  });
+}
+
+
 
 // start of function block
 function checkAuth(token) {
@@ -35,12 +145,6 @@ function checkAuth(token) {
      return tokenCheck;
   }
 
-function buildQuery(req) {
-
-     console.log('building query')
-     var query = 'asdf'
-     return query;
-    }
 
   function getNextSequence(name) {
       var nextSeq = counters.findOneAndUpdate({_id: name}, { $inc: { seq: 1 } }).then((nextcounter) => {return nextcounter.seq
@@ -171,7 +275,10 @@ function buildQuery(req) {
         if (resultDiff <= 2) {
           //update this with the actual req.body.* fields incl timestamp
           eventResults.findByIdAndUpdate(duplicate._id, {success: body.success, timestamp: timestamp, tier: body.tier}, {new: true}).then((doc) => {
-            //need to send to an update david function
+            //insert call to score calculate function to calculate and update score for bibNo n
+			updateScore(bibNo)		
+			// end
+			//need to send to an update david function
           return res.status(200).send(successfulPost);
      }).catch((e) => { //
           console.log(e);
@@ -192,7 +299,9 @@ function buildQuery(req) {
                 });
                 console.log('Duplicate logged: ' + JSON.stringify(obstResults));
                 obstResults.save().then((doc) => {
-
+				//!!
+				//do NOT update score for bibNo = n
+				//!!
                   return res.status(409).send(successfulPost);
                 }, (e) => {
                   console.log(e);
@@ -204,6 +313,7 @@ function buildQuery(req) {
       }
       // start of new result logging
       else {
+		  
 
         var getSeq = getNextSequence('results');
         getSeq.then((nextSeq) => {
@@ -218,6 +328,9 @@ function buildQuery(req) {
             resultID: nextSeq
           });
           obstResults.save().then((doc) => {
+			//insert call to score calculate function to calculate and update score for bibNo n
+			updateScore(bibNo)		
+			// end
             res.send(successfulPost);
           }, (e) => {
             console.log(e);
@@ -410,46 +523,24 @@ app.get('/results', (req, res) => {
 // needs edits
 app.get('/scoring', (req, res) => {
 
-  // //function to build query and then build scores
-
-  if (key !==undefined) {
-    var buildQuery = buildQuery(key);
-    buildQuery.then((query) => {
-      //console.log(token);
-      var scores = [];
-      getScore(scores,query,res)
-    }).catch((e) => {
-      res.status(500).send(e);
-      })
-    ;}
-    else {
-      //invert comments below to make token optional/mandatory
-      getScore(scores,res,query)
-    //return res.status(401).send(invalidToken);
+  var gender = req.query.gender
+  if (gender !==undefined) {
+  Scoring.find({ gender: gender }).then((results) => {
+    res.send({results});
+  }, (e) => {
+    console.log(e);
+    res.status(400).send(e);
+    });
   }
-var buildQuery = buildQuery(req,res);
+  else {
+  Scoring.find().then((results) => {
+    res.send({results});
+  }, (e) => {
+    console.log(e);
+    res.status(400).send(e);
+  });
 
-  buildQuery.then((query) => {
-    var scores = [];
-    getScore(scores,query,res)
-  }).catch((e) => {
-      console.log(e);
-    })
-  // //gender
-  // var g = req.query.g
-  // //isDavid
-  // var d = req.query.d
-  // //BibNo
-  // var bibNo = req.query.bibNo
-  // //# results to return
-  // var n = req.query.n
-  //
-  //
-  //
-  // var query
-  // var scores = [];
-
-      getScore(scores,query,res)
+  }
 
 });
 
