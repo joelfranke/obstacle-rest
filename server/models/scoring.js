@@ -29,7 +29,7 @@ var Scoring = mongoose.model('score', {
     default: null
   },
   isDavid: {
-	 type: Boolean, 
+	 type: Boolean,
 	 default: true
   },
   g1: {
@@ -59,7 +59,11 @@ var Scoring = mongoose.model('score', {
     progress: {
     type: String,
 	required: true
-  }
+},
+next: {
+type: Number,
+required: true
+}
 });
 
 module.exports = {Scoring};

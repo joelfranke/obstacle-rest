@@ -57,6 +57,7 @@ function updateScore(bibNo){
                var g3 = 0;
                var totScore = 0;
                var totEvents = 0
+							 var next
                for(var event in events){
                  var success = events[event].success;
                  var tier = events[event].tier;
@@ -76,28 +77,32 @@ function updateScore(bibNo){
                  }
                }
 
-               totScore = (g1*1.000001) + (g2*3.0001) + (g3*5.01);
+               totScore = (g1*1.0000001) + (g2*3.00001) + (g3*5.001);
                if (totEvents == 12) {
-                 totEvents = 'Course Complete';
+								 //should be refactored for G8
+								 progress = 'Course Complete';
+								 next  = 99
                } else {
-                 totEvents = totEvents + '/12';
+                 progress = totEvents + '/12';
+								 next = totEvents + 1
                }
 			if (newScore == true){
 				// if this is the first result for the participant, write a new score.
 				var score = new Scoring({
-				participant: participantName,
+							participant: participantName,
                  firstName: firstName,
-				 lastName: lastName,
-				 gender: gender,
+				 			 	lastName: lastName,
+				 					gender: gender,
                  bibNo: personBib,
-				 isDavid: isDavid,
+				 			 	isDavid: isDavid,
                  teamID: teamName,
                  g1:g1,
                  g2:g2,
                  g3:g3,
                  score:totScore,
-				 updatedOn: timestamp,
-                 progress:totEvents
+				 			 	updatedOn: timestamp,
+                 progress:progress,
+								 next: next
           });
           score.save().then((doc) => {
 			//console.log(doc)
@@ -106,24 +111,24 @@ function updateScore(bibNo){
             //log the error
           });
 			} else {
-			// if this is an update to a person's score, update 
-			
-			Scoring.findOneAndUpdate({ bibNo:bibNo }, { $set: {'g1':g1,'g2':g2,'g3':g3,'score':totScore,'updatedOn': timestamp,'progress':totEvents}} , {returnNewDocument : true}).then((doc) => {
+			// if this is an update to a person's score, update
+
+			Scoring.findOneAndUpdate({ bibNo:bibNo }, { $set: {'g1':g1,'g2':g2,'g3':g3,'score':totScore,'updatedOn': timestamp,'progress':totEvents, 'next': next}} , {returnNewDocument : true}).then((doc) => {
 			//console.log(doc)
 			}, (e) => {
             console.log(e);
             //log the error
 			});
 
-				
+
 			}
 
              }, (e) => {
                res.status(400).send(e);
              });
          });
-	
-	
+
+
 	//
   }, (e) => {
     res.status(400).send(e);
@@ -277,7 +282,7 @@ function checkAuth(token) {
           //update this with the actual req.body.* fields incl timestamp
           eventResults.findByIdAndUpdate(duplicate._id, {success: body.success, timestamp: timestamp, tier: body.tier}, {new: true}).then((doc) => {
             //insert call to score calculate function to calculate and update score for bibNo n
-			updateScore(bibNo)		
+			updateScore(bibNo)
 			// end
 			//need to send to an update david function
           return res.status(200).send(successfulPost);
@@ -300,9 +305,9 @@ function checkAuth(token) {
                 });
                 console.log('Duplicate logged: ' + JSON.stringify(obstResults));
                 obstResults.save().then((doc) => {
-				//!!
-				//do NOT update score for bibNo = n
-				//!!
+								//!!
+								//do NOT update score for bibNo = n
+								//!!
                   return res.status(409).send(successfulPost);
                 }, (e) => {
                   console.log(e);
@@ -314,7 +319,7 @@ function checkAuth(token) {
       }
       // start of new result logging
       else {
-		  
+
 
         var getSeq = getNextSequence('results');
         getSeq.then((nextSeq) => {
@@ -330,7 +335,7 @@ function checkAuth(token) {
           });
           obstResults.save().then((doc) => {
 			//insert call to score calculate function to calculate and update score for bibNo n
-			updateScore(bibNo)		
+			updateScore(bibNo)
 			// end
             res.send(successfulPost);
           }, (e) => {
@@ -338,7 +343,7 @@ function checkAuth(token) {
             res.status(400).send(e);
           });
         });
-          //move this to an async update david function
+				// update david flag
               if (isDavid === true){
                  if (body.success === false || body.tier !== 3){
                    Participant.findByIdAndUpdate(id, {isDavid: false}, {new: true}).then((participant) => {
@@ -368,7 +373,7 @@ function checkAuth(token) {
       var firstName = participant.firstName;
       var isDavid = participant.isDavid;
 	  var bibFromBand = body.bibFromBand;
-	  
+
       var update;
      //existing code
       var successfulPost = ({
@@ -523,14 +528,16 @@ app.get('/results', (req, res) => {
 //main scoring endpoint
 // needs edits
 app.get('/scoring', (req, res) => {
-// only one parameter is considered (regardless of how many are passed), in this order, gender, teams, recent
+// only one parameter is considered (regardless of how many are passed), in this order or precedence, gender, teams, davids, bibNo, recent
+var status404  = ({message: "BibNo not found."})
+
+  	var gender = req.query.gender
+	  var teams = req.query.teams
+		var davids = req.query.davids
+		var bibNo = req.query.bibNo
+  	var recent = req.query.recent
 
 
-  var gender = req.query.gender
-  var recent = req.query.recent
-  var teams = req.query.teams
-  //console.log(req.query)
-  
   if (gender !==undefined) {
 	// get by gender
   Scoring.find({ gender: gender}).then((results) => {
@@ -539,18 +546,37 @@ app.get('/scoring', (req, res) => {
     console.log(e);
     res.status(400).send(e);
     });
-  
   }
-  else if (teams == 'true'){
-	//get team scoring and send
-  }
+  // else if (teams == 'true'){
+	// //get team scoring and send
+  // }
+	else if (davids == 'true'){
+	Scoring.find({
+			isDavid: true,
+			next: { $gte: 5 }
+		}).then((results) => {
+    res.send({results});
+  }, (e) => {
+    console.log(e);
+    res.status(400).send(e);
+    });
+ }
+	else if (bibNo !==undefined){
+		Scoring.find({ bibNo: bibNo}).then((results) => {
+			if (!results || results.length == 0) {
+				return res.status(404).send(status404);
+			}
+	    res.send({results});
+	  }, (e) => {
+	    console.log(e);
+	    res.status(400).send(e);
+	    });
+	}
   else if (recent == 'true'){
-	 // looking at 30 minutes ago currently
-
-	Scoring.find({ 
-		progress: 'Course Complete', 
-		updatedOn: { $gte: new Date(Date.now() - 180000).toISOString() }}).then((results) => {
-		console.log(results)
+	 // looking at 15 minutes currently
+	Scoring.find({
+		progress: 'Course Complete',
+		updatedOn: { $gte: new Date(Date.now() - 900000).toISOString() }}).then((results) => {
     res.send({results});
   }, (e) => {
     console.log(e);
