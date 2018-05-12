@@ -24,10 +24,11 @@ var invalidToken = ({message: "Invalid or missing token."});
 
 var app = express();
 
-function updateTeamScore(TeamID){
+function updateTeamScore(teamID){
 	var newScore
-	Scoring.find({bibNo: bibNo}).then((scores) => {
-		 if(!scores || scores.length ==0){
+	var timestamp = Date.now()
+	Scoring.find({teamID: teamID}).then((scores) => {
+		 if(!scores || scores.length == 0){
 			 newScore = true
 		 } else {
 			 newScore = false
@@ -35,104 +36,80 @@ function updateTeamScore(TeamID){
 	}, (e) => {
     console.log('trouble')
   });
-	eventResults.find({bibNo: bibNo}).then((results) => {
-    if (!results || results.length == 0) {
-      console.log('Invalid bibNo passed to scoring function')
-    }
-	//
-	// start of getting all participant data
-	Participant.findOne({bibNo: bibNo}).then((participant) => {
 
-			var timestamp = Date.now()
-           var gender = participant.gender;
-           var personBib = participant.bibNo;
-           var isDavid = participant.isDavid;
-           var firstName = participant.firstName;
-           var lastName = participant.lastName;
-           var teamName = participant.teamID;
-		   var isDavid = participant.isDavid;
-           var participantName = "<a href='/individual/?id=" +personBib+"'>" + lastName + ', ' + firstName+"</a>";
-           eventResults.find({bibNo: personBib}).then((events) => {
-               var g1 = 0;
-               var g2 = 0;
-               var g3 = 0;
-               var totScore = 0;
-               var totEvents = 0
-							 var next
-               for(var event in events){
-                 var success = events[event].success;
-                 var tier = events[event].tier;
-                 if (success == true){
-                   if (tier ==1){
-                     g1 = g1 + 1;
-                   }
-                   if (tier == 2){
-                     g2 = g2 + 1;
-                   }
-                   if (tier == 3){
-                     g3 = g3 + 1;
-                   }
-                   totEvents = totEvents + 1
-                 } else {
-                   totEvents = totEvents + 1
-                 }
-               }
+	// count rank males first and calculate score, then females
+	Scoring.find({
+		teamID: teamID,
+		gender: 'M'
+			}).limit( 3 ).sort( { score: -1 } ).then((results) => {
 
-               totScore = (g1*1.0000001) + (g2*3.00001) + (g3*5.001);
-               if (totEvents == 12) {
-								 //should be refactored for G8
-								 progress = 'Course Complete';
-								 next  = 99
-               } else {
-                 progress = totEvents + '/12';
-								 next = totEvents + 1
-               }
-			if (newScore == true){
-				// if this is the first result for the team, write a new score.
-				var score = new teamScoring({
-							participant: participantName,
-                 firstName: firstName,
-				 			 	lastName: lastName,
-				 					gender: gender,
-                 bibNo: personBib,
-				 			 	isDavid: isDavid,
-                 teamID: teamName,
-                 g1:g1,
-                 g2:g2,
-                 g3:g3,
-                 score:totScore,
-				 			 	updatedOn: timestamp,
-                 progress:progress,
-								 next: next
-          });
-          score.save().then((doc) => {
-			//console.log(doc)
-          }, (e) => {
-            console.log(e);
-            //log the error
-          });
-			} else {
-			// if this is an update to a team's score, update
+    		if (!results || results.length < 1) {
+      		console.log('Bad/wrong team name or team DNQ')
+    	}
+			else {
+				var g1 = 0;
+				var g2 = 0;
+				var g3 = 0;
+				var totScore = 0;
 
-			teamScoring.findOneAndUpdate({ teamID:bibNo }, { $set: {'g1':g1,'g2':g2,'g3':g3,'score':totScore,'updatedOn': timestamp,'onCourse':onCourse}} , {returnNewDocument : true}).then((doc) => {
-			//console.log(doc)
-			}, (e) => {
-            console.log(e);
-            //log the error
-			});
+				for(var result in results){
+						g1= g1 + results[result].g1
+						g2= g2 + results[result].g2
+						g3= g3 + results[result].g3;
+						totScore= totScore + results[result].score;
 
+				}
+					Scoring.find({
+						teamID: teamID,
+						gender: 'F'
+					}).limit( 3 ).sort( { score: -1 } ).then((results) => {
+						if (!results || results.length < 3) {
+							//console.log('Bad/wrong team name or team DNQ')
+						}
+						else {
+							for(var result in results){
+								g1= g1 + results[result].g1
+								g2= g2 + results[result].g2
+								g3= g3 + results[result].g3;
+								totScore= totScore + results[result].score;
+								//this is the right aggregate score, so do something here
+								//	console.log(g1,g2,g3,totScore,timestamp)
+								if (newScore == true){
+									// if this is the first result for the team, write a new score.
+									var score = new teamScoring({
+												 	teamID: teamName,
+													 g1:g1,
+													 g2:g2,
+													 g3:g3,
+													 score:totScore,
+													updatedOn: timestamp
+										});
+										score.save().then((doc) => {
+											//console.log(doc)
+										}, (e) => {
+											console.log(e);
+											//log the error
+										});
+								} else {
+								// if this is an update to a team's score, update
+								teamScoring.findOneAndUpdate({ teamID:teamID }, { $set: {'g1':g1,'g2':g2,'g3':g3,'score':totScore,'updatedOn': timestamp}} , {returnNewDocument : true}).then((doc) => {
+								//console.log(doc)
+								}, (e) => {
+											console.log(e);
+											//log the error
+								});
+
+								}
+						}
+					//end of female else
+					}
+				})
+
+			// end of else
 			}
-
-             }, (e) => {
-               res.status(400).send(e);
-             });
-         });
-
-
-	//
-  }, (e) => {
-    res.status(400).send(e);
-  });
+	}, (e) => {
+		//res.status(400).send(e);
+	});
 }
 
 
@@ -219,6 +196,10 @@ function updateScore(bibNo){
 								 next: next
           });
           score.save().then((doc) => {
+						if (teamName > 0) {
+							updateTeamScore(teamName)
+						}
+
 			//console.log(doc)
           }, (e) => {
             console.log(e);
@@ -228,6 +209,10 @@ function updateScore(bibNo){
 			// if this is an update to a person's score, update
 
 			Scoring.findOneAndUpdate({ bibNo:bibNo }, { $set: {'g1':g1,'g2':g2,'g3':g3,'score':totScore,'updatedOn': timestamp,'progress':totEvents, 'next': next}} , {returnNewDocument : true}).then((doc) => {
+				if (teamName > 0) {
+					updateTeamScore(teamName)
+				}
+
 			//console.log(doc)
 			}, (e) => {
             console.log(e);
@@ -238,14 +223,14 @@ function updateScore(bibNo){
 			}
 
              }, (e) => {
-               res.status(400).send(e);
+               //res.status(400).send(e);
              });
          });
 
 
 	//
   }, (e) => {
-    res.status(400).send(e);
+  //  res.status(400).send(e);
   });
 }
 
@@ -677,6 +662,10 @@ var status404  = ({message: "BibNo not found."})
   }
 
 	else if (team !==undefined){
+		// testing only, remove
+		updateTeamScore(team)
+		//
+
 		status404  = ({message: "Team not found."})
 		teamScoring.find({ teamID: team}).then((results) => {
 			if (!results || results.length == 0) {
