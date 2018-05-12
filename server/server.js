@@ -17,11 +17,125 @@ var {team} = require('./models/teamTable');
 var {counters} = require('./models/counters');
 var {dupeResults} = require('./models/duplicateresults');
 var {Scoring} = require('./models/scoring');
+var {teamScoring} = require('./models/teamscoring');
 
 var status404  = ({message: "Check request and try again."});
 var invalidToken = ({message: "Invalid or missing token."});
 
 var app = express();
+
+function updateTeamScore(TeamID){
+	var newScore
+	Scoring.find({bibNo: bibNo}).then((scores) => {
+		 if(!scores || scores.length ==0){
+			 newScore = true
+		 } else {
+			 newScore = false
+		 }
+	}, (e) => {
+    console.log('trouble')
+  });
+	eventResults.find({bibNo: bibNo}).then((results) => {
+    if (!results || results.length == 0) {
+      console.log('Invalid bibNo passed to scoring function')
+    }
+	//
+	// start of getting all participant data
+	Participant.findOne({bibNo: bibNo}).then((participant) => {
+
+			var timestamp = Date.now()
+           var gender = participant.gender;
+           var personBib = participant.bibNo;
+           var isDavid = participant.isDavid;
+           var firstName = participant.firstName;
+           var lastName = participant.lastName;
+           var teamName = participant.teamID;
+		   var isDavid = participant.isDavid;
+           var participantName = "<a href='/individual/?id=" +personBib+"'>" + lastName + ', ' + firstName+"</a>";
+           eventResults.find({bibNo: personBib}).then((events) => {
+               var g1 = 0;
+               var g2 = 0;
+               var g3 = 0;
+               var totScore = 0;
+               var totEvents = 0
+							 var next
+               for(var event in events){
+                 var success = events[event].success;
+                 var tier = events[event].tier;
+                 if (success == true){
+                   if (tier ==1){
+                     g1 = g1 + 1;
+                   }
+                   if (tier == 2){
+                     g2 = g2 + 1;
+                   }
+                   if (tier == 3){
+                     g3 = g3 + 1;
+                   }
+                   totEvents = totEvents + 1
+                 } else {
+                   totEvents = totEvents + 1
+                 }
+               }
+
+               totScore = (g1*1.0000001) + (g2*3.00001) + (g3*5.001);
+               if (totEvents == 12) {
+								 //should be refactored for G8
+								 progress = 'Course Complete';
+								 next  = 99
+               } else {
+                 progress = totEvents + '/12';
+								 next = totEvents + 1
+               }
+			if (newScore == true){
+				// if this is the first result for the team, write a new score.
+				var score = new teamScoring({
+							participant: participantName,
+                 firstName: firstName,
+				 			 	lastName: lastName,
+				 					gender: gender,
+                 bibNo: personBib,
+				 			 	isDavid: isDavid,
+                 teamID: teamName,
+                 g1:g1,
+                 g2:g2,
+                 g3:g3,
+                 score:totScore,
+				 			 	updatedOn: timestamp,
+                 progress:progress,
+								 next: next
+          });
+          score.save().then((doc) => {
+			//console.log(doc)
+          }, (e) => {
+            console.log(e);
+            //log the error
+          });
+			} else {
+			// if this is an update to a team's score, update
+
+			teamScoring.findOneAndUpdate({ teamID:bibNo }, { $set: {'g1':g1,'g2':g2,'g3':g3,'score':totScore,'updatedOn': timestamp,'onCourse':onCourse}} , {returnNewDocument : true}).then((doc) => {
+			//console.log(doc)
+			}, (e) => {
+            console.log(e);
+            //log the error
+			});
+
+			}
+
+             }, (e) => {
+               res.status(400).send(e);
+             });
+         });
+
+
+	//
+  }, (e) => {
+    res.status(400).send(e);
+  });
+}
+
+
 
 function updateScore(bibNo){
 	var newScore
@@ -530,7 +644,7 @@ app.get('/results', (req, res) => {
 //main scoring endpoint
 // needs edits
 app.get('/scoring', (req, res) => {
-// only one parameter is considered (regardless of how many are passed), in this order or precedence, gender, teams, davids, bibNo, recent
+// only one parameter is considered (regardless of how many are passed), in this order or precedence, gender, teamscores, team, onTeam, davids, bibNo, recent, otherwise all results are sent
 var status404  = ({message: "BibNo not found."})
 
   	var gender = req.query.gender
@@ -552,14 +666,32 @@ var status404  = ({message: "BibNo not found."})
     });
   }
 	// TEAM SCORING -- ALL 'teamscores' or one team
-  // else if (teamscores == 'true'){
-	// //get team scoring and send
-  // }
-	// else if (team !==undefined){
-	// //get team scoring and send
-	// }
+  else if (teamscores == 'true'){
+	// get all and send
+		teamScoring.find().then((results) => {
+			res.send({results});
+		}, (e) => {
+			console.log(e);
+			res.status(400).send(e);
+		});
+  }
+
+	else if (team !==undefined){
+		status404  = ({message: "Team not found."})
+		teamScoring.find({ teamID: team}).then((results) => {
+			if (!results || results.length == 0) {
+				return res.status(404).send(status404);
+			}
+	    res.send({results});
+	  }, (e) => {
+	    console.log(e);
+	    res.status(400).send(e);
+	    });
+	}
+	// END TEAM SCORING
 
 	else if (onTeam !==undefined){
+		status404  = ({message: "Team not found."})
 		Scoring.find({ teamID: onTeam}).then((results) => {
 			if (!results || results.length == 0) {
 				return res.status(404).send(status404);
