@@ -372,25 +372,27 @@ function checkAuth(token) {
       var time = body.time;
       var firstName = participant.firstName;
       var isDavid = participant.isDavid;
-	  var bibFromBand = body.bibFromBand;
+	  	var bibFromBand = body.bibFromBand;
+			var heat = participant.heat;
 
       var update;
      //existing code
       var successfulPost = ({
         message: `${firstName}`,
         bibNo: `${bibNo}`,
-        location: `${location}`
+        obstID: `${location}`,
+				heat: `${heat}`
       });
 
       if (!participant) {
         return res.status(404).send(status404);
        } else {
          if (location === 'start'){
-           update = {'startTime.time': time, 'startTime.bibFromBand':bibFromBand};
+           update = {'startTime.deviceTime': time, 'startTime.bibFromBand':bibFromBand};
          } else if (location === 'finish'){
-            update = {'finishTime.time': time, 'finishTime.bibFromBand':bibFromBand};
+            update = {'finishTime.deviceTime': time, 'finishTime.bibFromBand':bibFromBand};
          } else if (location === 'tiebreaker'){
-		var timestamp = Date.now()
+					 var timestamp = Date.now()
            update = {'tiebreaker.time': time, 'tiebreaker.bibFromBand':bibFromBand,'tiebreaker.timestamp':timestamp};
          } else {
            res.status(400).send(e);
@@ -532,7 +534,9 @@ app.get('/scoring', (req, res) => {
 var status404  = ({message: "BibNo not found."})
 
   	var gender = req.query.gender
-	  var teams = req.query.teams
+	  var teamscores = req.query.teamscores
+		var team = req.query.team
+		var onTeam = req.query.onTeam
 		var davids = req.query.davids
 		var bibNo = req.query.bibNo
   	var recent = req.query.recent
@@ -547,9 +551,25 @@ var status404  = ({message: "BibNo not found."})
     res.status(400).send(e);
     });
   }
-  // else if (teams == 'true'){
+	// TEAM SCORING -- ALL 'teamscores' or one team
+  // else if (teamscores == 'true'){
 	// //get team scoring and send
   // }
+	// else if (team !==undefined){
+	// //get team scoring and send
+	// }
+
+	else if (onTeam !==undefined){
+		Scoring.find({ teamID: onTeam}).then((results) => {
+			if (!results || results.length == 0) {
+				return res.status(404).send(status404);
+			}
+	    res.send({results});
+	  }, (e) => {
+	    console.log(e);
+	    res.status(400).send(e);
+	    });
+	}
 	else if (davids == 'true'){
 	Scoring.find({
 			isDavid: true,

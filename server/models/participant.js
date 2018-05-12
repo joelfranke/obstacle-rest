@@ -72,7 +72,7 @@ var Participant = mongoose.model('Participant', {
     default: null
   },
   startTime: {
-	time:{
+	deviceTime:{
 		type: String,
 		default: null
 		},
@@ -82,7 +82,7 @@ var Participant = mongoose.model('Participant', {
 		}
   },
   finishTime: {
-	time:{
+	deviceTime:{
 		type: String,
 		default: null
 		},
