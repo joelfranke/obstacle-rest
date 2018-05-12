@@ -64,7 +64,7 @@ function updateTeamScore(teamID){
 						gender: 'F'
 					}).limit( 3 ).sort( { score: -1 } ).then((results) => {
 						if (!results || results.length < 3) {
-							//console.log('Bad/wrong team name or team DNQ')
+							console.log('Bad/wrong team name or team DNQ')
 						}
 						else {
 							for(var result in results){
@@ -73,7 +73,7 @@ function updateTeamScore(teamID){
 								g3= g3 + results[result].g3;
 								totScore= totScore + results[result].score;
 								//this is the right aggregate score, so do something here
-								//	console.log(g1,g2,g3,totScore,timestamp)
+									console.log(g1,g2,g3,totScore,timestamp)
 								if (newScore == true){
 									// if this is the first result for the team, write a new score.
 									var score = new teamScoring({
@@ -108,7 +108,7 @@ function updateTeamScore(teamID){
 			// end of else
 			}
 	}, (e) => {
-		//res.status(400).send(e);
+		res.status(400).send(e);
 	});
 }
 
