@@ -703,11 +703,11 @@ var status404  = ({message: "BibNo not found."})
     });
  }
 	else if (bibNo !==undefined){
-		Scoring.find({ bibNo: bibNo}).then((participantScoring) => {
-			if (!participantScoring || participantScoring.length == 0) {
+		Scoring.find({ bibNo: bibNo}).then((participantScores) => {
+			if (!participantScores || participantScores.length == 0) {
 				return res.status(404).send(status404);
 			}
-	    res.send({participantScoring});
+	    res.send({participantScores});
 	  }, (e) => {
 	    console.log(e);
 	    res.status(400).send(e);
