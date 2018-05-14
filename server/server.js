@@ -43,7 +43,7 @@ function updateTeamScore(teamID){
 		gender: 'M'
 			}).limit( 3 ).sort( { score: -1 } ).then((results) => {
 
-    		if (!results || results.length < 1) {
+    		if (!results || results.length < 3) {
       		console.log('Bad/wrong team name or team DNQ')
     	}
 			else {
@@ -196,7 +196,7 @@ function updateScore(bibNo){
 								 next: next
           });
           score.save().then((doc) => {
-						if (teamName > 0) {
+						if (teamName.length > 0) {
 							updateTeamScore(teamName)
 						}
 
@@ -209,7 +209,7 @@ function updateScore(bibNo){
 			// if this is an update to a person's score, update
 
 			Scoring.findOneAndUpdate({ bibNo:bibNo }, { $set: {'g1':g1,'g2':g2,'g3':g3,'score':totScore,'updatedOn': timestamp,'progress':totEvents, 'next': next}} , {returnNewDocument : true}).then((doc) => {
-				if (teamName > 0) {
+				if (teamName.length > 0) {
 					updateTeamScore(teamName)
 				}
 
@@ -608,16 +608,16 @@ app.post('/post-result', (req, res) => {
 app.get('/results', (req, res) => {
   var delta = req.query.d
   if (delta !==undefined) {
-  eventResults.find({ resultID: { $gt: delta } }).then((results) => {
-    res.send({results});
+  eventResults.find({ resultID: { $gt: delta } }).then((participantResults) => {
+    res.send({participantResults});
   }, (e) => {
     console.log(e);
     res.status(400).send(e);
     });
   }
   else {
-  eventResults.find().then((results) => {
-    res.send({results});
+  eventResults.find().then((participantResults) => {
+    res.send({participantResults});
   }, (e) => {
     console.log(e);
     res.status(400).send(e);
@@ -643,8 +643,8 @@ var status404  = ({message: "BibNo not found."})
 
   if (gender !==undefined) {
 	// get by gender
-  Scoring.find({ gender: gender}).then((results) => {
-    res.send({results});
+  Scoring.find({ gender: gender}).limit( 25 ).sort( { score: -1 } ).then((participantScores ) => {
+    res.send({participantScores });
   }, (e) => {
     console.log(e);
     res.status(400).send(e);
@@ -653,8 +653,8 @@ var status404  = ({message: "BibNo not found."})
 	// TEAM SCORING -- ALL 'teamscores' or one team
   else if (teamscores == 'true'){
 	// get all and send
-		teamScoring.find().then((results) => {
-			res.send({results});
+		teamScoring.find().then((teamScores) => {
+			res.send({teamScores});
 		}, (e) => {
 			console.log(e);
 			res.status(400).send(e);
@@ -663,15 +663,15 @@ var status404  = ({message: "BibNo not found."})
 
 	else if (team !==undefined){
 		// testing only, remove
-		updateTeamScore(team)
+		//updateTeamScore(team)
 		//
 
 		status404  = ({message: "Team not found."})
-		teamScoring.find({ teamID: team}).then((results) => {
-			if (!results || results.length == 0) {
+		teamScoring.find({ teamID: team}).then((teamScores) => {
+			if (!teamScores || teamScores.length == 0) {
 				return res.status(404).send(status404);
 			}
-	    res.send({results});
+	    res.send({teamScores});
 	  }, (e) => {
 	    console.log(e);
 	    res.status(400).send(e);
@@ -681,11 +681,11 @@ var status404  = ({message: "BibNo not found."})
 
 	else if (onTeam !==undefined){
 		status404  = ({message: "Team not found."})
-		Scoring.find({ teamID: onTeam}).then((results) => {
-			if (!results || results.length == 0) {
+		Scoring.find({ teamID: onTeam}).then((participantScores) => {
+			if (!participantScores  || participantScores.length == 0) {
 				return res.status(404).send(status404);
 			}
-	    res.send({results});
+	    res.send({participantScores});
 	  }, (e) => {
 	    console.log(e);
 	    res.status(400).send(e);
@@ -695,19 +695,19 @@ var status404  = ({message: "BibNo not found."})
 	Scoring.find({
 			isDavid: true,
 			next: { $gte: 5 }
-		}).then((results) => {
-    res.send({results});
+		}).then((participantScores) => {
+    res.send({participantScores});
   }, (e) => {
     console.log(e);
     res.status(400).send(e);
     });
  }
 	else if (bibNo !==undefined){
-		Scoring.find({ bibNo: bibNo}).then((results) => {
-			if (!results || results.length == 0) {
+		Scoring.find({ bibNo: bibNo}).then((participantScoring) => {
+			if (!participantScoring || participantScoring.length == 0) {
 				return res.status(404).send(status404);
 			}
-	    res.send({results});
+	    res.send({participantScoring});
 	  }, (e) => {
 	    console.log(e);
 	    res.status(400).send(e);
@@ -717,8 +717,8 @@ var status404  = ({message: "BibNo not found."})
 	 // looking at 15 minutes currently
 	Scoring.find({
 		progress: 'Course Complete',
-		updatedOn: { $gte: new Date(Date.now() - 900000).toISOString() }}).then((results) => {
-    res.send({results});
+		updatedOn: { $gte: new Date(Date.now() - 900000).toISOString() }}).then((participantScores) => {
+    res.send({participantScores});
   }, (e) => {
     console.log(e);
     res.status(400).send(e);
@@ -726,8 +726,8 @@ var status404  = ({message: "BibNo not found."})
   }
   else {
 	  // get all and send
-  Scoring.find().then((results) => {
-    res.send({results});
+  Scoring.find().then((participantScores) => {
+    res.send({participantScores});
   }, (e) => {
     console.log(e);
     res.status(400).send(e);
@@ -740,11 +740,11 @@ var status404  = ({message: "BibNo not found."})
 // GET results by bib number
 app.get('/results/:id', (req, res) => {
   var id = req.params.id;
-  eventResults.find({bibNo: id}).then((results) => {
-    if (!results || results.length == 0) {
+  eventResults.find({bibNo: id}).then((participantResults) => {
+    if (!participantResults || participantResults.length == 0) {
       return res.status(404).send(status404);
     }
-    res.send({results});
+    res.send({participantResults});
   }, (e) => {
     res.status(400).send(e);
   });

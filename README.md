@@ -100,7 +100,7 @@ Data for participants or event results will be returned as one or more objects.
 	- includes support for query parameters "lastName" or "bday"
 	- ex. [API_URL]/participant?lastName=smith
 	- ex. [API_URL]/participant?bday=1/31/2017
-- [API_URL]/participant/[bibNo]
+  - [API_URL]/participant?bibNo={bibNo}
 
 ##### Response Model/Schema
 
