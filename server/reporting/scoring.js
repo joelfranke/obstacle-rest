@@ -6,7 +6,7 @@ function mostRecent (){
     $('#results-recent').DataTable( {
       ajax: {
           url: url,
-          dataSrc: 'results'
+          dataSrc: 'participantScores'
         },
         scrollY: "500px",
         scrollCollapse: true,
@@ -26,7 +26,7 @@ function mostRecent (){
             { data: 'g3', title: 'G3'},
             { data: 'score', title: 'Score',  render: $.fn.dataTable.render.number( ',', '.', 0 )}
         ],
-		
+
     });
   });
 
@@ -40,7 +40,7 @@ function updateM (){
     $('#results-m').DataTable( {
       ajax: {
           url: url,
-          dataSrc: 'results'
+          dataSrc: 'participantScores'
         },
         scrollY: "500px",
         scrollCollapse: true,
@@ -61,7 +61,7 @@ function updateM (){
             { data: 'score', title: 'Score',  render: $.fn.dataTable.render.number( ',', '.', 0 )},
             { data: 'progress', title: 'Progress' },
         ],
-		
+
     });
   });
 
@@ -75,7 +75,7 @@ function updateAll (){
     $('#results-all').DataTable( {
       ajax: {
           url: url,
-          dataSrc: 'results'
+          dataSrc: 'participantScores'
         },
         scrollY: "500px",
         scrollCollapse: true,
@@ -98,7 +98,7 @@ function updateAll (){
             { data: 'score', title: 'Score',  render: $.fn.dataTable.render.number( ',', '.', 0 )},
             { data: 'progress', title: 'Progress' },
         ],
-		
+
     });
   });
 
@@ -112,7 +112,7 @@ function updateF (){
     $('#results-f').DataTable( {
       ajax: {
           url: url,
-          dataSrc: 'results'
+          dataSrc: 'participantScores'
         },
         scrollY: "500px",
         scrollCollapse: true,
@@ -133,7 +133,7 @@ function updateF (){
             { data: 'score', title: 'Score',  render: $.fn.dataTable.render.number( ',', '.', 0 )},
             { data: 'progress', title: 'Progress' },
         ],
-		
+
     });
   });
 
