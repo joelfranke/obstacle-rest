@@ -18,7 +18,7 @@ var obstIndex = [{obstID: 1, value: "Water Carry"},
 
 function getResults(participantID,callback) {
   var jsonData = "/results/" + participantID;
-  var personData = "/participant?bibNo=" + participantID;
+  var personData = "/participant?k=04AA27B75640D189EEF52BCC78BA34CEBEA9440E563D7F2B36B5CB98EC899CC3&bibNo=" + participantID;
 
   $.getJSON( personData, function( personJson ) {
 
@@ -35,9 +35,9 @@ function getResults(participantID,callback) {
 
   $.getJSON( jsonData, function( json ) {
 
-    for (var item in json.results) {
+    for (var item in json.participantResults) {
 
-      var obstID = json.results[item].obstID;
+      var obstID = json.participantResults[item].obstID;
       //testing
       var obstName;
 
@@ -51,9 +51,9 @@ function getResults(participantID,callback) {
       obstName = obstID + ". "+ obstName
       // end testing
 
-      var tier = json.results[item].tier;
-      var deviceTime = json.results[item].deviceTime;
-      var success = json.results[item].success;
+      var tier = json.participantResults[item].tier;
+      var deviceTime = json.participantResults[item].deviceTime;
+      var success = json.participantResults[item].success;
       //update to include invidual score
       if (success == true){
         success = 	"&#x2714;"

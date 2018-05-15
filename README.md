@@ -6,7 +6,7 @@ This is a RESTful-based API (nodeJS) intended to capture and track real-time eve
 ## Endpoint
 [API_URL]
 
-### POST result ([API_URL]/post-result)
+### POST result ([API_URL]/post-result&k={API_KEY})
 
 #### Headers
 Content-Type :  application/json
@@ -34,7 +34,8 @@ Response Class (Status 200 / 409)
 {
     "message": "${firstName}",
 		bibNo: "${bibNo}",
-		obstID: "${obstID}"
+		obstID: "${obstID}",
+		heat: "${heat}"
 }
 ```
 
@@ -47,7 +48,7 @@ HTTP Status Code | Reason | Response Model
 
 500 | Something went wrong with the service. Contact xxx@xxx.xxx. | n/a
 
-### POST participant ([API_URL]/registration)
+### POST participant ([API_URL]/registration&k={API_KEY})
 
 #### Headers
 Content-Type :  application/json
@@ -96,7 +97,7 @@ HTTP Status Code | Reason | Response Model
 Data for participants or event results will be returned as one or more objects.
 
 #### Participant
-- [API_URL]/participant
+[API_URL]/participant&k={API_KEY}
 	- includes support for query parameters "lastName" or "bday"
 	- ex. [API_URL]/participant?lastName=smith
 	- ex. [API_URL]/participant?bday=1/31/2017
@@ -190,5 +191,66 @@ Content-Type :  application/json
 	"location" : "start", //string, mandatory) -- One of "start", "finish", "rope", case sensitive
 	"time" : 2 //(string, mandatory) -- timestamp or elapsed time to be written to database
 
+}
+```
+
+### GET Scores ([API_URL]/scoring)
+Supports following parameters, no token required. Only one parameter is considered (regardless of how many are passed), in this order of precedence, gender, teamScores, team, onTeam, davids, bibNo, recent, otherwise all results are sent
+
+	- /scoring?gender={M or F for Male/Female} // Individual, returns scores for either the top 25 Males or Females
+	- /scoring?teamScores=true // Team, (only true is considered, false may be passed but will be ignored); returns scores for all teams
+	- /scoring?team={teamName} // Team, returns scores for a given team
+	- /scoring?onTeam={teamName} // Individual, returns scores for all members of a given team
+	- /scoring?davids=true //  Individual, (only true is considered, false may be passed but will be ignored); returns scores for all individuals who have successfully completed the first four G3s
+	- /scoring?bibNo={bibNo} // Individual, returns scores for a single individual
+	- /scoring?recent=true // Individual, (only true is considered, false may be passed but will be ignored); returns scores for all individuals who have finished in the last 15 minutes since the request was made
+	- scoring // all scores for all participants
+
+#### Headers
+Content-Type :  application/json
+
+#### Body //(dataType, mandatory/optional) -- Definition
+Individual
+```
+{
+    "participantScores": [
+        {
+            "_id": "5af1a9210bf74a29643e2853", // db object id STRING
+            "firstName": "Barry", // First name of participant
+            "lastName": "Porch", // Last name of participant
+            "gender": "M", // gender, "M" or "F" used, case sensitive
+            "bibNo": 100, // Bib NUMBER of the participant read from the scanned or manually entered code
+            "g1": 0, // NUMBER of G1s successfully completed
+            "g2": 1, // NUMBER of G2s successfully completed
+            "g3": 11, // NUMBER of G3s successfully completed
+            "score": 58.011010000000006, // Calculated score based on number of obstacles completed * various multipliers
+            "progress": "Course Complete", // or '9/12', Progress based # of obstacles completed
+            "__v": 0,
+            "next": 99, // NUMBER of next obstacle, 99 = course complete
+            "updatedOn": "2018-05-09T13:49:03.803Z", // Timestamp of last update
+            "isDavid": true, // true/false, whether the participant is a david
+            "teamID": null, // Team name STRING
+            "participant": "<a href='/individual/?id=100'>Porch, Barry</a>" //HTML for display of name in dashboard
+        }
+			]
+		}
+
+```
+
+Team
+```
+{
+    "teamScores": [
+        {
+            "_id": "5af731402736a6bbaf99a0ed",// db object id STRING
+            "g1": 4, // NUMBER of G1s successfully completed
+            "g2": 5, // NUMBER of G2s successfully completed
+            "g3": 11,// NUMBER of G3s successfully completed
+            "score": 74.02923039999999, // Calculated score based on number of obstacles completed * various multipliers for top three male and top three female.
+            "onCourse": 124,//total number of participants who have not yet completed the course
+            "updatedOn": "2018-05-12T19:53:30.098Z",//timestamp
+            "teamID": "PPK"//team name
+        }
+    ]
 }
 ```

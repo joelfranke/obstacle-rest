@@ -24,10 +24,37 @@ var invalidToken = ({message: "Invalid or missing token."});
 
 var app = express();
 
+// this function counts the number of participants still on course, should be called as part of the new/update for team scoring
+function onCourse(teamID){
+		// update query to say progress $ne "Course Complete"
+		var onCourseCount = teamScoring.count({teamID: teamID}).then((count) => {return count
+			console.log(count)
+		});
+		return onCourseCount;
+		//return 1
+ }
+
+
 function updateTeamScore(teamID){
+
+//all testing
+	// var onCourse = onCourse(teamID);
+	// onCourse.then((onCourseCount) => {
+	// 	console.log(onCourseCount);
+	// 		// if (token ===false){
+	// 		// 	return res.status(401).send(invalidToken);
+	// 		// } else {
+	// 		// 	logEvent(body,res)// call remaining script as function
+	// 		// }
+	// }).catch((e) => {
+	// 	console.log(e);
+	// 	})
+
+//testing
+
 	var newScore
 	var timestamp = Date.now()
-	Scoring.find({teamID: teamID}).then((scores) => {
+	teamScoring.find({teamID: teamID}).then((scores) => {
 		 if(!scores || scores.length == 0){
 			 newScore = true
 		 } else {
@@ -37,14 +64,14 @@ function updateTeamScore(teamID){
     console.log('trouble')
   });
 
-	// count rank males first and calculate score, then females
+	// count & rank males first and calculate score, then females
 	Scoring.find({
 		teamID: teamID,
 		gender: 'M'
 			}).limit( 3 ).sort( { score: -1 } ).then((results) => {
 
     		if (!results || results.length < 3) {
-      		console.log('Bad/wrong team name or team DNQ')
+      	//	console.log('Bad/wrong team name or team DNQ')
     	}
 			else {
 				var g1 = 0;
@@ -64,7 +91,7 @@ function updateTeamScore(teamID){
 						gender: 'F'
 					}).limit( 3 ).sort( { score: -1 } ).then((results) => {
 						if (!results || results.length < 3) {
-							console.log('Bad/wrong team name or team DNQ')
+						//	console.log('Bad/wrong team name or team DNQ')
 						}
 						else {
 							for(var result in results){
@@ -72,37 +99,40 @@ function updateTeamScore(teamID){
 								g2= g2 + results[result].g2
 								g3= g3 + results[result].g3;
 								totScore= totScore + results[result].score;
-								//this is the right aggregate score, so do something here
-									console.log(g1,g2,g3,totScore,timestamp)
-								if (newScore == true){
-									// if this is the first result for the team, write a new score.
-									var score = new teamScoring({
-												 	teamID: teamName,
-													 g1:g1,
-													 g2:g2,
-													 g3:g3,
-													 score:totScore,
-													updatedOn: timestamp
-										});
-										score.save().then((doc) => {
-											//console.log(doc)
-										}, (e) => {
-											console.log(e);
-											//log the error
-										});
-								} else {
-								// if this is an update to a team's score, update
-								teamScoring.findOneAndUpdate({ teamID:teamID }, { $set: {'g1':g1,'g2':g2,'g3':g3,'score':totScore,'updatedOn': timestamp}} , {returnNewDocument : true}).then((doc) => {
-								//console.log(doc)
-								}, (e) => {
-											console.log(e);
-											//log the error
-								});
-
-								}
 						}
 					//end of female else
 					}
+					// start write score logic
+					if (newScore == true){
+
+						// if this is the first result for the team, write a new score.
+						var score = new teamScoring({
+									 	teamID: teamID,
+										 g1:g1,
+										 g2:g2,
+										 g3:g3,
+										 score:totScore,
+										updatedOn: timestamp
+							});
+							score.save().then((doc) => {
+								//console.log(newScore)
+								newScore == false
+							}, (e) => {
+								console.log(e);
+								//log the error
+							});
+					} else {
+					// if this is an update to a team's score, update
+					teamScoring.findOneAndUpdate({ teamID:teamID }, { $set: {'g1':g1,'g2':g2,'g3':g3,'score':totScore,'updatedOn': timestamp}} , {returnNewDocument : true}).then((doc) => {
+					//console.log(doc)
+					}, (e) => {
+								console.log(e);
+								//log the error
+					});
+
+					}
+					//end write score logic
+					//console.log(g1,g2,g3,totScore,timestamp)
 				})
 
 			// end of else
@@ -633,25 +663,24 @@ app.get('/scoring', (req, res) => {
 var status404  = ({message: "BibNo not found."})
 
   	var gender = req.query.gender
-	  var teamscores = req.query.teamscores
+	  var teamScores = req.query.teamScores
 		var team = req.query.team
 		var onTeam = req.query.onTeam
 		var davids = req.query.davids
 		var bibNo = req.query.bibNo
   	var recent = req.query.recent
 
-
   if (gender !==undefined) {
 	// get by gender
   Scoring.find({ gender: gender}).limit( 25 ).sort( { score: -1 } ).then((participantScores ) => {
-    res.send({participantScores });
+    res.send({participantScores});
   }, (e) => {
     console.log(e);
     res.status(400).send(e);
     });
   }
 	// TEAM SCORING -- ALL 'teamscores' or one team
-  else if (teamscores == 'true'){
+  else if (teamScores == 'true'){
 	// get all and send
 		teamScoring.find().then((teamScores) => {
 			res.send({teamScores});
@@ -703,6 +732,7 @@ var status404  = ({message: "BibNo not found."})
     });
  }
 	else if (bibNo !==undefined){
+		//console.log(bibNo)
 		Scoring.find({ bibNo: bibNo}).then((participantScores) => {
 			if (!participantScores || participantScores.length == 0) {
 				return res.status(404).send(status404);

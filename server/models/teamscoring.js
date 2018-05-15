@@ -28,7 +28,7 @@ var teamScoring = mongoose.model('teamscore', {
   },
   onCourse: {
     type: Number,
-    required: true
+    required: false
   },
     updatedOn: {
     type: Date,
