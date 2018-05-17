@@ -205,6 +205,7 @@ function updateScore(bibNo){
 								 next  = 99
                } else {
                  progress = totEvents + '/12';
+								 console.log(progress)
 								 next = totEvents + 1
                }
 			if (newScore == true){
@@ -238,7 +239,7 @@ function updateScore(bibNo){
 			} else {
 			// if this is an update to a person's score, update
 
-			Scoring.findOneAndUpdate({ bibNo:bibNo }, { $set: {'g1':g1,'g2':g2,'g3':g3,'score':totScore,'updatedOn': timestamp,'progress':totEvents, 'next': next}} , {returnNewDocument : true}).then((doc) => {
+			Scoring.findOneAndUpdate({ bibNo:bibNo }, { $set: {'g1':g1,'g2':g2,'g3':g3,'score':totScore,'updatedOn': timestamp,'progress':progress, 'next': next}} , {returnNewDocument : true}).then((doc) => {
 				if (teamName.length > 0) {
 					updateTeamScore(teamName)
 				}
@@ -783,9 +784,10 @@ app.get('/results/:id', (req, res) => {
 // GET query of participant table
 app.get('/participant', (req, res) => {
 	var getList;
-	var qLastName = req.query.lastName;
-  var birth = req.query.bday;
-  var bibNo = req.query.bibNo;
+	var qLastName = req.query.lastName
+  var birth = req.query.bday
+  var bibNo = req.query.bibNo
+	var onTeam = req.query.onTeam
   var key = req.query.k
 
 	if (qLastName !==undefined){
@@ -794,6 +796,9 @@ app.get('/participant', (req, res) => {
       getList = Participant.find({ birthdate: birth  });
 	} else if (bibNo !== undefined){
     getList = Participant.find({ bibNo: bibNo  });
+  }
+	else if (onTeam !== undefined){
+    getList = Participant.find({ teamID: onTeam  });
   }
   else {
 		getList = Participant.find();
