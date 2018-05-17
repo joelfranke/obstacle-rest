@@ -123,7 +123,9 @@ function updateTeamScore(teamID){
 							});
 					} else {
 					// if this is an update to a team's score, update
+
 					teamScoring.findOneAndUpdate({ teamID:teamID }, { $set: {'g1':g1,'g2':g2,'g3':g3,'score':totScore,'updatedOn': timestamp}} , {returnNewDocument : true}).then((doc) => {
+
 					//console.log(doc)
 					}, (e) => {
 								console.log(e);
@@ -144,8 +146,9 @@ function updateTeamScore(teamID){
 
 
 
-function updateScore(bibNo){
+function updateScore(bibNo,tiebreaker){
 	var newScore
+	var update
 	Scoring.find({bibNo: bibNo}).then((scores) => {
 		 if(!scores || scores.length ==0){
 			 newScore = true
@@ -205,7 +208,6 @@ function updateScore(bibNo){
 								 next  = 99
                } else {
                  progress = totEvents + '/12';
-								 console.log(progress)
 								 next = totEvents + 1
                }
 			if (newScore == true){
@@ -238,8 +240,15 @@ function updateScore(bibNo){
           });
 			} else {
 			// if this is an update to a person's score, update
+			if (tiebreaker){
+				update = {'g1':g1,'g2':g2,'g3':g3,'score':totScore,'updatedOn': timestamp,'progress':progress, 'next': next,'tiebreaker':tiebreaker}
+				//console.log('this is a tiebreaker update')
+			} else {
+				update = {'g1':g1,'g2':g2,'g3':g3,'score':totScore,'updatedOn': timestamp,'progress':progress, 'next': next}
+			}
+			//Scoring.findOneAndUpdate({ bibNo:bibNo }, { $set: {'g1':g1,'g2':g2,'g3':g3,'score':totScore,'updatedOn': timestamp,'progress':progress, 'next': next}} , {returnNewDocument : true}).then((doc) => {
+			Scoring.findOneAndUpdate({ bibNo:bibNo }, { $set: update} , {returnNewDocument : true}).then((doc) => {
 
-			Scoring.findOneAndUpdate({ bibNo:bibNo }, { $set: {'g1':g1,'g2':g2,'g3':g3,'score':totScore,'updatedOn': timestamp,'progress':progress, 'next': next}} , {returnNewDocument : true}).then((doc) => {
 				if (teamName.length > 0) {
 					updateTeamScore(teamName)
 				}
@@ -378,8 +387,8 @@ function checkAuth(token) {
        });
    }
 
-   //log event function
-   function logEvent(body,res){
+//log event function
+function logEvent(body,res){
 
     var status404  = ({message: "BibNo not found.", bibNo: body.bibNo, obstID: body.obstID});
     Participant.findOne({bibNo: body.bibNo}).then((participant) => {
@@ -531,7 +540,11 @@ function checkAuth(token) {
          //no duplicate handling, will need to be added here
          Participant.findOneAndUpdate({ bibNo:bibNo }, { $set: update }, {returnNewDocument : true}).then((participant) => {
            if (participant){
-			   console.log(participant)
+			   		if(time){
+							console.log(bibNo,time)
+								updateScore(bibNo,time)
+						}
+
              return res.status(200).send(successfulPost);
            }
            }).catch((e) => {
