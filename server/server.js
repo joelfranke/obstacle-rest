@@ -34,6 +34,17 @@ function onCourse(teamID){
 		//return 1
  }
 
+ function allScores(){
+	 eventResults.distinct("bibNo").then((event) => {
+		 console.log(event)
+		 var uniqueBib = event.length;
+		 for(var bib in event){
+			 updateScore(event[bib])
+		 }
+	 })
+
+ }
+
 
 function updateTeamScore(teamID){
 
@@ -158,7 +169,7 @@ function updateScore(bibNo,tiebreaker){
   });
 	eventResults.find({bibNo: bibNo}).then((results) => {
     if (!results || results.length == 0) {
-      console.log('Invalid bibNo passed to scoring function')
+      console.log(bibNo, 'Invalid bibNo passed to scoring function')
     }
 	//
 	// start of getting all participant data
@@ -802,6 +813,7 @@ app.get('/participant', (req, res) => {
   var bibNo = req.query.bibNo
 	var onTeam = req.query.onTeam
   var key = req.query.k
+	var rb = req.query.rb
 
 	if (qLastName !==undefined){
       getList = Participant.find({ lastName: qLastName  }).collation( { locale: 'en', strength: 2 } );
@@ -813,6 +825,11 @@ app.get('/participant', (req, res) => {
 	else if (onTeam !== undefined){
     getList = Participant.find({ teamID: onTeam  });
   }
+	//temp function, remove!
+	else if (rb == 'true'){
+		allScores()
+		return res.status(200).send('scoring calc in progress');
+	}
   else {
 		getList = Participant.find();
 	}
