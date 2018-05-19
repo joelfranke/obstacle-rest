@@ -92,7 +92,7 @@ var Participant = mongoose.model('Participant', {
 		}
   },
   tiebreaker: {
-    time:{
+    deviceTime:{
 		type: String,
 		default: null
 		},

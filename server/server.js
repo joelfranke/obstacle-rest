@@ -144,8 +144,6 @@ function updateTeamScore(teamID){
 	});
 }
 
-
-
 function updateScore(bibNo,tiebreaker){
 	var newScore
 	var update
@@ -241,8 +239,8 @@ function updateScore(bibNo,tiebreaker){
 			} else {
 			// if this is an update to a person's score, update
 			if (tiebreaker){
-				update = {'g1':g1,'g2':g2,'g3':g3,'score':totScore,'updatedOn': timestamp,'progress':progress, 'next': next,'tiebreaker':tiebreaker}
-				//console.log('this is a tiebreaker update')
+				update = {'updatedOn': timestamp,'tiebreaker':tiebreaker}
+				//console.log(bibNo,update);
 			} else {
 				update = {'g1':g1,'g2':g2,'g3':g3,'score':totScore,'updatedOn': timestamp,'progress':progress, 'next': next}
 			}
@@ -508,7 +506,7 @@ function logEvent(body,res){
       var id = participant.id;
       var bibNo = participant.bibNo;
       var location = body.location;
-      var time = body.time;
+      var time = body.deviceTime;
       var firstName = participant.firstName;
       var isDavid = participant.isDavid;
 	  	var bibFromBand = body.bibFromBand;
@@ -532,7 +530,7 @@ function logEvent(body,res){
             update = {'finishTime.deviceTime': time, 'finishTime.bibFromBand':bibFromBand};
          } else if (location === 'tiebreaker'){
 					 var timestamp = Date.now()
-           update = {'tiebreaker.time': time, 'tiebreaker.bibFromBand':bibFromBand,'tiebreaker.timestamp':timestamp};
+           update = {'tiebreaker.deviceTime': time, 'tiebreaker.bibFromBand':bibFromBand,'tiebreaker.timestamp':timestamp};
          } else {
            res.status(400).send(e);
          }
@@ -541,7 +539,7 @@ function logEvent(body,res){
          Participant.findOneAndUpdate({ bibNo:bibNo }, { $set: update }, {returnNewDocument : true}).then((participant) => {
            if (participant){
 			   		if(time){
-							console.log(bibNo,time)
+							//console.log(bibNo,time)
 								updateScore(bibNo,time)
 						}
 
@@ -563,6 +561,8 @@ function logEvent(body,res){
      var successfulPost = ({
        message: `${req.body.firstName} registered with bibNo: ${req.body.bibNo}.`
      });
+
+		 //Add res.status(409).(alreadyRegistered) if (preregistered.bibNo.length >0 or not null as precondition)
 
      Participant.findOne({_id: req.body._id}).then((preregistered) => {
        if (preregistered) {

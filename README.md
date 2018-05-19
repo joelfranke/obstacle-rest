@@ -102,6 +102,7 @@ Data for participants or event results will be returned as one or more objects.
 	- ex. [API_URL]/participant?lastName=smith
 	- ex. [API_URL]/participant?bday=1/31/2017
   - [API_URL]/participant?bibNo={bibNo}
+	- [API_URL]/participant?onTeam={teamID}
 
 ##### Response Model/Schema
 
@@ -189,7 +190,10 @@ Content-Type :  application/json
 {
 	"bibNo" : 123, //(integer, mandatory) -- Bib NUMBER of the participant read from the scanned or manually entered code
 	"location" : "start", //string, mandatory) -- One of "start", "finish", "rope", case sensitive
-	"time" : 2 //(string, mandatory) -- timestamp or elapsed time to be written to database
+	"deviceTime" : "8:28:29 AM", //(string, mandatory) -- timestamp or elapsed time to be written to database
+	"bibFromBand": true, //(boolean, optional) -- BOOLEAN value indicating whether the bibNo was manually entered (false) or scanned (true).
+
+
 
 }
 ```
