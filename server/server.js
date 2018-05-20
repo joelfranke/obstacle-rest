@@ -26,42 +26,43 @@ var app = express();
 
 // this function counts the number of participants still on course, should be called as part of the new/update for team scoring
 function onCourse(teamID){
-		// update query to say progress $ne "Course Complete"
-		var onCourseCount = teamScoring.count({teamID: teamID}).then((count) => {return count
-			console.log(count)
-		});
-		return onCourseCount;
-		//return 1
- }
+	var onCourseCount = Scoring.find({teamID: teamID, progress: { $ne: 'Course Complete' }}).count().then((count) => {
+	return count
+});
+	return onCourseCount
 
- function allScores(){
-	 eventResults.distinct("bibNo").then((event) => {
-		 console.log(event)
-		 var uniqueBib = event.length;
-		 for(var bib in event){
-			 updateScore(event[bib])
-		 }
-	 })
+	// Scoring.count({teamID: teamID}).then((total) => {
+	// 	Scoring.count({teamID: teamID, progress: { $ne: 'Course Complete' }}).then((count) => {
+	// 		var onCourse = count + " of " + total
+	// 		console.log(onCourse)
+	// 		return onCourse
+	// 	})
+	// })
+	//return onCourse
+}
 
- }
+ // function allScores(){
+	//  eventResults.distinct("bibNo").then((event) => {
+	// 	 var uniqueBib = event.length;
+	// 	 for(var bib in event){
+	// 		 updateScore(event[bib])
+	// 	 }
+	//  })
+ //
+ // }
 
 
 function updateTeamScore(teamID){
 
-//all testing
-	// var onCourse = onCourse(teamID);
-	// onCourse.then((onCourseCount) => {
-	// 	console.log(onCourseCount);
-	// 		// if (token ===false){
-	// 		// 	return res.status(401).send(invalidToken);
-	// 		// } else {
-	// 		// 	logEvent(body,res)// call remaining script as function
-	// 		// }
-	// }).catch((e) => {
-	// 	console.log(e);
-	// 	})
-
-//testing
+		//start testing
+		// var count = onCourse(teamID)
+		// count.then((onCourseCount) => {
+		//
+		// 	console.log(teamID,onCourseCount)
+		// })
+		//console.log(teamID,count)
+		//testing
+	//	onCourse(teamID)
 
 	var newScore
 	var timestamp = Date.now()
@@ -72,7 +73,7 @@ function updateTeamScore(teamID){
 			 newScore = false
 		 }
 	}, (e) => {
-    console.log('trouble')
+    console.log('trouble with team calculation')
   });
 
 	// count & rank males first and calculate score, then females
@@ -707,7 +708,7 @@ var status404  = ({message: "BibNo not found."})
 	// TEAM SCORING -- ALL 'teamscores' or one team
   else if (teamScores == 'true'){
 	// get all and send
-		teamScoring.find().then((teamScores) => {
+		teamScoring.find().sort( { score: -1 } ).then((teamScores) => {
 			res.send({teamScores});
 		}, (e) => {
 			console.log(e);
@@ -735,7 +736,7 @@ var status404  = ({message: "BibNo not found."})
 
 	else if (onTeam !==undefined){
 		status404  = ({message: "Team not found."})
-		Scoring.find({ teamID: onTeam}).then((participantScores) => {
+		Scoring.find({ teamID: onTeam}).sort( { score: -1 } ).then((participantScores) => {
 			if (!participantScores  || participantScores.length == 0) {
 				return res.status(404).send(status404);
 			}
@@ -749,7 +750,7 @@ var status404  = ({message: "BibNo not found."})
 	Scoring.find({
 			isDavid: true,
 			next: { $gte: 5 }
-		}).then((participantScores) => {
+		}).sort( { score: -1 } ).then((participantScores) => {
     res.send({participantScores});
   }, (e) => {
     console.log(e);
@@ -772,7 +773,7 @@ var status404  = ({message: "BibNo not found."})
 	 // looking at 15 minutes currently
 	Scoring.find({
 		progress: 'Course Complete',
-		updatedOn: { $gte: new Date(Date.now() - 900000).toISOString() }}).then((participantScores) => {
+		updatedOn: { $gte: new Date(Date.now() - 900000).toISOString() }}).sort( { score: -1 } ).sort( { updatedOn: -1 } ).then((participantScores) => {
     res.send({participantScores});
   }, (e) => {
     console.log(e);
@@ -781,7 +782,7 @@ var status404  = ({message: "BibNo not found."})
   }
   else {
 	  // get all and send
-  Scoring.find().then((participantScores) => {
+  Scoring.find().sort( { score: -1 } ).then((participantScores) => {
     res.send({participantScores});
   }, (e) => {
     console.log(e);
@@ -813,7 +814,7 @@ app.get('/participant', (req, res) => {
   var bibNo = req.query.bibNo
 	var onTeam = req.query.onTeam
   var key = req.query.k
-	var rb = req.query.rb
+	//var rb = req.query.rb
 
 	if (qLastName !==undefined){
       getList = Participant.find({ lastName: qLastName  }).collation( { locale: 'en', strength: 2 } );
@@ -825,11 +826,11 @@ app.get('/participant', (req, res) => {
 	else if (onTeam !== undefined){
     getList = Participant.find({ teamID: onTeam  });
   }
-	//temp function, remove!
-	else if (rb == 'true'){
-		allScores()
-		return res.status(200).send('scoring calc in progress');
-	}
+	// //temp function, remove!
+	// else if (rb == 'true'){
+	// 	allScores()
+	// 	return res.status(200).send({message: 'scoring calc in progress'});
+	// }
   else {
 		getList = Participant.find();
 	}
