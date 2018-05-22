@@ -86,47 +86,48 @@ function updateTeamScore(teamID){
 								g3= g3 + results[result].g3;
 								totScore= totScore + results[result].score;
 						}
-					//end of female else
-					}
+						// start write score logic
+						Participant.count({teamID:teamID, bibNo:{ $gt:0}, finishTime:null}).then((count) => {
+							if (newScore == true){
 
-					// start write score logic
-					Participant.count({teamID:teamID, bibNo:{ $gt:0}, finishTime:null}).then((count) => {
-						if (newScore == true){
+								// if this is the first result for the team, write a new score.
+								var score = new teamScoring({
+												teamID: teamID,
+												 g1:g1,
+												 g2:g2,
+												 g3:g3,
+												 onCourse:count,
+												 score:totScore,
+												updatedOn: timestamp
+									});
+									score.save().then((doc) => {
+										//console.log(newScore)
+										newScore == false
+									}, (e) => {
+										console.log(e);
+										//log the error
+									});
+							} else {
+							// if this is an update to a team's score, update
 
-							// if this is the first result for the team, write a new score.
-							var score = new teamScoring({
-										 	teamID: teamID,
-											 g1:g1,
-											 g2:g2,
-											 g3:g3,
-											 onCourse:count,
-											 score:totScore,
-											updatedOn: timestamp
-								});
-								score.save().then((doc) => {
-									//console.log(newScore)
-									newScore == false
-								}, (e) => {
-									console.log(e);
-									//log the error
-								});
-						} else {
-						// if this is an update to a team's score, update
+							teamScoring.findOneAndUpdate({ teamID:teamID }, { $set: {'g1':g1,'g2':g2,'g3':g3,'score':totScore,'updatedOn': timestamp,'onCourse':count}} , {returnNewDocument : true}).then((doc) => {
 
-						teamScoring.findOneAndUpdate({ teamID:teamID }, { $set: {'g1':g1,'g2':g2,'g3':g3,'score':totScore,'updatedOn': timestamp,'onCourse':count}} , {returnNewDocument : true}).then((doc) => {
+							//console.log(doc)
+							}, (e) => {
+										console.log(e);
+										//log the error
+							});
 
-						//console.log(doc)
+							}
+
 						}, (e) => {
 									console.log(e);
 									//log the error
 						});
+					//end of female else
+					}
 
-						}
 
-					}, (e) => {
-								console.log(e);
-								//log the error
-					});
 
 					//original code
 					// if (newScore == true){
