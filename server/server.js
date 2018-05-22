@@ -24,22 +24,6 @@ var invalidToken = ({message: "Invalid or missing token."});
 
 var app = express();
 
-// this function counts the number of participants still on course, should be called as part of the new/update for team scoring
-function onCourse(teamID){
-	var onCourseCount = Scoring.find({teamID: teamID, progress: { $ne: 'Course Complete' }}).count().then((count) => {
-	return count
-});
-	return onCourseCount
-
-	// Scoring.count({teamID: teamID}).then((total) => {
-	// 	Scoring.count({teamID: teamID, progress: { $ne: 'Course Complete' }}).then((count) => {
-	// 		var onCourse = count + " of " + total
-	// 		console.log(onCourse)
-	// 		return onCourse
-	// 	})
-	// })
-	//return onCourse
-}
 
  // function allScores(){
 	//  eventResults.distinct("bibNo").then((event) => {
@@ -53,16 +37,6 @@ function onCourse(teamID){
 
 
 function updateTeamScore(teamID){
-
-		//start testing
-		// var count = onCourse(teamID)
-		// count.then((onCourseCount) => {
-		//
-		// 	console.log(teamID,onCourseCount)
-		// })
-		//console.log(teamID,count)
-		//testing
-	//	onCourse(teamID)
 
 	var newScore
 	var timestamp = Date.now()
@@ -114,38 +88,80 @@ function updateTeamScore(teamID){
 						}
 					//end of female else
 					}
+
 					// start write score logic
-					if (newScore == true){
+					Participant.count({teamID:teamID, bibNo:{ $gt:0}, finishTime:null}).then((count) => {
+						if (newScore == true){
 
-						// if this is the first result for the team, write a new score.
-						var score = new teamScoring({
-									 	teamID: teamID,
-										 g1:g1,
-										 g2:g2,
-										 g3:g3,
-										 score:totScore,
-										updatedOn: timestamp
-							});
-							score.save().then((doc) => {
-								//console.log(newScore)
-								newScore == false
-							}, (e) => {
-								console.log(e);
-								//log the error
-							});
-					} else {
-					// if this is an update to a team's score, update
+							// if this is the first result for the team, write a new score.
+							var score = new teamScoring({
+										 	teamID: teamID,
+											 g1:g1,
+											 g2:g2,
+											 g3:g3,
+											 onCourse:count,
+											 score:totScore,
+											updatedOn: timestamp
+								});
+								score.save().then((doc) => {
+									//console.log(newScore)
+									newScore == false
+								}, (e) => {
+									console.log(e);
+									//log the error
+								});
+						} else {
+						// if this is an update to a team's score, update
 
-					teamScoring.findOneAndUpdate({ teamID:teamID }, { $set: {'g1':g1,'g2':g2,'g3':g3,'score':totScore,'updatedOn': timestamp}} , {returnNewDocument : true}).then((doc) => {
+						teamScoring.findOneAndUpdate({ teamID:teamID }, { $set: {'g1':g1,'g2':g2,'g3':g3,'score':totScore,'updatedOn': timestamp,'onCourse':count}} , {returnNewDocument : true}).then((doc) => {
 
-					//console.log(doc)
+						//console.log(doc)
+						}, (e) => {
+									console.log(e);
+									//log the error
+						});
+
+						}
+
 					}, (e) => {
 								console.log(e);
 								//log the error
 					});
 
-					}
-					//end write score logic
+					//original code
+					// if (newScore == true){
+					//
+					// 	// if this is the first result for the team, write a new score.
+					// 	var score = new teamScoring({
+					// 				 	teamID: teamID,
+					// 					 g1:g1,
+					// 					 g2:g2,
+					// 					 g3:g3,
+					// 					 score:totScore,
+					// 					updatedOn: timestamp
+					// 		});
+					// 		score.save().then((doc) => {
+					// 			//console.log(newScore)
+					// 			newScore == false
+					// 		}, (e) => {
+					// 			console.log(e);
+					// 			//log the error
+					// 		});
+					// } else {
+					// // if this is an update to a team's score, update
+					//
+					// teamScoring.findOneAndUpdate({ teamID:teamID }, { $set: {'g1':g1,'g2':g2,'g3':g3,'score':totScore,'updatedOn': timestamp}} , {returnNewDocument : true}).then((doc) => {
+					//
+					// //console.log(doc)
+					// }, (e) => {
+					// 			console.log(e);
+					// 			//log the error
+					// });
+					//
+					// }
+					//end original code for write score logic
+
+
 					//console.log(g1,g2,g3,totScore,timestamp)
 				})
 
@@ -236,6 +252,7 @@ function updateScore(bibNo,tiebreaker){
                  score:totScore,
 				 			 	updatedOn: timestamp,
                  progress:progress,
+								 obstaclesCompleted:totEvents,
 								 next: next
           });
           score.save().then((doc) => {
@@ -254,7 +271,7 @@ function updateScore(bibNo,tiebreaker){
 				update = {'updatedOn': timestamp,'tiebreaker':tiebreaker}
 				//console.log(bibNo,update);
 			} else {
-				update = {'g1':g1,'g2':g2,'g3':g3,'score':totScore,'updatedOn': timestamp,'progress':progress, 'next': next}
+				update = {'g1':g1,'g2':g2,'g3':g3,'score':totScore,'updatedOn': timestamp,'progress':progress, 'next': next,'obstaclesCompleted':totEvents}
 			}
 			//Scoring.findOneAndUpdate({ bibNo:bibNo }, { $set: {'g1':g1,'g2':g2,'g3':g3,'score':totScore,'updatedOn': timestamp,'progress':progress, 'next': next}} , {returnNewDocument : true}).then((doc) => {
 			Scoring.findOneAndUpdate({ bibNo:bibNo }, { $set: update} , {returnNewDocument : true}).then((doc) => {
@@ -314,87 +331,6 @@ function checkAuth(token) {
      }, (e) => {
        res.status(400).send(e);
      });
-   }
-
-   function getScore(scores,res,query){
-     eventResults.distinct("bibNo").then((event) => {
-       var uniqueBib = event.length;
-       for(var bib in event){
-         var bibNo = event[bib];
-         //get people metadata
-         Participant.findOne({bibNo: bibNo}).then((participant) => {
-
-           var gender = participant.gender;
-           var personBib = participant.bibNo;
-           var isDavid = participant.isDavid;
-           var firstName = participant.firstName;
-           var lastName = participant.lastName;
-           var teamName = participant.teamID;
-
-
-           if (isDavid == true){
-             var participantName = "<a href='/individual/?id=" +personBib+"'>" + lastName + ', ' + firstName+"</a>*";
-             } else {
-               var participantName = "<a href='/individual/?id=" +personBib+"'>" + lastName + ', ' + firstName+"</a>";
-             }
-
-             eventResults.find({bibNo: personBib}).then((events) => {
-               var g1 = 0;
-               var g2 = 0;
-               var g3 = 0;
-               var totScore = 0;
-               var totEvents = 0
-               for(var event in events){
-                 var success = events[event].success;
-                 var tier = events[event].tier;
-                 if (success == true){
-                   if (tier ==1){
-                     g1 = g1 + 1;
-                   }
-                   if (tier == 2){
-                     g2 = g2 + 1;
-                   }
-                   if (tier == 3){
-                     g3 = g3 + 1;
-                   }
-                   totEvents = totEvents + 1
-                 } else {
-                   totEvents = totEvents + 1
-                 }
-               }
-
-               totScore = (g1*1.000001) + (g2*3.0001) + (g3*5.01);
-               if (totEvents == 12) {
-                 totEvents = 'Course Complete';
-               } else {
-                 totEvents = totEvents + '/12';
-               }
-               var score = {
-                 person: participantName,
-                 bibNo: personBib,
-                 teamID: teamName,
-                 g1:g1,
-                 g2:g2,
-                 g3:g3,
-                 score:totScore,
-                 progress:totEvents
-               }
-               scores.push(score);
-               var uniqueScores=scores.length
-               if (uniqueScores == uniqueBib){
-                 res.send(scores);
-               }
-             }, (e) => {
-               res.status(400).send(e);
-             });
-         });
-       }
-
-
-       }, (e) => {
-         console.log(e);
-         res.status(400).send(e);
-       });
    }
 
 //log event function
@@ -773,7 +709,7 @@ var status404  = ({message: "BibNo not found."})
 	 // looking at 15 minutes currently
 	Scoring.find({
 		progress: 'Course Complete',
-		updatedOn: { $gte: new Date(Date.now() - 900000).toISOString() }}).sort( { score: -1 } ).sort( { updatedOn: -1 } ).then((participantScores) => {
+		updatedOn: { $gte: new Date(Date.now() - 900000).toISOString() }}).sort( { updatedOn: -1 } ).then((participantScores) => {
     res.send({participantScores});
   }, (e) => {
     console.log(e);

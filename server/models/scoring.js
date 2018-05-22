@@ -60,6 +60,10 @@ var Scoring = mongoose.model('score', {
     type: String,
 	required: true
 },
+obstaclesCompleted: {
+type: Number,
+required: true
+},
 tiebreaker: {
   type: String,
   required: false
