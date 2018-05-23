@@ -2,16 +2,16 @@ var aggJSON = [];
 var aggIndvJSON = [];
 
 var obstIndex = [{obstID: 1, value: "Water Carry"},
-    {obstID: 2, value: "Ninja Killer"},
-    {obstID: 3, value: "Hangman"},
-    {obstID: 4, value: "Half Dome"},
-    {obstID: 5, value: "Balancing Act"},
+    {obstID: 2, value: "Slippery Wall Monkey"},
+    {obstID: 3, value: "Skyclimb"},
+    {obstID: 4, value: "Circus Maximus"},
+    {obstID: 5, value: "The Destroyer"},
     {obstID: 6, value: "Leap of Faith"},
-    {obstID: 7, value: "Slippery Wall Monkey"},
-    {obstID: 8, value: "Scale the Walls"},
-    {obstID: 9, value: "Circus Maximus"},
-    {obstID: 10, value: "Skyclimb"},
-    {obstID: 11, value: "Rope Cross"},
+    {obstID: 7, value: "Rope Cross"},
+    {obstID: 8, value: "Balancing Act"},
+    {obstID: 9, value: "Half Dome"},
+    {obstID: 10, value: "Hangman"},
+    {obstID: 11, value: "Ninja Killer"},
     {obstID: 12, value: "Over the Moon"}
 ];
 

@@ -138,10 +138,45 @@ function updateF (){
   });
 
 }
+function updateT (){
+  var url = "/scoring?teamScores=true";
+    $(document).ready (function() {
+    $('#results-t').DataTable( {
+      ajax: {
+          url: url,
+          dataSrc: 'teamScores'
+        },
+        scrollY: "500px",
+        scrollCollapse: true,
+        order: [[ 4, "desc" ]],
+        bStateSave: true,
+        paging: false,
+        processing: true,
+        retrieve: true,
+        deferRender: true,
+        language: {
+          emptyTable: "No results recorded"
+        },
+        columns: [
+            { data: 'teamID', title: 'Team' },
+            { data: 'g1', title: 'G1' },
+            { data: 'g2', title: 'G2' },
+            { data: 'g3', title: 'G3'},
+            { data: 'score', title: 'Score',  render: $.fn.dataTable.render.number( ',', '.', 0 )},
+            { data: 'onCourse', title: 'On Course', "defaultContent": "<i>n/a</i>" },
+        ],
+
+    });
+  });
+
+}
+
+
 
 mostRecent();
 updateM();
 updateF();
+updateT();
 updateAll();
 
 //results reload every three minutes (180000ms)

@@ -200,7 +200,7 @@ function updateScore(bibNo,tiebreaker){
            var firstName = participant.firstName;
            var lastName = participant.lastName;
            var teamName = participant.teamID;
-		   var isDavid = participant.isDavid;
+		   	var isDavid = participant.isDavid;
            var participantName = "<a href='/individual/?id=" +personBib+"'>" + lastName + ', ' + firstName+"</a>";
            eventResults.find({bibNo: personBib}).then((events) => {
                var g1 = 0;
@@ -272,7 +272,7 @@ function updateScore(bibNo,tiebreaker){
 				update = {'updatedOn': timestamp,'tiebreaker':tiebreaker}
 				//console.log(bibNo,update);
 			} else {
-				update = {'g1':g1,'g2':g2,'g3':g3,'score':totScore,'updatedOn': timestamp,'progress':progress, 'next': next,'obstaclesCompleted':totEvents}
+				update = {'g1':g1,'g2':g2,'g3':g3,'score':totScore,'updatedOn': timestamp,'progress':progress, 'next': next,'obstaclesCompleted':totEvents, "isDavid":isDavid}
 			}
 			//Scoring.findOneAndUpdate({ bibNo:bibNo }, { $set: {'g1':g1,'g2':g2,'g3':g3,'score':totScore,'updatedOn': timestamp,'progress':progress, 'next': next}} , {returnNewDocument : true}).then((doc) => {
 			Scoring.findOneAndUpdate({ bibNo:bibNo }, { $set: update} , {returnNewDocument : true}).then((doc) => {
@@ -421,7 +421,22 @@ function logEvent(body,res){
           });
           obstResults.save().then((doc) => {
 			//insert call to score calculate function to calculate and update score for bibNo n
-			updateScore(bibNo)
+			if (isDavid === true){
+				console.log('david check in progress')
+				 if (body.success === false || body.tier !== 3){
+					 Participant.findByIdAndUpdate(id, {isDavid: false}, {new: true}).then((participant) => {
+						 updateScore(bibNo)
+				}).catch((e) => {
+						 console.log('Something went wrong.');
+					 })
+				 } else{
+					 updateScore(bibNo)
+				 }
+			} else {
+				updateScore(bibNo)
+			}
+
+			//updateScore(bibNo)
 			// end
             res.send(successfulPost);
           }, (e) => {
@@ -429,15 +444,19 @@ function logEvent(body,res){
             res.status(400).send(e);
           });
         });
-				// update david flag
+				// test if this if firing
+				// update david flag move up to within "obstResults.save().then((doc) => {" and move updateScore to within the participant arrow function
               if (isDavid === true){
+								console.log('david check in progress')
                  if (body.success === false || body.tier !== 3){
                    Participant.findByIdAndUpdate(id, {isDavid: false}, {new: true}).then((participant) => {
                 }).catch((e) => {
                      console.log('Something went wrong.');
                    })
                  }
-              }
+              } else {
+
+							}
 
       }
     })
