@@ -422,7 +422,7 @@ function logEvent(body,res){
           obstResults.save().then((doc) => {
 			//insert call to score calculate function to calculate and update score for bibNo n
 			if (isDavid === true){
-				console.log('david check in progress')
+				//console.log('david check in progress')
 				 if (body.success === false || body.tier !== 3){
 					 Participant.findByIdAndUpdate(id, {isDavid: false}, {new: true}).then((participant) => {
 						 updateScore(bibNo)
@@ -447,7 +447,7 @@ function logEvent(body,res){
 				// test if this if firing
 				// update david flag move up to within "obstResults.save().then((doc) => {" and move updateScore to within the participant arrow function
               if (isDavid === true){
-								console.log('david check in progress')
+							//	console.log('david check in progress')
                  if (body.success === false || body.tier !== 3){
                    Participant.findByIdAndUpdate(id, {isDavid: false}, {new: true}).then((participant) => {
                 }).catch((e) => {
