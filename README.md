@@ -192,7 +192,8 @@ Content-Type :  application/json
 	"location" : "start", //string, mandatory) -- One of "start", "finish", "rope", case sensitive
 	"deviceTime" : "8:28:29 AM", //(string, mandatory) -- timestamp or elapsed time to be written to database
 	"bibFromBand": true, //(boolean, optional) -- BOOLEAN value indicating whether the bibNo was manually entered (false) or scanned (true).
-
+	// for tiebreaker
+	"time": 1.05 // (number, optional) -- elapsed time (as NUMBER) for rope climb tiebreaker
 
 
 }

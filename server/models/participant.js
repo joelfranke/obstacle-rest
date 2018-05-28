@@ -97,7 +97,7 @@ var Participant = mongoose.model('Participant', {
 		default: null
 		},
     time:{
-    type: String,
+    type: Number,
     default: null
     },
 	timestamp:{

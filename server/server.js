@@ -255,7 +255,7 @@ function updateScore(bibNo,tiebreaker){
                  progress:progress,
 								 obstaclesCompleted:totEvents,
 								 next: next,
-								 tiebreaker:"999.99"
+								 tiebreaker: 999.99
           });
           score.save().then((doc) => {
 						if (teamName.length > 0) {
