@@ -458,7 +458,6 @@ function logEvent(body,res){
               } else {
 
 							}
-
       }
     })
     }
@@ -665,19 +664,8 @@ var status404  = ({message: "BibNo not found."})
     res.status(400).send(e);
     });
   }
-	// TEAM SCORING -- ALL 'teamscores' or one team
+	// TEAM SCORING -- ALL 'teamscores'
   else if (teamScores == 'true'){
-		if (ranks == 'true'){
-			// UPDATE THIS
-			console.log('this is where ranks will be returned.')
-				teamScoring.find().sort( { score: -1  } ).then((teamScores) => {
-					res.send({teamScores});
-				}, (e) => {
-					console.log(e);
-					res.status(400).send(e);
-				});
-				//end of what will be updated
-		} else {
 			// get all and send
 				teamScoring.find().sort( { score: -1 } ).then((teamScores) => {
 					res.send({teamScores});
@@ -685,22 +673,85 @@ var status404  = ({message: "BibNo not found."})
 					console.log(e);
 					res.status(400).send(e);
 				});
-		}
-
   }
 
-	else if (team !==undefined){
-
-		status404  = ({message: "Team not found."})
-		teamScoring.find({ teamID: team}).then((teamScores) => {
-			if (!teamScores || teamScores.length == 0) {
-				return res.status(404).send(status404);
+		else if (team !==undefined){
+				status404  = ({message: "Team not found."})
+				//if (ranks == 'true'){
+					// UPDATE THIS
+					//teamScoring.find().sort( { score: -1  } ).then((teamScores) => {
+			teamScoring.aggregate([
+			{ $sort: { score: -1 } },
+			{
+					"$group": {
+							"_id": false,
+							"team": {
+									"$push": {
+											"_id":"$_id",
+											"teamID": "$teamID",
+											"score": "$score",
+											"g1": "$g1",
+											"g2": "$g2",
+											"g3": "$g3",
+											"onCourse": "$onCourse",
+									}
+							}
+					}
+			},
+			{
+					"$unwind": {
+							"path": "$team",
+							"includeArrayIndex": "rank"
+					}
+			},
+			{
+				 "$match": {
+				      "team.teamID": team
+					}
 			}
-	    res.send({teamScores});
-	  }, (e) => {
-	    console.log(e);
-	    res.status(400).send(e);
-	    });
+		]).then((withRanks) => {
+				var rankOffset = withRanks[0].rank + 1
+				var teamScores = [{
+					_id: withRanks[0].team._id,
+					 g1: withRanks[0].team.g1,
+					 g2: withRanks[0].team.g2,
+					 g3: withRanks[0].team.g3,
+					 score: withRanks[0].team.score,
+					 onCourse: withRanks[0].team.onCourse,
+					 teamID: withRanks[0].team.teamID,
+					 rank: rankOffset
+				}]
+
+				//console.log(teamScores)
+				//send results
+				res.send({teamScores});
+		}, (e) => {
+			console.log(e);
+			res.status(400).send(e);
+		});
+
+
+
+//}
+		// 
+		// else {
+		// 	// get one and send
+		// 	teamScoring.find({ teamID: team}).then((teamScores) => {
+		// 		if (!teamScores || teamScores.length == 0) {
+		// 			return res.status(404).send(status404);
+		// 		}
+		//     res.send({teamScores});
+		//   }, (e) => {
+		//     console.log(e);
+		//     res.status(400).send(e);
+		//     });
+		// }
+
+
+
+
+
+
 	}
 	// END TEAM SCORING
 
@@ -784,7 +835,6 @@ app.get('/participant', (req, res) => {
   var bibNo = req.query.bibNo
 	var onTeam = req.query.onTeam
   var key = req.query.k
-	//var rb = req.query.rb
 
 	if (qLastName !==undefined){
       getList = Participant.find({ lastName: qLastName  }).collation( { locale: 'en', strength: 2 } );
