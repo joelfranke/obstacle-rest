@@ -66,7 +66,8 @@ required: true
 },
 tiebreaker: {
   type: String,
-  required: false
+  required: false,
+  default: "999.99"
 },
 next: {
 type: Number,

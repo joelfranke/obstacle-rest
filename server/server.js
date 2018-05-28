@@ -200,7 +200,7 @@ function updateScore(bibNo,tiebreaker){
            var firstName = participant.firstName;
            var lastName = participant.lastName;
            var teamName = participant.teamID;
-		   	var isDavid = participant.isDavid;
+		   		 var isDavid = participant.isDavid;
            var participantName = "<a href='/individual/?id=" +personBib+"'>" + lastName + ', ' + firstName+"</a>";
            eventResults.find({bibNo: personBib}).then((events) => {
                var g1 = 0;
@@ -254,7 +254,8 @@ function updateScore(bibNo,tiebreaker){
 				 			 	updatedOn: timestamp,
                  progress:progress,
 								 obstaclesCompleted:totEvents,
-								 next: next
+								 next: next,
+								 tiebreaker:"999.99"
           });
           score.save().then((doc) => {
 						if (teamName.length > 0) {
@@ -479,6 +480,7 @@ function logEvent(body,res){
       var isDavid = participant.isDavid;
 	  	var bibFromBand = body.bibFromBand;
 			var heat = participant.heat;
+			var ropeTime = body.time;
 
       var update;
      //existing code
@@ -498,17 +500,18 @@ function logEvent(body,res){
             update = {'finishTime.deviceTime': time, 'finishTime.bibFromBand':bibFromBand};
          } else if (location === 'tiebreaker'){
 					 var timestamp = Date.now()
-           update = {'tiebreaker.deviceTime': time, 'tiebreaker.bibFromBand':bibFromBand,'tiebreaker.timestamp':timestamp};
+           update = {'tiebreaker.deviceTime': time, 'tiebreaker.bibFromBand':bibFromBand,'tiebreaker.timestamp':timestamp, 'tiebreaker.time':ropeTime};
          } else {
            res.status(400).send(e);
          }
          //console.log(update);
          //no duplicate handling, will need to be added here
+				 // issue with time vs timestamp vs body.time from POST request
          Participant.findOneAndUpdate({ bibNo:bibNo }, { $set: update }, {returnNewDocument : true}).then((participant) => {
            if (participant){
 			   		if(time){
 							//console.log(bibNo,time)
-								updateScore(bibNo,time)
+								updateScore(bibNo,ropeTime)
 						}
 
              return res.status(200).send(successfulPost);
@@ -651,10 +654,11 @@ var status404  = ({message: "BibNo not found."})
 		var davids = req.query.davids
 		var bibNo = req.query.bibNo
   	var recent = req.query.recent
+		var ranks = req.query.ranks
 
   if (gender !==undefined) {
 	// get by gender
-  Scoring.find({ gender: gender}).limit( 25 ).sort( { score: -1 } ).then((participantScores ) => {
+  Scoring.find({ gender: gender}).limit( 25 ).sort( { score: -1, tiebreaker: 1  } ).then((participantScores ) => {
     res.send({participantScores});
   }, (e) => {
     console.log(e);
@@ -663,19 +667,29 @@ var status404  = ({message: "BibNo not found."})
   }
 	// TEAM SCORING -- ALL 'teamscores' or one team
   else if (teamScores == 'true'){
-	// get all and send
-		teamScoring.find().sort( { score: -1 } ).then((teamScores) => {
-			res.send({teamScores});
-		}, (e) => {
-			console.log(e);
-			res.status(400).send(e);
-		});
+		if (ranks == 'true'){
+			// UPDATE THIS
+			console.log('this is where ranks will be returned.')
+				teamScoring.find().sort( { score: -1  } ).then((teamScores) => {
+					res.send({teamScores});
+				}, (e) => {
+					console.log(e);
+					res.status(400).send(e);
+				});
+				//end of what will be updated
+		} else {
+			// get all and send
+				teamScoring.find().sort( { score: -1 } ).then((teamScores) => {
+					res.send({teamScores});
+				}, (e) => {
+					console.log(e);
+					res.status(400).send(e);
+				});
+		}
+
   }
 
 	else if (team !==undefined){
-		// testing only, remove
-		//updateTeamScore(team)
-		//
 
 		status404  = ({message: "Team not found."})
 		teamScoring.find({ teamID: team}).then((teamScores) => {
@@ -692,7 +706,7 @@ var status404  = ({message: "BibNo not found."})
 
 	else if (onTeam !==undefined){
 		status404  = ({message: "Team not found."})
-		Scoring.find({ teamID: onTeam}).sort( { score: -1 } ).then((participantScores) => {
+		Scoring.find({ teamID: onTeam}).sort( { score: -1, tiebreaker:1 } ).then((participantScores) => {
 			if (!participantScores  || participantScores.length == 0) {
 				return res.status(404).send(status404);
 			}
@@ -706,7 +720,7 @@ var status404  = ({message: "BibNo not found."})
 	Scoring.find({
 			isDavid: true,
 			next: { $gte: 5 }
-		}).sort( { score: -1 } ).then((participantScores) => {
+		}).sort( { score: -1, tiebreaker:1 } ).then((participantScores) => {
     res.send({participantScores});
   }, (e) => {
     console.log(e);
@@ -738,7 +752,7 @@ var status404  = ({message: "BibNo not found."})
   }
   else {
 	  // get all and send
-  Scoring.find().sort( { score: -1 } ).then((participantScores) => {
+  Scoring.find().sort( { score: -1, tiebreaker:1 } ).then((participantScores) => {
     res.send({participantScores});
   }, (e) => {
     console.log(e);
@@ -871,3 +885,4 @@ app.listen(port, () => {
 });
 
 module.exports = {app};
+''
