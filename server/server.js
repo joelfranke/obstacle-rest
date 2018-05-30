@@ -862,6 +862,7 @@ var status404  = ({message: "BibNo not found."})
 														firstName: firstName,
 														 lastName:lastName,
 														gender: gender,
+														bibNo:bibNo,
 														g1:g1,
 														g2:g2,
 														g3:g3,
