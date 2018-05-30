@@ -204,7 +204,7 @@ Supports following parameters, no token required. Only one parameter is consider
 
 	- /scoring?gender={M or F for Male/Female} // Individual, returns scores for either the top 25 Males or Females
 	- /scoring?teamScores=true // Team, (only true is considered, false may be passed but will be ignored); returns scores for all teams
-	- /scoring?team={teamName} // Team, returns scores for a given team
+	- /scoring?team={teamName} // Team, returns scores for a given team. An added field "rank" is passed when this parameter is passed
 	- /scoring?onTeam={teamName} // Individual, returns scores for all members of a given team
 	- /scoring?davids=true //  Individual, (only true is considered, false may be passed but will be ignored); returns scores for all individuals who have successfully completed the first four G3s
 	- /scoring?bibNo={bibNo} // Individual, returns scores for a single individual

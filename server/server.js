@@ -126,44 +126,6 @@ function updateTeamScore(teamID){
 						});
 					//end of female else
 					}
-
-
-
-					//original code
-					// if (newScore == true){
-					//
-					// 	// if this is the first result for the team, write a new score.
-					// 	var score = new teamScoring({
-					// 				 	teamID: teamID,
-					// 					 g1:g1,
-					// 					 g2:g2,
-					// 					 g3:g3,
-					// 					 score:totScore,
-					// 					updatedOn: timestamp
-					// 		});
-					// 		score.save().then((doc) => {
-					// 			//console.log(newScore)
-					// 			newScore == false
-					// 		}, (e) => {
-					// 			console.log(e);
-					// 			//log the error
-					// 		});
-					// } else {
-					// // if this is an update to a team's score, update
-					//
-					// teamScoring.findOneAndUpdate({ teamID:teamID }, { $set: {'g1':g1,'g2':g2,'g3':g3,'score':totScore,'updatedOn': timestamp}} , {returnNewDocument : true}).then((doc) => {
-					//
-					// //console.log(doc)
-					// }, (e) => {
-					// 			console.log(e);
-					// 			//log the error
-					// });
-					//
-					// }
-					//end original code for write score logic
-
-
-					//console.log(g1,g2,g3,totScore,timestamp)
 				})
 
 			// end of else
@@ -201,6 +163,7 @@ function updateScore(bibNo,tiebreaker){
            var lastName = participant.lastName;
            var teamName = participant.teamID;
 		   		 var isDavid = participant.isDavid;
+					 var group = participant.group;
            var participantName = "<a href='/individual/?id=" +personBib+"'>" + lastName + ', ' + firstName+"</a>";
            eventResults.find({bibNo: personBib}).then((events) => {
                var g1 = 0;
@@ -244,6 +207,7 @@ function updateScore(bibNo,tiebreaker){
                  firstName: firstName,
 				 			 	lastName: lastName,
 				 					gender: gender,
+									group: group,
                  bibNo: personBib,
 				 			 	isDavid: isDavid,
                  teamID: teamName,
@@ -552,6 +516,7 @@ function logEvent(body,res){
            email: req.body.email,
            teamID: req.body.teamID,
            gender: req.body.gender,
+					 group: req.body.group,
            birthdate: req.body.birthdate,
            address1: req.body.address1,
            address2: req.body.address2,
@@ -710,6 +675,10 @@ var status404  = ({message: "BibNo not found."})
 					}
 			}
 		]).then((withRanks) => {
+			//added 404 for zero results
+			if (!withRanks  || withRanks.length == 0) {
+				return res.status(404).send(status404);
+			}
 				var rankOffset = withRanks[0].rank + 1
 				var teamScores = [{
 					_id: withRanks[0].team._id,
@@ -729,28 +698,6 @@ var status404  = ({message: "BibNo not found."})
 			console.log(e);
 			res.status(400).send(e);
 		});
-
-
-
-//}
-		// 
-		// else {
-		// 	// get one and send
-		// 	teamScoring.find({ teamID: team}).then((teamScores) => {
-		// 		if (!teamScores || teamScores.length == 0) {
-		// 			return res.status(404).send(status404);
-		// 		}
-		//     res.send({teamScores});
-		//   }, (e) => {
-		//     console.log(e);
-		//     res.status(400).send(e);
-		//     });
-		// }
-
-
-
-
-
 
 	}
 	// END TEAM SCORING
@@ -780,11 +727,195 @@ var status404  = ({message: "BibNo not found."})
  }
 	else if (bibNo !==undefined){
 		//console.log(bibNo)
-		Scoring.find({ bibNo: bibNo}).then((participantScores) => {
-			if (!participantScores || participantScores.length == 0) {
+		Scoring.find({ bibNo: bibNo}).then((individualScores) => {
+			if (!individualScores || individualScores.length == 0) {
 				return res.status(404).send(status404);
 			}
-	    res.send({participantScores});
+			individualScores = individualScores[0]
+			// insert aggregation pipeline and scoring request here based on values of participant scores
+			//start with scores from participantScores, then pull ranks/counts to create the master object that is sent
+			//should benchmark performance before changing code
+			// start testing
+				var id = individualScores._id
+				var firstName = individualScores.firstName
+				var lastName = individualScores.lastName
+				var gender = individualScores.gender
+				var g1 = individualScores.g1
+				var g2 = individualScores.g2
+				var g3 = individualScores.g3
+				var score = individualScores.score
+				var progress = individualScores.progress
+				var next = individualScores.next
+				var tiebreaker = individualScores.tiebreaker
+				var isDavid = individualScores.isDavid
+				var teamID = individualScores.teamID
+				var group = individualScores.group
+				var participant = individualScores.participant
+
+						// get rank from all scores
+						Scoring.aggregate([
+
+							{ $sort: { score: -1, tiebreaker:1 } },
+								{
+										"$group": {
+											"_id": false,
+											"count":{$sum:1},
+											"participant": {
+												"$push": {
+													"_id":"$_id",
+													"bibNo": "$bibNo"
+												}
+											}
+										}
+									},
+							{
+								"$unwind": {
+									"path": "$participant",
+									"includeArrayIndex": "rank"
+								}
+							},
+								{
+									"$match": {
+										"participant.bibNo": Number(bibNo)
+									}
+								}
+							]).then((totalRank) => {
+									var rank = totalRank[0].rank + 1
+									var rankCount = totalRank[0].count
+
+									// get rank by gender
+									Scoring.aggregate([
+										// use this for gender match
+										{
+											$match: {
+												gender: gender
+											}
+										},
+										{ $sort: { score: -1, tiebreaker:1 } },
+											{
+													"$group": {
+														"_id": false,
+														"genderCount":{$sum:1},
+														"participant": {
+															"$push": {
+																"_id":"$_id",
+																"bibNo": "$bibNo"
+															}
+														}
+													}
+												},
+										{
+											"$unwind": {
+												"path": "$participant",
+												"includeArrayIndex": "genderRank"
+											}
+										},
+											{
+												"$match": {
+													"participant.bibNo": Number(bibNo)
+												}
+											}
+										]).then((genderRank) => {
+											var sexRank = genderRank[0].genderRank + 1
+											var sexRankCount = genderRank[0].genderCount
+											//console.log(sexRank,sexRankCount)
+											//get rank by group
+											Scoring.aggregate([
+
+												//use this for group match
+												{
+												"$match": {
+												group: group
+												}
+												},
+
+												{ $sort: { score: -1, tiebreaker:1 } },
+													{
+															"$group": {
+																"_id": false,
+																"groupcount":{$sum:1},
+																"participant": {
+																	"$push": {
+																		"_id":"$_id",
+																		"bibNo": "$bibNo"
+																	}
+																}
+															}
+														},
+												{
+													"$unwind": {
+														"path": "$participant",
+														"includeArrayIndex": "grouprank"
+													}
+												},
+													{
+														"$match": {
+															"participant.bibNo": Number(bibNo)
+														}
+													}
+												]).then((groupingRank) => {
+													var groupRank = groupingRank[0].grouprank + 1
+													var groupRankCount = groupingRank[0].groupcount
+													//console.log(groupRank,groupRankCount)
+													var participantScores = [{
+													 	_id:id,
+														firstName: firstName,
+														 lastName:lastName,
+														gender: gender,
+														g1:g1,
+														g2:g2,
+														g3:g3,
+														score:score,
+														progress:progress,
+														next:next,
+														tiebreaker:tiebreaker,
+														isDavid:isDavid,
+														teamID:teamID,
+														group:group,
+														participant:participant,
+														rank:rank,
+														rankCount:rankCount,
+														sexRank:sexRank,
+														sexRankCount:sexRankCount,
+														groupRank:groupRank,
+														groupRankCount:groupRankCount
+
+													 }]
+
+													console.log(participantScores)
+													//send results
+													res.send({participantScores})
+
+
+												}, (e) => {
+													console.log(e);
+												})
+
+
+										}, (e) => {
+											console.log(e);
+										})
+									// var participantScores = [{
+									// 	_id: withRanks[0].team._id,
+									// 	 g1: withRanks[0].team.g1,
+									// 	 g2: withRanks[0].team.g2,
+									// 	 g3: withRanks[0].team.g3,
+									// 	 score: withRanks[0].team.score,
+									// 	 onCourse: withRanks[0].team.onCourse,
+									// 	 teamID: withRanks[0].team.teamID,
+									// 	 rank: rankOffset
+									// }]
+
+									//console.log(teamScores)
+									//send results
+									//res.send({teamScores});
+							}, (e) => {
+								console.log(e);
+							})
+//end testing
+
+
+	    //res.send({participantScores});
 	  }, (e) => {
 	    console.log(e);
 	    res.status(400).send(e);

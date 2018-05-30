@@ -71,6 +71,10 @@ var Participant = mongoose.model('Participant', {
     type: String,
     default: null
   },
+  group: {
+    type: String,
+    default: null
+  },
   startTime: {
 	deviceTime:{
 		type: String,

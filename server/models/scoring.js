@@ -23,6 +23,10 @@ var Scoring = mongoose.model('score', {
   gender: {
     type: String
   },
+  group: {
+    type: String,
+    default: null
+  },
   teamID: {
     type: String,
     required: false,
