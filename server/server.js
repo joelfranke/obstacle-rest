@@ -883,7 +883,7 @@ var status404  = ({message: "BibNo not found."})
 
 													 }]
 
-													console.log(participantScores)
+													//console.log(participantScores)
 													//send results
 													res.send({participantScores})
 
