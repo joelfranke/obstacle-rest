@@ -745,6 +745,7 @@ var status404  = ({message: "BibNo not found."})
 				var teamID = individualScores.teamID
 				var group = individualScores.group
 				var participant = individualScores.participant
+				var obstaclesCompleted = individualScores.obstaclesCompleted
 
 						// get rank from all scores
 						Scoring.aggregate([
@@ -867,6 +868,7 @@ var status404  = ({message: "BibNo not found."})
 														isDavid:isDavid,
 														teamID:teamID,
 														group:group,
+														obstaclesCompleted:obstaclesCompleted,
 														participant:participant,
 														rank:rank,
 														rankCount:rankCount,
