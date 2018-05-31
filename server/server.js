@@ -25,17 +25,6 @@ var invalidToken = ({message: "Invalid or missing token."});
 var app = express();
 
 
- // function allScores(){
-	//  eventResults.distinct("bibNo").then((event) => {
-	// 	 var uniqueBib = event.length;
-	// 	 for(var bib in event){
-	// 		 updateScore(event[bib])
-	// 	 }
-	//  })
- //
- // }
-
-
 function updateTeamScore(teamID){
 
 	var newScore
@@ -149,7 +138,7 @@ function updateScore(bibNo,tiebreaker){
   });
 	eventResults.find({bibNo: bibNo}).then((results) => {
     if (!results || results.length == 0) {
-      console.log(bibNo, 'Invalid bibNo passed to scoring function')
+      //console.log(bibNo, 'Invalid bibNo passed to scoring function')
     }
 	//
 	// start of getting all participant data
@@ -166,6 +155,7 @@ function updateScore(bibNo,tiebreaker){
 					 var group = participant.group;
            var participantName = "<a href='/individual/?id=" +personBib+"'>" + lastName + ', ' + firstName+"</a>";
            eventResults.find({bibNo: personBib}).then((events) => {
+
                var g1 = 0;
                var g2 = 0;
                var g3 = 0;
@@ -200,7 +190,13 @@ function updateScore(bibNo,tiebreaker){
                  progress = totEvents + '/12';
 								 next = totEvents + 1
                }
+
 			if (newScore == true){
+				if (tiebreaker){
+					tiebreaker = tiebreaker
+				} else {
+					tiebreaker = 999.99
+				}
 				// if this is the first result for the participant, write a new score.
 				var score = new Scoring({
 							participant: participantName,
@@ -219,7 +215,7 @@ function updateScore(bibNo,tiebreaker){
                  progress:progress,
 								 obstaclesCompleted:totEvents,
 								 next: next,
-								 tiebreaker: 999.99
+								 tiebreaker: tiebreaker
           });
           score.save().then((doc) => {
 						if (teamName.length > 0) {
@@ -472,11 +468,9 @@ function logEvent(body,res){
 				 // issue with time vs timestamp vs body.time from POST request
          Participant.findOneAndUpdate({ bibNo:bibNo }, { $set: update }, {returnNewDocument : true}).then((participant) => {
            if (participant){
-			   		if(time){
-							//console.log(bibNo,time)
+			   			if(ropeTime){
 								updateScore(bibNo,ropeTime)
-						}
-
+							}
              return res.status(200).send(successfulPost);
            }
            }).catch((e) => {
@@ -883,7 +877,6 @@ var status404  = ({message: "BibNo not found."})
 
 													 }]
 
-													//console.log(participantScores)
 													//send results
 													res.send({participantScores})
 
@@ -978,11 +971,6 @@ app.get('/participant', (req, res) => {
 	else if (onTeam !== undefined){
     getList = Participant.find({ teamID: onTeam  });
   }
-	// //temp function, remove!
-	// else if (rb == 'true'){
-	// 	allScores()
-	// 	return res.status(200).send({message: 'scoring calc in progress'});
-	// }
   else {
 		getList = Participant.find();
 	}
