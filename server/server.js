@@ -1022,7 +1022,7 @@ app.post('/registration', (req, res) => {
     }
   });
 
-//test /timing Endpoint
+//timing Endpoint
 app.post('/timing', (req, res) => {
     var key = req.query.k
     var body = req.body
@@ -1046,6 +1046,17 @@ app.post('/timing', (req, res) => {
       return res.status(401).send(invalidToken);
     }
   });
+
+//get rope climb times Endpoint
+app.get('/timing', (req, res) => {
+	Scoring.find({$and:[ { tiebreaker: { $ne: 999.99 } }, { tiebreaker: { $ne: null } } ] } ).sort( { tiebreaker: 1 } ).then((participants) => {
+		res.send({participants});
+	}, (e) => {
+    console.log(e);
+    res.status(400).send(e);
+    });
+})
+
 
 // Binds the root directory to display html results page
 app.use('/', express.static(path.join(__dirname, 'reporting')))
