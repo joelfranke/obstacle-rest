@@ -456,7 +456,7 @@ function logEvent(body,res){
          if (location === 'start'){
            update = {'startTime.deviceTime': time, 'startTime.bibFromBand':bibFromBand};
          } else if (location === 'finish'){
-            update = {'finishTime.deviceTime': time, 'finishTime.bibFromBand':bibFromBand};
+            update = {'finishTime.deviceTime': time, 'finishTime.bibFromBand':bibFromBand, 'progress':'Course Complete', 'obstaclesCompleted': 12};
          } else if (location === 'tiebreaker'){
 					 var timestamp = Date.now()
            update = {'tiebreaker.deviceTime': time, 'tiebreaker.bibFromBand':bibFromBand,'tiebreaker.timestamp':timestamp, 'tiebreaker.time':ropeTime};
