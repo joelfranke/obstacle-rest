@@ -660,14 +660,17 @@ var status404  = ({message: "BibNo not found."})
 						}
 					},
 					{$match: 
-						{"team.teamID": team
+						{
+							"team.teamID": team
 						}
 					}
 					]//,// added comma                
-					//{ cursor: {} } 
-			).allowDiskUse(true).then((withRanks) => {
+					//{ //
+					//	cursor: {} // added cursor  
+					//}//
+			).allowDiskUse(true)//better memory handling
+			.then((withRanks) => {
 			//added 404 for zero results
-			console.log(withRanks)
 			if (!withRanks  || withRanks.length == 0) {
 				return res.status(404).send(status404);
 			}
@@ -680,7 +683,7 @@ var status404  = ({message: "BibNo not found."})
 					 score: withRanks[0].team.score,
 					 onCourse: withRanks[0].team.onCourse,
 					 teamID: withRanks[0].team.teamID,
-					 rank: rankOffset
+				 rank: rankOffset
 				}]
 
 				//console.log(teamScores)
