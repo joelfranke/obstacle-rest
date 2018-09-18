@@ -641,7 +641,7 @@ var status404  = ({message: "BibNo not found."})
 					{$group: {
 							_id: false,
 							team: {
-									$push: {
+									$push: { 
 											_id:"$_id",
 											teamID: "$teamID",
 											score: "$score",
@@ -663,9 +663,9 @@ var status404  = ({message: "BibNo not found."})
 						{"team.teamID": team
 						}
 					}
-					],// added comma                
-					{ cursor: {} }
-			).then((withRanks) => {
+					]//,// added comma                
+					//{ cursor: {} } 
+			).allowDiskUse(true).then((withRanks) => {
 			//added 404 for zero results
 			console.log(withRanks)
 			if (!withRanks  || withRanks.length == 0) {
