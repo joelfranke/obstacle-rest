@@ -456,7 +456,7 @@ function logEvent(body,res){
          if (location === 'start'){
            update = {'startTime.deviceTime': time, 'startTime.bibFromBand':bibFromBand};
          } else if (location === 'finish'){
-            update = {'finishTime.deviceTime': time, 'finishTime.bibFromBand':bibFromBand, 'progress':'Course Complete', 'obstaclesCompleted': 12};
+            update = {'finishTime.deviceTime': time, 'finishTime.bibFromBand':bibFromBand, 'progress':'Course Complete' };
          } else if (location === 'tiebreaker'){
 					 var timestamp = Date.now()
            update = {'tiebreaker.deviceTime': time, 'tiebreaker.bibFromBand':bibFromBand,'tiebreaker.timestamp':timestamp, 'tiebreaker.time':ropeTime};
@@ -611,12 +611,20 @@ var status404  = ({message: "BibNo not found."})
 		var onTeam = req.query.onTeam
 		var davids = req.query.davids
 		var bibNo = req.query.bibNo
-  	var recent = req.query.recent
+		var recent = req.query.recent
 		var ranks = req.query.ranks
+		var limit = req.query.limit
+		if (limit !== undefined) {
+			n = Number(limit)
+		} else {
+			n=25
+		}
+		
+console.log(n, limit)
 
   if (gender !==undefined) {
 	// get by gender
-  Scoring.find({ gender: gender}).limit( 25 ).sort( { score: -1, tiebreaker: 1  } ).then((participantScores ) => {
+  Scoring.find({ gender: gender}).limit( n ).sort( { score: -1, tiebreaker: 1  } ).then((participantScores ) => {
     res.send({participantScores});
   }, (e) => {
     console.log(e);
