@@ -636,40 +636,40 @@ var status404  = ({message: "BibNo not found."})
 
 		else if (team !==undefined){
 				status404  = ({message: "Team not found."})
-				//if (ranks == 'true'){
-					// UPDATE THIS
-					//teamScoring.find().sort( { score: -1  } ).then((teamScores) => {
-			teamScoring.aggregate([
-			{ $sort: { score: -1 } },
-			{
-					"$group": {
-							"_id": false,
-							"team": {
-									"$push": {
-											"_id":"$_id",
-											"teamID": "$teamID",
-											"score": "$score",
-											"g1": "$g1",
-											"g2": "$g2",
-											"g3": "$g3",
-											"onCourse": "$onCourse",
+				teamScoring.aggregate([
+					{$sort: { score: -1 } },
+					{$group: {
+							_id: false,
+							team: {
+									$push: {
+											_id:"$_id",
+											teamID: "$teamID",
+											score: "$score",
+											g1: "$g1",
+											g2: "$g2",
+											g3: "$g3",
+											onCourse: "$onCourse"
+											}
 									}
 							}
+					},
+					{$unwind: 
+						{
+							path: "$team",
+							includeArrayIndex: "rank"
+						}
+					},
+					{$match: 
+						{"team.teamID": team
+						}
 					}
-			},
-			{
-					"$unwind": {
-							"path": "$team",
-							"includeArrayIndex": "rank"
-					}
-			},
-			{
-				 "$match": {
-				      "team.teamID": team
-					}
-			}
-		]).then((withRanks) => {
+					],// added comma                
+					{
+                       cursor: { batchSize: 0 }
+                     } 		
+			).then((withRanks) => {
 			//added 404 for zero results
+			console.log(withRanks)
 			if (!withRanks  || withRanks.length == 0) {
 				return res.status(404).send(status404);
 			}

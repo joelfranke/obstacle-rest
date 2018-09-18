@@ -16,7 +16,7 @@
     "compression": "^1.7.2",
     "express": "^4.14.0",
     "lodash": "^4.15.0",
-    "mongodb": "^2.2.5",
-    "mongoose": "^4.5.9"
+    "mongodb": "^2.2",
+    "mongoose": "^4"
   }
 }
