@@ -663,11 +663,8 @@ var status404  = ({message: "BibNo not found."})
 						{"team.teamID": team
 						}
 					}
-					]//,// added comma                
-					//{
-                    //   cursor: { batchSize: 0 }
-                    // }
-			//).allowDiskUse(true).cursor({batchSize : 1000}).then((withRanks) => {
+					],// added comma                
+					{ cursor: {} }
 			).then((withRanks) => {
 			//added 404 for zero results
 			console.log(withRanks)
