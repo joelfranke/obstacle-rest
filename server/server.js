@@ -1065,6 +1065,49 @@ app.get('/timing', (req, res) => {
     });
 })
 
+app.get('/teams', (req, res) => {
+	var team = req.query.id
+	if (team === undefined ) {
+	Participant.aggregate( 
+            [            	{
+			"$match": {"teamID": { "$exists": true, "$nin": [ null, "" ] },
+						"heat": { "$exists": true, "$nin": [ null, "" ] }}},
+                {"$group": { "_id":{ teamID: "$teamID", heat: "$heat"  },
+                   "count":  {"$sum":1}}}   
+            ]
+        )
+	.then((teams) => {
+		res.send({teams});
+	}, (e) => {
+		console.log(e);
+		res.status(400).send(e);
+    });
+	} else {
+		Participant.find({teamID: team}).then((result) => {
+		if (!result || result.length == 0) {
+			return res.status(404).send(status404);
+		} else {
+		Participant.aggregate( 
+            [{
+				"$match": {
+                    "teamID": team
+                    }
+				},
+                {"$group": { "_id":{ teamID: "$teamID", heat: "$heat"  },
+                   "count":  {"$sum":1}}} 
+            ]
+        )
+	.then((teams) => {
+		res.send({teams});
+	}, (e) => {
+		console.log(e);
+		res.status(400).send(e);
+			});
+		} 		
+	  })
+	}	
+})
+
 
 // Binds the root directory to display html results page
 app.use('/', express.static(path.join(__dirname, 'reporting')))
