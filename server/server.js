@@ -620,7 +620,7 @@ var status404  = ({message: "BibNo not found."})
 			n=25
 		}
 		
-console.log(n, limit)
+//console.log(n, limit)
 
   if (gender !==undefined) {
 	// get by gender
