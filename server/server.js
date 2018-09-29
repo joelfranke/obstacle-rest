@@ -720,7 +720,7 @@ console.log(n, limit)
 	else if (davids == 'true'){
 	Scoring.find({
 			isDavid: true,
-			next: { $gte: 5 }
+			next: { $gte: 4 }
 		}).sort( { score: -1, tiebreaker:1 } ).then((participantScores) => {
     res.send({participantScores});
   }, (e) => {
