@@ -29,6 +29,33 @@
                 });
       </script>
 <style>
+.tooltip {
+    position: relative;
+    display: inline-block;
+    border-bottom: 1px dotted black;
+}
+
+.tooltip .tooltiptext {
+    visibility: hidden;
+    width: 400px;
+    background-color: grey;
+    color: #fff;
+    text-align: left;
+    border-radius: 6px;
+    padding: 5px;
+
+    /* Position the tooltip */
+    position: absolute;
+    z-index: 1;
+    top: -5px;
+    left: 105%;
+}
+
+.tooltip:hover .tooltiptext {
+    visibility: visible;
+}
+
+
 	  #datatable-recent {
     float: left;
     border: 3px solid #47a942;
@@ -90,7 +117,24 @@ padding-right:20px;
     <div id="appStore"><a href="https://itunes.apple.com/us/app/goliathon/id1373209962?mt=8" style="display:inline-block;overflow:hidden;background:url(https://linkmaker.itunes.apple.com/assets/shared/badges/en-us/appstore-lrg.svg) no-repeat;width:135px;height:40px;background-size:contain;"></a>
 </div>
 <div><p>This dashboard displays the real-time event results for Goliathon X on October 13, 2018. This results page is automatically refreshed every three (3) minutes. <a href="#images">(jump to all)</a></p></div>
-<div><p>These results will be available until the end of October and will then be available <a href="http://www.goliathon.com/results" target="_blank">here</a>, where all past event results are archived.</p></div>
+<div><p>These results will be available until the end of October and will then be available <a href="http://www.goliathon.com/results" target="_blank">here</a>, where all past event results are archived. <div class="tooltip">How does scoring work?
+  <span class="tooltiptext">Scores are calculated for all individuals and qualifying teams. All teams registered with a minimum of three females and three males will be automatically enrolled in our team competition. Once enrolled, your team will be scored based on your obstacle success rate. When you and your team members arrive at a tiered Goliathon obstacle, each of you must choose the tier that you believe will most help your team.<br>
+<br>
+Successful completion of a G3 obstacle earns you (and your team) 5 points.
+<br>
+Successful completion of a G2 obstacle earns you (and your team) 3 points.
+<br>
+Successful completion of a G1 obstacle earns you (and your team) 1 point.
+<br><br>
+No points are given for an unsuccessful attempt, and only one attempt per individual, per obstacle, unless otherwise noted on the course.
+
+
+<br>
+<br>
+We will total up the points earned by the top three females and top three males from each team. Prizes will be awarded to the top three teams.</span>
+</div></p></div>
+
+
     <div id="reporting-tables">
 		<div id="datatable-m">
 			<p>Males</p>
