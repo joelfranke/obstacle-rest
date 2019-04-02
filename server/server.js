@@ -553,7 +553,7 @@ app.use(compression());
 
 // Endpoint for POSTing results from tracker app
 app.post('/post-result', (req, res) => {
-  var key = req.query.k
+  var key = req.headers.k
   var body = req.body
 
   if (key !==undefined) {
@@ -619,7 +619,7 @@ var status404  = ({message: "BibNo not found."})
 		} else {
 			n=25
 		}
-		
+
 //console.log(n, limit)
 
   if (gender !==undefined) {
@@ -649,7 +649,7 @@ var status404  = ({message: "BibNo not found."})
 					{$group: {
 							_id: false,
 							team: {
-									$push: { 
+									$push: {
 											_id:"$_id",
 											teamID: "$teamID",
 											score: "$score",
@@ -661,20 +661,20 @@ var status404  = ({message: "BibNo not found."})
 									}
 							}
 					},
-					{$unwind: 
+					{$unwind:
 						{
 							path: "$team",
 							includeArrayIndex: "rank"
 						}
 					},
-					{$match: 
+					{$match:
 						{
 							"team.teamID": team
 						}
 					}
-					]//,// added comma                
+					]//,// added comma
 					//{ //
-					//	cursor: {} // added cursor  
+					//	cursor: {} // added cursor
 					//}//
 			).allowDiskUse(true)//better memory handling
 			.then((withRanks) => {
@@ -970,7 +970,9 @@ app.get('/participant', (req, res) => {
   var birth = req.query.bday
   var bibNo = req.query.bibNo
 	var onTeam = req.query.onTeam
-  var key = req.query.k
+  var key = req.headers.k
+	//var headerKey = req.headers.k
+	console.log(key)
 
 	if (qLastName !==undefined){
       getList = Participant.find({ lastName: qLastName  }).collation( { locale: 'en', strength: 2 } );
@@ -1007,7 +1009,7 @@ app.get('/participant', (req, res) => {
 
 // Endpoint for POSTing new registrations to participant db
 app.post('/registration', (req, res) => {
-    var key = req.query.k
+    var key = req.headers.k
     var body = req.body
 
     if (key !==undefined) {
@@ -1032,7 +1034,7 @@ app.post('/registration', (req, res) => {
 
 //timing Endpoint
 app.post('/timing', (req, res) => {
-    var key = req.query.k
+    var key = req.headers.k
     var body = req.body
 
     if (key !==undefined) {
@@ -1068,12 +1070,12 @@ app.get('/timing', (req, res) => {
 app.get('/teams', (req, res) => {
 	var team = req.query.id
 	if (team === undefined ) {
-	Participant.aggregate( 
+	Participant.aggregate(
             [            	{
 			"$match": {"teamID": { "$exists": true, "$nin": [ null, "" ] },
 						"heat": { "$exists": true, "$nin": [ null, "" ] }}},
                 {"$group": { "_id":{ teamID: "$teamID", heat: "$heat"  },
-                   "count":  {"$sum":1}}}   
+                   "count":  {"$sum":1}}}
             ]
         )
 	.then((teams) => {
@@ -1087,14 +1089,14 @@ app.get('/teams', (req, res) => {
 		if (!result || result.length == 0) {
 			return res.status(404).send(status404);
 		} else {
-		Participant.aggregate( 
+		Participant.aggregate(
             [{
 				"$match": {
                     "teamID": team
                     }
 				},
                 {"$group": { "_id":{ teamID: "$teamID", heat: "$heat"  },
-                   "count":  {"$sum":1}}} 
+                   "count":  {"$sum":1}}}
             ]
         )
 	.then((teams) => {
@@ -1103,9 +1105,9 @@ app.get('/teams', (req, res) => {
 		console.log(e);
 		res.status(400).send(e);
 			});
-		} 		
+		}
 	  })
-	}	
+	}
 })
 
 
