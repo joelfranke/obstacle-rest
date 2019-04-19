@@ -30,6 +30,16 @@ var Participant = mongoose.model('Participant', {
     required: false,
     default: null
   },
+  startHeat: {
+    type: String,
+    required: false,
+    default: null
+  },
+  courseTimeLimit: {
+    type: String,
+    required: false,
+    default: null
+  },
   birthdate: {
     type: String,
     required: true,

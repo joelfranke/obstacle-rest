@@ -8,6 +8,7 @@ const bodyParser = require('body-parser');
 const {ObjectID} = require('mongodb');
 const path = require('path');
 const compression = require('compression');
+let timeDate = require('date-and-time');
 
 var {mongoose} = require('./db/mongoose');
 var {Participant} = require('./models/participant');
@@ -307,11 +308,31 @@ function logEvent(body,res){
       var bibNo = participant.bibNo;
       var obstID = body.obstID;
 
+
+
+			//start testing
+			var deviceTime= body.deviceTime.replace('AM','a.m.')
+			deviceTime=deviceTime.replace('PM','p.m.')
+			var courseTimeLimit = participant.courseTimeLimit;
+
+
+			scanTime = timeDate.parse(deviceTime,'h:mm:ss A', false)
+			if(Date.parse(scanTime)<Date.parse(courseTimeLimit)){
+				countScore=true
+				secondsRemaining= (Date.parse(courseTimeLimit)-Date.parse(scanTime))/1000
+			} else{
+				countScore=false
+				secondsRemaining=0
+			}
+			//end testing
+
+
       var successfulPost = ({
         message: `${firstName}`,
         bibNo: `${bibNo}`,
         obstID: `${obstID}`,
-		tier: `${body.tier}`,
+				tier: `${body.tier}`,
+				secondsRemaining:`${secondsRemaining}`
       });
 
    if (!participant) {
@@ -329,6 +350,8 @@ function logEvent(body,res){
           //update this with the actual req.body.* fields incl timestamp
           eventResults.findByIdAndUpdate(duplicate._id, {success: body.success, timestamp: timestamp, tier: body.tier}, {new: true}).then((doc) => {
             //insert call to score calculate function to calculate and update score for bibNo n
+
+			// no courseTimeLimit check required for this edge case since the prevailing assumption is that the two minutes never happend.
 			updateScore(bibNo)
 			// end
 			//need to send to an update david function
@@ -361,7 +384,6 @@ function logEvent(body,res){
                   res.status(400).send(e);
                 });
       }
-
         // end of duplicate handler
       }
       // start of new result logging
@@ -391,10 +413,16 @@ function logEvent(body,res){
 						 console.log('Something went wrong.');
 					 })
 				 } else{
-					 updateScore(bibNo)
+					 if(countScore==true){
+					 	updateScore(bibNo)
+					}
+					 //updateScore(bibNo)
 				 }
 			} else {
-				updateScore(bibNo)
+				if(countScore==true){
+					updateScore(bibNo)
+				}
+				//updateScore(bibNo)
 			}
 
 			//updateScore(bibNo)
@@ -407,6 +435,7 @@ function logEvent(body,res){
         });
 				// test if this if firing
 				// update david flag move up to within "obstResults.save().then((doc) => {" and move updateScore to within the participant arrow function
+				// make sure this also considers and time is under four hours
               if (isDavid === true){
 							//	console.log('david check in progress')
                  if (body.success === false || body.tier !== 3){
@@ -430,6 +459,7 @@ function logEvent(body,res){
    //log time function
    function logTime(body,res){
     var status404  = ({message: "BibNo not found.", bibNo: body.bibNo, obstID: body.location});
+		var status500  = ({message: "Something went wrong processing this request.", bibNo: body.bibNo, obstID: body.location});
     Participant.findOne({bibNo: body.bibNo}).then((participant) => {
       var id = participant.id;
       var bibNo = participant.bibNo;
@@ -454,7 +484,42 @@ function logEvent(body,res){
         return res.status(404).send(status404);
        } else {
          if (location === 'start'){
-           update = {'startTime.deviceTime': time, 'startTime.bibFromBand':bibFromBand};
+					 // start of new code https://trello.com/c/0vlmzDx5/106-time-limit-for-scores
+					 // original code
+
+
+					 // add update/calculate courseTimeLimit value
+					 // transform time from AM to a.m. format
+					 time = time.replace('AM','a.m.')
+					 time = time.replace('PM','p.m.')
+					 heat = heat.replace(' AM',':00 a.m.')
+					 heat = heat.replace(' PM',':00 p.m.')
+
+					 scanTime = timeDate.parse(time,'h:mm:ss A', false)
+					 heatTime = timeDate.parse(heat,'h:mm:ss A', false)
+					 //console.log(scanTime,heatTime)
+					// console.log(timeDate.addMinutes(heatTime,2))
+					 heatDiff = (timeDate.addMinutes(heatTime,2)-scanTime)/60000
+					 //console.log(heatDiff)
+					 if(heatDiff>15 || heatDiff<0){
+						 console.log('revise heat time')
+						 //revise startHeat to correct heat time then
+
+						 // get correct heat time
+
+
+						 //set course time limit and new heat time
+						  update = {'startTime.deviceTime': time, 'startTime.bibFromBand':bibFromBand, 'startHeat':heatTime, 'courseTimeLimit':courseTimeLimit};
+					 } else{
+						 //set startHeat parameter with current heat assignment
+						 //set course time limit
+						 courseTimeLimit = timeDate.addHours(heatTime,4)
+						// console.log(courseTimeLimit)
+						 update = {'startTime.deviceTime': time, 'startTime.bibFromBand':bibFromBand, 'startHeat':heatTime, 'courseTimeLimit':courseTimeLimit};
+					 }
+
+
+					 // end of new code
          } else if (location === 'finish'){
             update = {'finishTime.deviceTime': time, 'finishTime.bibFromBand':bibFromBand, 'progress':'Course Complete' };
          } else if (location === 'tiebreaker'){
@@ -480,7 +545,8 @@ function logEvent(body,res){
          }
 
    ).catch((e) => {
-   res.status(404).send(status404);
+		 //throw 500 error if something goes wrong
+   	res.status(500).send(status500);
    });
    }
 
@@ -571,8 +637,8 @@ app.post('/post-result', (req, res) => {
     ;}
     else {
       //invert comments below to make token optional/mandatory
-      logEvent(body,res)
-    //return res.status(401).send(invalidToken);
+    	//  logEvent(body,res)
+    return res.status(401).send(invalidToken);
   }
 });
 
@@ -672,10 +738,7 @@ var status404  = ({message: "BibNo not found."})
 							"team.teamID": team
 						}
 					}
-					]//,// added comma
-					//{ //
-					//	cursor: {} // added cursor
-					//}//
+					]
 			).allowDiskUse(true)//better memory handling
 			.then((withRanks) => {
 			//added 404 for zero results
@@ -694,7 +757,6 @@ var status404  = ({message: "BibNo not found."})
 				 rank: rankOffset
 				}]
 
-				//console.log(teamScores)
 				//send results
 				res.send({teamScores});
 		}, (e) => {
@@ -860,7 +922,6 @@ var status404  = ({message: "BibNo not found."})
 												]).then((groupingRank) => {
 													var groupRank = groupingRank[0].grouprank + 1
 													var groupRankCount = groupingRank[0].groupcount
-													//console.log(groupRank,groupRankCount)
 													var participantScores = [{
 													 	_id:id,
 														firstName: firstName,
@@ -900,20 +961,7 @@ var status404  = ({message: "BibNo not found."})
 										}, (e) => {
 											console.log(e);
 										})
-									// var participantScores = [{
-									// 	_id: withRanks[0].team._id,
-									// 	 g1: withRanks[0].team.g1,
-									// 	 g2: withRanks[0].team.g2,
-									// 	 g3: withRanks[0].team.g3,
-									// 	 score: withRanks[0].team.score,
-									// 	 onCourse: withRanks[0].team.onCourse,
-									// 	 teamID: withRanks[0].team.teamID,
-									// 	 rank: rankOffset
-									// }]
 
-									//console.log(teamScores)
-									//send results
-									//res.send({teamScores});
 							}, (e) => {
 								console.log(e);
 							})
@@ -972,7 +1020,6 @@ app.get('/participant', (req, res) => {
 	var onTeam = req.query.onTeam
   var key = req.headers.k
 	//var headerKey = req.headers.k
-	console.log(key)
 
 	if (qLastName !==undefined){
       getList = Participant.find({ lastName: qLastName  }).collation( { locale: 'en', strength: 2 } );
