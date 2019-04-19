@@ -437,8 +437,8 @@ function logEvent(body,res){
 				// update david flag move up to within "obstResults.save().then((doc) => {" and move updateScore to within the participant arrow function
 				// make sure this also considers and time is under four hours
               if (isDavid === true){
-							//	console.log('david check in progress')
-                 if (body.success === false || body.tier !== 3){
+
+                 if (countScore === false || (body.success === false || body.tier !== 3)){
                    Participant.findByIdAndUpdate(id, {isDavid: false}, {new: true}).then((participant) => {
                 }).catch((e) => {
                      console.log('Something went wrong.');
