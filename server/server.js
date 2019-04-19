@@ -139,7 +139,6 @@ function updateScore(bibNo,tiebreaker){
   });
 	eventResults.find({bibNo: bibNo}).then((results) => {
     if (!results || results.length == 0) {
-      //console.log(bibNo, 'Invalid bibNo passed to scoring function')
     }
 	//
 	// start of getting all participant data
@@ -263,8 +262,6 @@ function updateScore(bibNo,tiebreaker){
   //  res.status(400).send(e);
   });
 }
-
-
 
 // start of function block
 function checkAuth(token) {
@@ -433,9 +430,9 @@ function logEvent(body,res){
             res.status(400).send(e);
           });
         });
-				// test if this if firing
+
 				// update david flag move up to within "obstResults.save().then((doc) => {" and move updateScore to within the participant arrow function
-				// make sure this also considers and time is under four hours
+
               if (isDavid === true){
 
                  if (countScore === false || (body.success === false || body.tier !== 3)){
@@ -555,11 +552,19 @@ function logEvent(body,res){
      var successfulPost = ({
        message: `${req.body.firstName} registered with bibNo: ${req.body.bibNo}.`
      });
+		 //check bibNo and whether or not it is already registered to a person
+		 Participant.findOne({bibNo: req.body.bibNo}).then((conflict) => {
+				       if (conflict) {
+								 var conflictMsg = ({
+									 message: `${conflict.firstName} ${conflict.lastName} already registered with bibNo: ${conflict.bibNo}.`
+								 });
+								 res.status(409).send(conflictMsg)
 
-		 //Add res.status(409).(alreadyRegistered) if (preregistered.bibNo.length >0 or not null as precondition)
+				       } else {
 
      Participant.findOne({_id: req.body._id}).then((preregistered) => {
        if (preregistered) {
+
          var id = preregistered.id;
          Participant.findByIdAndUpdate(id, {bibNo: req.body.bibNo}, {new: true}).then((participant) => {
       }).catch((e) => {
@@ -594,6 +599,15 @@ function logEvent(body,res){
            res.status(400).send(e);
          });
        }
+
+
+
+		 }
+
+
+	 )}
+
+
      }).catch((e) => {
    res.status(404).send(e);
      });
