@@ -9,7 +9,7 @@ const {ObjectID} = require('mongodb');
 const path = require('path');
 const compression = require('compression');
 let timeDate = require('date-and-time');
-const cron = require('node-cron');
+
 
 var {mongoose} = require('./db/mongoose');
 var {Participant} = require('./models/participant');
@@ -317,7 +317,7 @@ function logEvent(body,res){
 			scanTime = timeDate.parse(deviceTime,'h:mm:ss A', false)
 
 			console.log(scanTime)
-			
+
 			if(Date.parse(scanTime)<Date.parse(courseTimeLimit)){
 				countScore=true
 				secondsRemaining= (Date.parse(courseTimeLimit)-Date.parse(scanTime))/1000
@@ -1174,20 +1174,6 @@ app.get('/teams', (req, res) => {
 })
 
 
-// running the task every five seconds ('*/5 * * * * *'); every minute ('* * * * *'); every 5 minutes ('*/5 * * * *')
-// currently every five minutes
-runChron = false
-
-var task = cron.schedule('*/1 * * * *', () =>  {
-if (runChron == true){
-	console.log(Date())
-}
-
-}, {
-  scheduled: false
-});
-
-task.start();
 
 
 
