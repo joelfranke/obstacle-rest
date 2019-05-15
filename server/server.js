@@ -9,6 +9,7 @@ const {ObjectID} = require('mongodb');
 const path = require('path');
 const compression = require('compression');
 let timeDate = require('date-and-time');
+const cron = require('node-cron');
 
 var {mongoose} = require('./db/mongoose');
 var {Participant} = require('./models/participant');
@@ -19,6 +20,7 @@ var {counters} = require('./models/counters');
 var {dupeResults} = require('./models/duplicateresults');
 var {Scoring} = require('./models/scoring');
 var {teamScoring} = require('./models/teamscoring');
+//var {heats} = require('./models/heats');
 
 var status404  = ({message: "Check request and try again."});
 var invalidToken = ({message: "Invalid or missing token."});
@@ -306,7 +308,6 @@ function logEvent(body,res){
       var obstID = body.obstID;
 
 
-
 			//start testing
 			var deviceTime= body.deviceTime.replace('AM','a.m.')
 			deviceTime=deviceTime.replace('PM','p.m.')
@@ -314,6 +315,9 @@ function logEvent(body,res){
 
 
 			scanTime = timeDate.parse(deviceTime,'h:mm:ss A', false)
+
+			console.log(scanTime)
+			
 			if(Date.parse(scanTime)<Date.parse(courseTimeLimit)){
 				countScore=true
 				secondsRemaining= (Date.parse(courseTimeLimit)-Date.parse(scanTime))/1000
@@ -482,8 +486,6 @@ function logEvent(body,res){
        } else {
          if (location === 'start'){
 					 // start of new code https://trello.com/c/0vlmzDx5/106-time-limit-for-scores
-					 // original code
-
 
 					 // add update/calculate courseTimeLimit value
 					 // transform time from AM to a.m. format
@@ -504,7 +506,7 @@ function logEvent(body,res){
 
 						 // get correct heat time
 
-
+						 courseTimeLimit = timeDate.addHours(heatTime,4)
 						 //set course time limit and new heat time
 						  update = {'startTime.deviceTime': time, 'startTime.bibFromBand':bibFromBand, 'startHeat':heatTime, 'courseTimeLimit':courseTimeLimit};
 					 } else{
@@ -1172,6 +1174,23 @@ app.get('/teams', (req, res) => {
 })
 
 
+// running the task every five seconds ('*/5 * * * * *'); every minute ('* * * * *'); every 5 minutes ('*/5 * * * *')
+// currently every five minutes
+runChron = false
+
+var task = cron.schedule('*/1 * * * *', () =>  {
+if (runChron == true){
+	console.log(Date())
+}
+
+}, {
+  scheduled: false
+});
+
+task.start();
+
+
+
 // Binds the root directory to display html results page
 app.use('/', express.static(path.join(__dirname, 'reporting')))
 
@@ -1183,4 +1202,3 @@ app.listen(port, () => {
 });
 
 module.exports = {app};
-''
