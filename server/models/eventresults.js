@@ -39,6 +39,11 @@ var eventResults = mongoose.model('results', {
   resultID: {
     type: Number,
     required: true
+  },
+  points:{
+    type: Number,
+    required: true,
+    default: 0
   }
 });
 

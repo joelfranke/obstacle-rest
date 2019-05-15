@@ -265,6 +265,69 @@ function updateScore(bibNo,tiebreaker){
   });
 }
 
+function updateProgress(bibNo){
+
+	var newScore
+	var update
+	var totEvents = 0
+
+	eventResults.find({bibNo: bibNo}).then((results) => {
+    if (!results || results.length == 0) {
+    }
+	//
+	// start of getting all participant data
+	Participant.findOne({bibNo: bibNo}).then((participant) => {
+
+			var timestamp = Date.now()
+           var gender = participant.gender;
+           var personBib = participant.bibNo;
+           var isDavid = participant.isDavid;
+           var firstName = participant.firstName;
+           var lastName = participant.lastName;
+           var teamName = participant.teamID;
+		   		 var isDavid = participant.isDavid;
+					 var group = participant.group;
+           var participantName = "<a href='/individual/?id=" +personBib+"'>" + lastName + ', ' + firstName+"</a>";
+           eventResults.find({bibNo: personBib}).then((events) => {
+
+// delete below
+							 var next
+               for(var event in events){
+                   totEvents = totEvents + 1
+               }
+
+
+               if (totEvents == 12) {
+								 //should be refactored for G8
+								 progress = 'Course Complete';
+								 next  = 99
+               } else {
+                 progress = totEvents + '/12';
+								 next = totEvents + 1
+               }
+
+				update = {'updatedOn': timestamp,'progress':progress, 'next': next,'obstaclesCompleted':totEvents, "isDavid":isDavid}
+
+			Scoring.findOneAndUpdate({ bibNo:bibNo }, { $set: update} , {returnNewDocument : true}).then((doc) => {
+
+
+			//console.log(doc)
+			}, (e) => {
+            console.log(e);
+            //log the error
+			});
+             }, (e) => {
+               //res.status(400).send(e);
+             });
+         });
+
+
+	//
+  }, (e) => {
+  //  res.status(400).send(e);
+  });
+}
+
 // start of function block
 function checkAuth(token) {
    // should be a salted hash...
@@ -316,7 +379,6 @@ function logEvent(body,res){
 
 			scanTime = timeDate.parse(deviceTime,'h:mm:ss A', false)
 
-			console.log(scanTime)
 
 			if(Date.parse(scanTime)<Date.parse(courseTimeLimit)){
 				countScore=true
@@ -325,7 +387,27 @@ function logEvent(body,res){
 				countScore=false
 				secondsRemaining=0
 			}
+
 			//end testing
+
+			//set points value
+			var points = 0
+			var tier = body.tier;
+			if (body.success == true && countScore == true){
+				if (tier ==1){
+					points =1
+				}
+				if (tier == 2){
+					points = 3
+				}
+				if (tier == 3){
+					points = 5
+				}
+
+			} else {
+				points = 0
+			}
+			//end point value
 
 
       var successfulPost = ({
@@ -354,6 +436,7 @@ function logEvent(body,res){
 
 			// no courseTimeLimit check required for this edge case since the prevailing assumption is that the two minutes never happend.
 			updateScore(bibNo)
+
 			// end
 			//need to send to an update david function
           return res.status(200).send(successfulPost);
@@ -372,6 +455,7 @@ function logEvent(body,res){
                   success: body.success,
                   bibFromBand: body.bibFromBand,
                   timestamp: timestamp,
+									points: points,
                   deviceTime: body.deviceTime
                 });
                 console.log('Duplicate logged: ' + JSON.stringify(obstResults));
@@ -401,32 +485,32 @@ function logEvent(body,res){
             bibFromBand: body.bibFromBand,
             timestamp: timestamp,
             deviceTime: body.deviceTime,
+						points: points,
             resultID: nextSeq
           });
           obstResults.save().then((doc) => {
 			//insert call to score calculate function to calculate and update score for bibNo n
 			if (isDavid === true){
-				//console.log('david check in progress')
-				 if (body.success === false || body.tier !== 3){
+
+				 if (countScore === false || (body.success === false || body.tier !== 3)){
+					 updateProgress(bibNo)
 					 Participant.findByIdAndUpdate(id, {isDavid: false}, {new: true}).then((participant) => {
-						 updateScore(bibNo)
 				}).catch((e) => {
 						 console.log('Something went wrong.');
 					 })
-				 } else{
-					 if(countScore==true){
-					 	updateScore(bibNo)
-					}
-					 //updateScore(bibNo)
+				 } else {
+					 updateScore(bibNo)
 				 }
 			} else {
-				if(countScore==true){
+				if (countScore === false || (body.success === false || body.tier !== 3)){
+					updateProgress(bibNo)
+
+				} else {
 					updateScore(bibNo)
 				}
-				//updateScore(bibNo)
+
 			}
 
-			//updateScore(bibNo)
 			// end
             res.send(successfulPost);
           }, (e) => {
@@ -434,20 +518,6 @@ function logEvent(body,res){
             res.status(400).send(e);
           });
         });
-
-				// update david flag move up to within "obstResults.save().then((doc) => {" and move updateScore to within the participant arrow function
-
-              if (isDavid === true){
-
-                 if (countScore === false || (body.success === false || body.tier !== 3)){
-                   Participant.findByIdAndUpdate(id, {isDavid: false}, {new: true}).then((participant) => {
-                }).catch((e) => {
-                     console.log('Something went wrong.');
-                   })
-                 }
-              } else {
-
-							}
       }
     })
     }
