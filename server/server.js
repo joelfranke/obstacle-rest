@@ -165,9 +165,10 @@ function updateScore(bibNo,tiebreaker){
                var totEvents = 0
 							 var next
                for(var event in events){
-                 var success = events[event].success;
-                 var tier = events[event].tier;
-                 if (success == true){
+                 var success = events[event].success
+                 var tier = events[event].tier
+								 var countScore = events[event].countScore
+                 if (success == true && countScore==true){
                    if (tier ==1){
                      g1 = g1 + 1;
                    }
@@ -437,7 +438,7 @@ function logEvent(body,res){
 			// no courseTimeLimit check required for this edge case since the prevailing assumption is that the two minutes never happend.
 			updateScore(bibNo)
 
-			// end
+
 			//need to send to an update david function
           return res.status(200).send(successfulPost);
      }).catch((e) => { //
@@ -456,7 +457,8 @@ function logEvent(body,res){
                   bibFromBand: body.bibFromBand,
                   timestamp: timestamp,
 									points: points,
-                  deviceTime: body.deviceTime
+                  deviceTime: body.deviceTime,
+									countScore: countScore
                 });
                 console.log('Duplicate logged: ' + JSON.stringify(obstResults));
                 obstResults.save().then((doc) => {
@@ -486,7 +488,8 @@ function logEvent(body,res){
             timestamp: timestamp,
             deviceTime: body.deviceTime,
 						points: points,
-            resultID: nextSeq
+            resultID: nextSeq,
+						countScore: countScore
           });
           obstResults.save().then((doc) => {
 			//insert call to score calculate function to calculate and update score for bibNo n

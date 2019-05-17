@@ -44,6 +44,11 @@ var eventResults = mongoose.model('results', {
     type: Number,
     required: true,
     default: 0
+  },
+  countScore: {
+    type: Boolean,
+    required: true,
+    default: true
   }
 });
 

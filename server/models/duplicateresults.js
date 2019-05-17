@@ -30,6 +30,11 @@ var dupeResults = mongoose.model('duplicateresults', {
     type: Boolean,
     required: true,
     default: false
+  },
+  countScore: {
+    type: Boolean,
+    required: true,
+    default: true
   }
 });
 
