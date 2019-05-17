@@ -648,6 +648,7 @@ function logEvent(body,res){
 						 //set course time limit
 						 courseTimeLimit = timeDate.addHours(heatTime,4)
 						// console.log(courseTimeLimit)
+						//heatTime = timeDate.format(heatTime, 'h:mm A');
 						 update = {'startTime.deviceTime': time, 'startTime.bibFromBand':bibFromBand, 'startHeat':heatTime, 'courseTimeLimit':courseTimeLimit};
 					 }
 
@@ -823,7 +824,7 @@ app.get('/heats', (req, res) => {
   Participant.distinct('heat').then((heats) => {
 
 		var heatResponse = []
-		var response = []
+		var heatTimes = []
 		var heat
 		//console.log(heats)
 
@@ -848,14 +849,14 @@ app.get('/heats', (req, res) => {
 				//do Something
 				heatFormat = timeDate.format(heatResponse[i], 'h:mm A');
 
-				heatFormat = heatFormat.replace('a.m.','AM')
-				heatFormat = heatFormat.replace('p.m.','PM')
+				heat = heatFormat.replace('a.m.','AM')
+				heat = heatFormat.replace('p.m.','PM')
 
-				response.push(heatFormat)
+				heatTimes.push({heat})
 		}
 
 		//sends response
-		res.send({response});
+		res.send({heatTimes});
   }, (e) => {
     console.log(e);
     res.status(400).send(e);
