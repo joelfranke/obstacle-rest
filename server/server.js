@@ -571,14 +571,75 @@ function logEvent(body,res){
 					 heatDiff = (timeDate.addMinutes(heatTime,2)-scanTime)/60000
 					 //console.log(heatDiff)
 					 if(heatDiff>15 || heatDiff<0){
-						 console.log('revise heat time')
+						 //console.log('revise heat time')
 						 //revise startHeat to correct heat time then
+						 var newHeat
+						 Participant.distinct('heat').then((heats) => {
 
-						 // get correct heat time
 
-						 courseTimeLimit = timeDate.addHours(heatTime,4)
-						 //set course time limit and new heat time
-						  update = {'startTime.deviceTime': time, 'startTime.bibFromBand':bibFromBand, 'startHeat':heatTime, 'courseTimeLimit':courseTimeLimit};
+					 		var heatResponse = []
+					 		var heat
+							var arrayLength = heats.length;
+							var heatFromList
+							//var newHeat
+
+							for (var i = 0; i < arrayLength; i++) {
+					 	    //console.log(heats[i]);
+					 			heat = heats[i]
+					 			// transform time from AM to a.m. format
+					 			heat = heat.replace(' AM',':00 a.m.')
+					 			heat = heat.replace(' PM',':00 p.m.')
+					 			heatTime = timeDate.parse(heat,'h:mm:ss A', false)
+					 			//console.log(heatTime)
+					 			heatResponse.push(heatTime)
+					 		}
+					 		//sort the results by time
+					 		heatResponse.sort()
+
+							// compare times against the scan time
+					 		var heatArrayLength = heatResponse.length;
+
+					 			for (var j = 0; j < heatArrayLength; j++) {
+									// compare scanTime vs. available heat times and write the next best heat time into the startHeat field
+									 heatFromList = heatResponse[j]
+									if (scanTime > heatFromList){
+										newHeat = heatFromList
+										continue
+									} else {
+										newHeat = heatFromList
+
+										break
+									}
+					 		}
+
+					 		//do something
+							courseTimeLimit = timeDate.addHours(newHeat,4)
+						//	console.log(newHeat, courseTimeLimit)
+ 						 //set course time limit and new heat time
+ 						  update = {'startTime.deviceTime': time, 'startTime.bibFromBand':bibFromBand, 'startHeat':newHeat, 'courseTimeLimit':courseTimeLimit};
+							//console.log(update)
+							Participant.findOneAndUpdate({ bibNo:bibNo }, { $set: update }, {returnNewDocument : true}).then((participant) => {
+								newHeat = timeDate.format(newHeat, 'h:mm A');
+
+								newHeat = newHeat.replace('a.m.','AM')
+								newHeat = newHeat.replace('p.m.','PM')
+									var successfulPost = ({
+										message: `${firstName}`,
+										bibNo: `${bibNo}`,
+										obstID: `${location}`,
+										heat: `${newHeat}`
+									});
+								return res.status(200).send(successfulPost);
+								}).catch((e) => {
+										console.log(e);
+									})
+
+					   }, (e) => {
+					     console.log(e);
+					     });
+
+						 // end get correct heat time
+
 					 } else{
 						 //set startHeat parameter with current heat assignment
 						 //set course time limit
@@ -761,7 +822,7 @@ app.get('/heats', (req, res) => {
 		var heatResponse = []
 		var response = []
 		var heat
-		console.log(heats)
+		//console.log(heats)
 
 		var arrayLength = heats.length;
 		for (var i = 0; i < arrayLength; i++) {
@@ -773,7 +834,7 @@ app.get('/heats', (req, res) => {
 			heat = heat.replace(' PM',':00 p.m.')
 
 			heatTime = timeDate.parse(heat,'h:mm:ss A', false)
-			console.log(heatTime)
+			//console.log(heatTime)
 			heatResponse.push(heatTime)
 		}
 
