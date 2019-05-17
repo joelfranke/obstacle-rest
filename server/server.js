@@ -751,6 +751,54 @@ app.get('/results', (req, res) => {
   }
 });
 
+//Complete GET ALL results
+// includes logic to send delta results based on an optional query value "q"
+app.get('/heats', (req, res) => {
+
+
+  Participant.distinct('heat').then((heats) => {
+
+		var heatResponse = []
+		var response = []
+		var heat
+		console.log(heats)
+
+		var arrayLength = heats.length;
+		for (var i = 0; i < arrayLength; i++) {
+	    //console.log(heats[i]);
+			heat = heats[i]
+			    //Do something
+			// transform time from AM to a.m. format
+			heat = heat.replace(' AM',':00 a.m.')
+			heat = heat.replace(' PM',':00 p.m.')
+
+			heatTime = timeDate.parse(heat,'h:mm:ss A', false)
+			console.log(heatTime)
+			heatResponse.push(heatTime)
+		}
+
+		//sort the results by time
+		heatResponse.sort()
+		var heatArrayLength = heatResponse.length;
+			for (var i = 0; i < heatArrayLength; i++) {
+				//do Something
+				heatFormat = timeDate.format(heatResponse[i], 'h:mm A');
+
+				heatFormat = heatFormat.replace('a.m.','AM')
+				heatFormat = heatFormat.replace('p.m.','PM')
+
+				response.push(heatFormat)
+		}
+
+		//sends response
+		res.send({response});
+  }, (e) => {
+    console.log(e);
+    res.status(400).send(e);
+    });
+
+});
+
 //main scoring endpoint
 // needs edits
 app.get('/scoring', (req, res) => {
