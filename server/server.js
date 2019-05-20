@@ -849,8 +849,8 @@ app.get('/heats', (req, res) => {
 				//do Something
 				heatFormat = timeDate.format(heatResponse[i], 'h:mm A');
 
-				heat = heatFormat.replace('a.m.','AM')
 				heat = heatFormat.replace('p.m.','PM')
+				heat = heat.replace('a.m.','AM')
 
 				heatTimes.push({heat})
 		}
