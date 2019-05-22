@@ -527,7 +527,7 @@ function logEvent(body,res){
 					 		}
 					 		//sort the results by time
 					 		heatResponse.sort()
-
+							console.log(heatResponse)
 							// compare times against the scan time
 					 		var heatArrayLength = heatResponse.length;
 
@@ -536,11 +536,11 @@ function logEvent(body,res){
 									 heatFromList = heatResponse[j]
 									if (scanTime > heatFromList){
 										newHeat = heatFromList
-
+										console.log(newHeat)
 										continue
 									} else {
 										newHeat = heatFromList
-										
+										console.log(newHeat)
 										break
 									}
 					 		}
@@ -556,6 +556,7 @@ function logEvent(body,res){
 
 								newHeat = newHeat.replace('a.m.','AM')
 								newHeat = newHeat.replace('p.m.','PM')
+								console.log(newHeat)
 									var successfulPost = ({
 										message: `${firstName}`,
 										bibNo: `${bibNo}`,
