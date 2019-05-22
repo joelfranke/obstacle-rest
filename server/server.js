@@ -266,69 +266,6 @@ function updateScore(bibNo,tiebreaker){
   });
 }
 
-function updateProgress(bibNo){
-
-	var newScore
-	var update
-	var totEvents = 0
-
-	eventResults.find({bibNo: bibNo}).then((results) => {
-    if (!results || results.length == 0) {
-    }
-	//
-	// start of getting all participant data
-	Participant.findOne({bibNo: bibNo}).then((participant) => {
-
-			var timestamp = Date.now()
-           var gender = participant.gender;
-           var personBib = participant.bibNo;
-           var isDavid = participant.isDavid;
-           var firstName = participant.firstName;
-           var lastName = participant.lastName;
-           var teamName = participant.teamID;
-		   		 var isDavid = participant.isDavid;
-					 var group = participant.group;
-           var participantName = "<a href='/individual/?id=" +personBib+"'>" + lastName + ', ' + firstName+"</a>";
-           eventResults.find({bibNo: personBib}).then((events) => {
-
-// delete below
-							 var next
-               for(var event in events){
-                   totEvents = totEvents + 1
-               }
-
-
-               if (totEvents == 12) {
-								 //should be refactored for G8
-								 progress = 'Course Complete';
-								 next  = 99
-               } else {
-                 progress = totEvents + '/12';
-								 next = totEvents + 1
-               }
-
-				update = {'updatedOn': timestamp,'progress':progress, 'next': next,'obstaclesCompleted':totEvents, "isDavid":isDavid}
-
-			Scoring.findOneAndUpdate({ bibNo:bibNo }, { $set: update} , {returnNewDocument : true}).then((doc) => {
-
-
-			//console.log(doc)
-			}, (e) => {
-            console.log(e);
-            //log the error
-			});
-             }, (e) => {
-               //res.status(400).send(e);
-             });
-         });
-
-
-	//
-  }, (e) => {
-  //  res.status(400).send(e);
-  });
-}
-
 // start of function block
 function checkAuth(token) {
    // should be a salted hash...
