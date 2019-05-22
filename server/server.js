@@ -380,7 +380,6 @@ function logEvent(body,res){
 
 			scanTime = timeDate.parse(deviceTime,'h:mm:ss A', false)
 
-
 			if(Date.parse(scanTime)<Date.parse(courseTimeLimit)){
 				countScore=true
 				secondsRemaining= (Date.parse(courseTimeLimit)-Date.parse(scanTime))/1000
@@ -494,10 +493,9 @@ function logEvent(body,res){
           obstResults.save().then((doc) => {
 			//insert call to score calculate function to calculate and update score for bibNo n
 			if (isDavid === true){
-
-				 if (countScore === false || (body.success === false || body.tier !== 3)){
-					 updateProgress(bibNo)
+				 if (body.success === false || body.tier !== 3){
 					 Participant.findByIdAndUpdate(id, {isDavid: false}, {new: true}).then((participant) => {
+							 updateScore(bibNo)
 				}).catch((e) => {
 						 console.log('Something went wrong.');
 					 })
@@ -505,13 +503,7 @@ function logEvent(body,res){
 					 updateScore(bibNo)
 				 }
 			} else {
-				if (countScore === false || (body.success === false || body.tier !== 3)){
-					updateProgress(bibNo)
-
-				} else {
 					updateScore(bibNo)
-				}
-
 			}
 
 			// end
