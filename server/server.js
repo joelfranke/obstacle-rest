@@ -498,10 +498,10 @@ function logEvent(body,res){
 
 					 scanTime = timeDate.parse(time,'h:mm:ss A', false)
 					 heatTime = timeDate.parse(heat,'h:mm:ss A', false)
-					 //console.log(scanTime,heatTime)
-					// console.log(timeDate.addMinutes(heatTime,2))
+					 console.log(scanTime,heatTime)
+						console.log(timeDate.addMinutes(heatTime,2))
 					 heatDiff = (timeDate.addMinutes(heatTime,2)-scanTime)/60000
-					 //console.log(heatDiff)
+					 console.log(heatDiff)
 					 if(heatDiff>15 || heatDiff<0){
 						 //console.log('revise heat time')
 						 //revise startHeat to correct heat time then
@@ -516,13 +516,13 @@ function logEvent(body,res){
 							//var newHeat
 
 							for (var i = 0; i < arrayLength; i++) {
-					 	    //console.log(heats[i]);
+					 	    console.log(heats[i]);
 					 			heat = heats[i]
 					 			// transform time from AM to a.m. format
 					 			heat = heat.replace(' AM',':00 a.m.')
 					 			heat = heat.replace(' PM',':00 p.m.')
 					 			heatTime = timeDate.parse(heat,'h:mm:ss A', false)
-					 			//console.log(heatTime)
+					 			console.log(heatTime)
 					 			heatResponse.push(heatTime)
 					 		}
 					 		//sort the results by time
@@ -536,17 +536,18 @@ function logEvent(body,res){
 									 heatFromList = heatResponse[j]
 									if (scanTime > heatFromList){
 										newHeat = heatFromList
+
 										continue
 									} else {
 										newHeat = heatFromList
-
+										
 										break
 									}
 					 		}
 
 					 		//do something
 							courseTimeLimit = timeDate.addHours(newHeat,4)
-						//	console.log(newHeat, courseTimeLimit)
+							console.log(newHeat, courseTimeLimit)
  						 //set course time limit and new heat time
  						  update = {'startTime.deviceTime': time, 'startTime.bibFromBand':bibFromBand, 'startHeat':newHeat, 'courseTimeLimit':courseTimeLimit};
 							//console.log(update)
