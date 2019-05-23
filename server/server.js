@@ -146,7 +146,7 @@ function updateScore(bibNo,tiebreaker){
 	// start of getting all participant data
 	Participant.findOne({bibNo: bibNo}).then((participant) => {
 
-			var timestamp = Date.now()
+					var timestamp = Date.now()
            var gender = participant.gender;
            var personBib = participant.bibNo;
            var isDavid = participant.isDavid;
@@ -430,7 +430,7 @@ function logEvent(body,res){
           obstResults.save().then((doc) => {
 			//insert call to score calculate function to calculate and update score for bibNo n
 			if (isDavid === true){
-				 if (body.success === false || body.tier !== 3){
+				 if (countScore === false || (body.success === false || body.tier !== 3)){
 					 Participant.findByIdAndUpdate(id, {isDavid: false}, {new: true}).then((participant) => {
 							 updateScore(bibNo)
 				}).catch((e) => {
