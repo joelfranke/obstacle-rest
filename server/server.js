@@ -919,7 +919,7 @@ var status404  = ({message: "BibNo not found."})
 	else if (davids == 'true'){
 	Scoring.find({
 			isDavid: true,
-			next: { $gte: 4 }
+			next: { $gte: 3 }
 		}).sort( { score: -1, tiebreaker:1 } ).then((participantScores) => {
     res.send({participantScores});
   }, (e) => {
