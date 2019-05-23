@@ -2,16 +2,16 @@ var aggJSON = [];
 var aggIndvJSON = [];
 
 var obstIndex = [{obstID: 1, value: "Water Carry"},
-    {obstID: 2, value: "Ninja Killer"},
-    {obstID: 3, value: "Hangman"},
-    {obstID: 4, value: "Leap of Faith"},
-    {obstID: 5, value: "Balancing Act"},
-    {obstID: 6, value: "Half Dome"},
-    {obstID: 7, value: "Rope Cross"},
-    {obstID: 8, value: "Slippery Wall Monkey"},
-    {obstID: 9, value: "Circus Maximus"},
-    {obstID: 10, value: "Skyclimb"},
-    {obstID: 11, value: "The Destroyer"},
+    {obstID: 2, value: "Arachnophobia"},
+    {obstID: 3, value: "Slippery Wall Monkey"},
+    {obstID: 4, value: "Skyclimb"},
+    {obstID: 5, value: "Circus Maximus"},
+    {obstID: 6, value: "The Destroyer"},
+    {obstID: 7, value: "Leap of Faith"},
+    {obstID: 8, value: "Balancing Act"},
+    {obstID: 9, value: "Rope Cross"},
+    {obstID: 10, value: "Hangman"},
+    {obstID: 11, value: "Ninja Killer"},
     {obstID: 12, value: "Over the Moon"}
 ];
 
@@ -21,7 +21,7 @@ function getResults(participantID,callback) {
    var personData = "/scoring/?bibNo=" + participantID;
 
   $.getJSON( personData, function( personJson ) {
-	 
+
 
     var personData = personJson.participantScores[0];
     var teamID = personData.teamID;
@@ -42,10 +42,10 @@ function getResults(participantID,callback) {
 	  var sexRank = gender + " Rank: " + personData.sexRank +"/"+personData.sexRankCount
 	  var groupRank = " Group Rank: " + personData.groupRank +"/"+personData.groupRankCount +" (" + personData.group + ")"
 	  var score = Math.round(personData.score)
-	  
+
 	  console.log(personData)
 	  console.log(score,rank, sexRank,groupRank)
-	  
+
 	  var pointsDiv = document.getElementById('participant-points-div');
       pointsDiv.innerHTML += score +'<br>' ;
 	   var ranksDiv = document.getElementById('participant-ranks-div');
@@ -86,7 +86,7 @@ function getResults(participantID,callback) {
   })
   callback(aggIndvJSON);
 }
-  
+
 
 function createPage (aggIndvJSON){
 
