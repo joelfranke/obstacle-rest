@@ -236,7 +236,7 @@ function updateScore(bibNo,tiebreaker){
 				update = {'updatedOn': timestamp,'tiebreaker':tiebreaker}
 				//console.log(bibNo,update);
 			} else {
-				update = {'g1':g1,'g2':g2,'g3':g3,'score':totScore,'updatedOn': timestamp,'progress':progress, 'next': next,'obstaclesCompleted':totEvents, "isDavid":isDavid}
+				update = {'g1':g1,'g2':g2,'g3':g3,'score':totScore,'updatedOn': timestamp,'progress':progress, 'next': next,'obstaclesCompleted':totEvents, 'isDavid':isDavid}
 			}
 			//Scoring.findOneAndUpdate({ bibNo:bibNo }, { $set: {'g1':g1,'g2':g2,'g3':g3,'score':totScore,'updatedOn': timestamp,'progress':progress, 'next': next}} , {returnNewDocument : true}).then((doc) => {
 			Scoring.findOneAndUpdate({ bibNo:bibNo }, { $set: update} , {returnNewDocument : true}).then((doc) => {
@@ -499,7 +499,10 @@ function logEvent(body,res){
 					 scanTime = timeDate.parse(time,'h:mm:ss A', false)
 					 heatTime = timeDate.parse(heat,'h:mm:ss A', false)
 
+					// console.log(time,scanTime,heat,heatTime)
+
 					 heatDiff = (timeDate.addMinutes(heatTime,2)-scanTime)/60000
+
 
 					 if(heatDiff>15 || heatDiff<0){
 						 //console.log('revise heat time')
@@ -535,11 +538,9 @@ function logEvent(body,res){
 									 heatFromList = heatResponse[j]
 									if (scanTime > heatFromList){
 										newHeat = heatFromList
-
 										continue
 									} else {
 										newHeat = heatFromList
-
 										break
 									}
 					 		}
@@ -551,8 +552,8 @@ function logEvent(body,res){
  						  update = {'startTime.deviceTime': time, 'startTime.bibFromBand':bibFromBand, 'startHeat':newHeat, 'courseTimeLimit':courseTimeLimit};
 							//console.log(update)
 							Participant.findOneAndUpdate({ bibNo:bibNo }, { $set: update }, {returnNewDocument : true}).then((participant) => {
-								newHeat = timeDate.format(newHeat, 'h:mm A');
 
+								newHeat = timeDate.format(newHeat, 'h:mm A');
 								newHeat = newHeat.replace('a.m.','AM')
 								newHeat = newHeat.replace('p.m.','PM')
 
@@ -562,7 +563,9 @@ function logEvent(body,res){
 										obstID: `${location}`,
 										heat: `${newHeat}`
 									});
+
 								return res.status(200).send(successfulPost);
+								//console.log('should end here')
 								}).catch((e) => {
 										console.log(e);
 									})
@@ -595,16 +598,21 @@ function logEvent(body,res){
          //console.log(update);
          //no duplicate handling, will need to be added here
 				 // issue with time vs timestamp vs body.time from POST request
+
+				 if(location !=='start'){
          Participant.findOneAndUpdate({ bibNo:bibNo }, { $set: update }, {returnNewDocument : true}).then((participant) => {
            if (participant){
 			   			if(ropeTime){
 								updateScore(bibNo,ropeTime)
 							}
+
              return res.status(200).send(successfulPost);
            }
            }).catch((e) => {
                console.log(e);
              })
+						}
+
            }
          }
 
