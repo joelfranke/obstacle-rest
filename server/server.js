@@ -221,7 +221,7 @@ function updateScore(bibNo,tiebreaker){
 								 tiebreaker: tiebreaker
           });
           score.save().then((doc) => {
-						if (teamName && teamName.length > 0) {
+						if (teamName.length > 0) {
 							updateTeamScore(teamName)
 						}
 
@@ -241,7 +241,7 @@ function updateScore(bibNo,tiebreaker){
 			//Scoring.findOneAndUpdate({ bibNo:bibNo }, { $set: {'g1':g1,'g2':g2,'g3':g3,'score':totScore,'updatedOn': timestamp,'progress':progress, 'next': next}} , {returnNewDocument : true}).then((doc) => {
 			Scoring.findOneAndUpdate({ bibNo:bibNo }, { $set: update} , {returnNewDocument : true}).then((doc) => {
 
-				if (teamName && teamName.length > 0) {
+				if (teamName.length > 0) {
 					updateTeamScore(teamName)
 				}
 
