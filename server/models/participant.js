@@ -65,10 +65,6 @@ var Participant = mongoose.model('Participant', {
     type: String,
     default: null
   },
-  ageGroup: {
-    type: String,
-    default: null
-  },
   teamID: {
     type: String,
     default: null
