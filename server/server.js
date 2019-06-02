@@ -743,6 +743,32 @@ app.post('/post-result', (req, res) => {
   }
 });
 
+// Endpoint for POSTing results from tracker app
+app.post('/update-score', (req, res) => {
+  var key = req.headers.k
+  var bibNo = req.body.bibNo
+
+  if (key !==undefined) {
+    var tokenCheck = checkAuth(key);
+    tokenCheck.then((token) => {
+      //console.log(token);
+        if (token ===false){
+          return res.status(401).send(invalidToken);
+        } else {
+          updateScore(bibNo)
+					return res.status(200).send({bibNo});
+        }
+    }).catch((e) => {
+      res.status(500).send(e);
+      })
+    ;}
+    else {
+      //invert comments below to make token optional/mandatory
+    	//  logEvent(body,res)
+    return res.status(401).send(invalidToken);
+  }
+});
+
 //Complete GET ALL results
 // includes logic to send delta results based on an optional query value "q"
 app.get('/results', (req, res) => {
@@ -765,6 +791,8 @@ app.get('/results', (req, res) => {
 
   }
 });
+
+
 
 //Complete GET ALL results
 // includes logic to send delta results based on an optional query value "q"
