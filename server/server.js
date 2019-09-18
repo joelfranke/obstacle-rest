@@ -553,6 +553,7 @@ function logEvent(body,res){
 
 					 		//do something
 							courseTimeLimit = timeDate.addHours(newHeat,4)
+							courseTimeLimit = timeDate.addMinutes(courseTimeLimit,1)
 							newHeat = timeDate.format(newHeat, 'h:mm A');
 							newHeat = newHeat.replace('a.m.','AM')
 							newHeat = newHeat.replace('p.m.','PM')
@@ -589,6 +590,7 @@ function logEvent(body,res){
 						 //set course time limit
 
 						 courseTimeLimit = timeDate.addHours(heatTime,4)
+						 courseTimeLimit = timeDate.addMinutes(courseTimeLimit,1)
 
 						heatTime = timeDate.format(heatTime, 'h:mm A');
 						heatTime = heatTime.replace('a.m.','AM')
