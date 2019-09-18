@@ -773,6 +773,7 @@ app.post('/update-score', (req, res) => {
 // includes logic to send delta results based on an optional query value "q"
 app.get('/results', (req, res) => {
   var delta = req.query.d
+	var _id = req.query.id
   if (delta !==undefined) {
   eventResults.find({ resultID: { $gt: delta } }).then((participantResults) => {
     res.send({participantResults});
@@ -780,7 +781,14 @@ app.get('/results', (req, res) => {
     console.log(e);
     res.status(400).send(e);
     });
-  }
+  } else if (_id!==undefined) {
+		eventResults.find({ _id: _id }).then((participantResults) => {
+			res.send({participantResults});
+		}, (e) => {
+			console.log(e);
+			res.status(400).send(e);
+			});
+	}
   else {
   eventResults.find().then((participantResults) => {
     res.send({participantResults});
@@ -1195,6 +1203,7 @@ app.get('/participant', (req, res) => {
   var birth = req.query.bday
   var bibNo = req.query.bibNo
 	var onTeam = req.query.onTeam
+	var dbID = req.query.id
   var key = req.headers.k
 	//var headerKey = req.headers.k
 
@@ -1204,6 +1213,9 @@ app.get('/participant', (req, res) => {
       getList = Participant.find({ birthdate: birth  });
 	} else if (bibNo !== undefined){
     getList = Participant.find({ bibNo: bibNo  });
+  }
+	 else if (dbID !== undefined){
+    getList = Participant.find({ _id: dbID  });
   }
 	else if (onTeam !== undefined){
     getList = Participant.find({ teamID: onTeam  });
@@ -1335,6 +1347,57 @@ app.get('/teams', (req, res) => {
 })
 
 
+app.post('/registrationupdate', (req, res) => {
+	var body = req.body
+
+
+	if (body.bibNo){
+		if (body.teamID){
+
+			var update = {'bibNo':body.bibNo,'teamID':body.teamID,'gender': body.gender,'birthdate':body.birthday,'group':body.group}
+		} else {
+
+			var update = {'bibNo':body.bibNo,'gender': body.gender,'birthdate':body.birthday,'group':body.group}
+		}
+	} else {
+		if (body.teamID){
+
+			var update = {'teamID':body.teamID,'gender': body.gender,'birthdate':body.birthday,'group':body.group}
+		} else {
+
+			var update = {'gender': body.gender,'birthdate':body.birthday,'group':body.group}
+		}
+	}
+	//var update = {'gender': body.gender,'birthdate':body.birthday,'group':body.group}
+
+
+	Participant.findByIdAndUpdate(body.id, update, {new: true}).then((doc) => {
+		var successfulPost = ({
+			message: 'updated'
+		});
+		//console.log(doc)
+			return res.status(200).send(successfulPost);
+	}).catch((e) => {
+		console.log('Something went wrong trying to update a registration.');
+	})
+})
+
+app.post('/scoringupdate', (req, res) => {
+	var body = req.body
+	var update = {'tier':body.tier,'success': body.success,'countScore':body.countScore}
+
+	eventResults.findByIdAndUpdate(body.id, update, {new: true}).then((doc) => {
+		var successfulPost = ({
+			message: 'updated'
+		});
+
+			updateScore(body.bibNo)
+		//console.log(doc)
+			return res.status(200).send(successfulPost);
+	}).catch((e) => {
+		console.log('Something went wrong trying to update a registration.');
+	})
+})
 
 
 
@@ -1343,6 +1406,20 @@ app.use('/', express.static(path.join(__dirname, 'reporting')))
 
 // Binds the root directory to display html individual results page
 app.use('/individual', express.static(path.join(__dirname, 'individual')))
+
+// Binds the root directory to display html admin page
+app.use('/admin', express.static(path.join(__dirname, 'admin')))
+
+// Binds the root directory to display html admin page
+app.use('/update-reg', express.static(path.join(__dirname, 'registrationupdate')))
+
+// Binds the root directory to display html admin page
+app.use('/scoringadmin', express.static(path.join(__dirname, 'scoringadmin')))
+
+// Binds the root directory to display html admin page
+app.use('/update-score', express.static(path.join(__dirname, 'scoringupdate')))
+
+
 
 app.listen(port, () => {
   console.log(`API running on port: ${port}`);
