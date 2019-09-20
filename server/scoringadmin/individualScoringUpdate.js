@@ -17,6 +17,7 @@ var obstIndex = [{obstID: 1, value: "Water Carry"},
 
 
 function getResults(participantID,callback) {
+aggIndvJSON = [];
   var jsonData = location.origin+"/results/" + participantID;
    var personData = location.origin+"/scoring/?bibNo=" + participantID;
 
@@ -146,6 +147,18 @@ $(document).ready(function() {
   $("#bibNoSearchButton").click(function(){
     var participantID = document.getElementById("bibNo-data").value.trim()
 
+    $("#participant-div").html("");
+
+    $("#participant-points-div").html("");
+    $("#participant-ranks-div").html("");
+    //refresh table
+     $("#datatable").html("");
+     var newDiv = document.createElement("table")
+       newDiv.setAttribute("id", "results","class","display", "width","100%");
+       newDiv.setAttribute("class","display");
+       newDiv.setAttribute("width","100%");
+       document.getElementById("datatable").appendChild(newDiv);
+
     getResults(participantID,function(){
       setTimeout(function(){
         createPage(aggIndvJSON);
@@ -161,12 +174,18 @@ $(document).ready(function() {
     });
 
     $("#refreshButton").click(function(){
-      // $("#datatable").html("");
-      // var newDiv = document.createElement("table")
-      //   newDiv.setAttribute("id", "results","class","display", "width","100%");
-      //   newDiv.setAttribute("class","display");
-      //   newDiv.setAttribute("width","100%");
-      //   document.getElementById("datatable").appendChild(newDiv);
+      //Refresh name and scores
+      $("#participant-div").html("");
+
+      $("#participant-points-div").html("");
+      $("#participant-ranks-div").html("");
+      //refresh table
+       $("#datatable").html("");
+       var newDiv = document.createElement("table")
+         newDiv.setAttribute("id", "results","class","display", "width","100%");
+         newDiv.setAttribute("class","display");
+         newDiv.setAttribute("width","100%");
+         document.getElementById("datatable").appendChild(newDiv);
       // do something
       $('#bibNoSearchButton').click();
     });
