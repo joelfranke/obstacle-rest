@@ -11,8 +11,8 @@ function getParameterByName(name, url) {
 }
 
 function updateRegistration(update){
-  console.log('update button works' + update.id)
-  console.log(update)
+  //console.log('update button works' + update.id)
+  //console.log(update)
   var posturl = location.origin+"/registrationupdate";
   $.ajax({
           url: posturl,

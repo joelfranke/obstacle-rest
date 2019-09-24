@@ -1,5 +1,6 @@
 var aggJSON = [];
 var aggIndvJSON = [];
+var dbID
 
 var obstIndex = [{obstID: 1, value: "Water Carry"},
     {obstID: 2, value: "Arachnophobia"},
@@ -17,6 +18,42 @@ var obstIndex = [{obstID: 1, value: "Water Carry"},
 
 
 function getResults(participantID,callback) {
+
+  //test
+                    var url2 = location.origin+"/participant?bibNo=" + participantID;
+                    console.log(url2)
+                    $.ajax({
+                            url: url2,
+                            type: 'GET',
+                            beforeSend: function(request) {
+                              request.setRequestHeader('k', '04AA27B75640D189EEF52BCC78BA34CEBEA9440E563D7F2B36B5CB98EC899CC3');
+                            },
+                            dataType: 'json', // added data type
+                            success: function(data) {
+
+
+
+
+
+
+
+
+
+dbID = data.participants[0]._id
+
+
+
+
+
+
+
+//console.log(dbID)
+
+                            }
+                        });
+
+
+  //end test
 aggIndvJSON = [];
   var jsonData = location.origin+"/results/" + participantID;
    var personData = location.origin+"/scoring/?bibNo=" + participantID;
@@ -34,6 +71,7 @@ aggIndvJSON = [];
     }
       var participantDiv = document.getElementById('participant-div');
       participantDiv.innerHTML += participantName;
+      participantDiv.innerHTML +='<a href="'+location.origin+'/update-reg?id='+dbID+'"><img id="edit" src="https://img.icons8.com/material-sharp/16/000000/edit.png"></a>'
 	  if (personData.gender == "M"){
 		  gender = "Male"
 	  } else {
@@ -192,5 +230,6 @@ $(document).ready(function() {
 
     $('#participant-score-div').hide();
     $('#refreshButton').hide();
+    $('#edit').hide();
 
 })

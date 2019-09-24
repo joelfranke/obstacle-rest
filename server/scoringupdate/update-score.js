@@ -66,7 +66,7 @@ $(document).ready(function() {
         } else {
           countScore=false
         }
-        console.log(bib)
+      //  console.log(bib)
               var updatedRes = ({
                 id: `${resultID}`,
                 bibNo: `${bib[0]}`,
@@ -113,6 +113,7 @@ $(document).ready(function() {
                   document.getElementById('tier').value = data.participantResults[0].tier;
                   document.getElementById('success').value = data.participantResults[0].success;
                   document.getElementById('countScore').value = data.participantResults[0].countScore;
+
 
               }
           });

@@ -1401,6 +1401,23 @@ app.post('/scoringupdate', (req, res) => {
 	})
 })
 
+app.post('/groupupdate', (req, res) => {
+	var body = req.body
+	var update = {'gender':body.gender,'group': body.group}
+
+	Scoring.findByIdAndUpdate(body.id, update, {new: true}).then((doc) => {
+		var successfulPost = ({
+			message: 'updated'
+		});
+
+			updateScore(body.bibNo)
+		//console.log(doc)
+			return res.status(200).send(successfulPost);
+	}).catch((e) => {
+		console.log('Something went wrong trying to update a registration.');
+	})
+})
+
 
 
 // Binds the root directory to display html results page
