@@ -1414,7 +1414,7 @@ app.post('/groupupdate', (req, res) => {
 		//console.log(doc)
 			return res.status(200).send(successfulPost);
 	}).catch((e) => {
-		console.log('Something went wrong trying to update a registration.');
+		console.log('Something went wrong trying to update a Score.');
 	})
 })
 
@@ -1437,6 +1437,9 @@ app.use('/scoringadmin', express.static(path.join(__dirname, 'scoringadmin')))
 
 // Binds the root directory to display html admin page
 app.use('/update-score', express.static(path.join(__dirname, 'scoringupdate')))
+
+// Binds the root directory to display html admin page
+app.use('/update-group', express.static(path.join(__dirname, 'groupupdate')))
 
 
 

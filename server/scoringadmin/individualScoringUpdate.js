@@ -69,10 +69,16 @@ aggIndvJSON = [];
     } else {
       var participantName = "<b>"+personData.lastName + ', ' + personData.firstName+"</b>"
     }
+    var urlPop= location.origin+'/update-group?bibNo='+participantID
       var participantDiv = document.getElementById('participant-div');
       participantDiv.innerHTML += participantName;
-      participantDiv.innerHTML +='<a href="'+location.origin+'/update-reg?id='+dbID+'"><img id="edit" src="https://img.icons8.com/material-sharp/16/000000/edit.png"></a>'
-	  if (personData.gender == "M"){
+
+      //testing
+      var participantPointsDiv = document.getElementById('participant-score-text');
+    //  participantDiv.innerHTML +='<a href="'+urlPop+'" target="popup" onclick="window.open(\''+urlPop+'\',\'popup\',\'width=600,height=600\'); return false;"><img id="edit" src="https://img.icons8.com/material-sharp/16/000000/edit.png"></a>'
+      participantPointsDiv.innerHTML +='<a href="'+urlPop+'" target="popup" onclick="window.open(\''+urlPop+'\',\'popup\',\'width=600,height=600\'); return false;"><img id="edit" src="https://img.icons8.com/material-sharp/16/000000/edit.png"></a>'
+
+    if (personData.gender == "M"){
 		  gender = "Male"
 	  } else {
 		  gender = "Female"
@@ -188,6 +194,10 @@ $(document).ready(function() {
     $("#participant-div").html("");
 
     $("#participant-points-div").html("");
+    $("#participant-score-text").html("");
+    var pointTextDiv = document.getElementById('participant-score-text');
+     pointTextDiv.innerHTML += 'Points<br><br>'
+
     $("#participant-ranks-div").html("");
     //refresh table
      $("#datatable").html("");
