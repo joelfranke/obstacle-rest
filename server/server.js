@@ -1386,8 +1386,8 @@ app.post('/registrationupdate', (req, res) => {
 
 app.post('/scoringupdate', (req, res) => {
 	var body = req.body
-	var update = {'tier':body.tier,'success': body.success,'countScore':body.countScore}
-
+	var update = {'obstID':body.obstID,'tier':body.tier,'success': body.success,'countScore':body.countScore}
+	console.log(update)
 	eventResults.findByIdAndUpdate(body.id, update, {new: true}).then((doc) => {
 		var successfulPost = ({
 			message: 'updated'

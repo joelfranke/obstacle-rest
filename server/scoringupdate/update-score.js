@@ -54,6 +54,8 @@ $(document).ready(function() {
       $("#updateButton").click(function(){
         //var obstID = document.getElementById("obstID").value
         var tier = document.getElementById("tier").value
+        var obst = document.getElementById("obstID").value
+      obst = Number(obst)
         var success = document.getElementById("success").value
         if (success == 'true'){
           success=true
@@ -69,8 +71,9 @@ $(document).ready(function() {
       //  console.log(bib)
               var updatedRes = ({
                 id: `${resultID}`,
+                obstID: obst,
                 bibNo: `${bib[0]}`,
-                tier: `${tier}`,
+                tier: tier,
                 success: success,
                 countScore: countScore
               });
@@ -79,9 +82,6 @@ $(document).ready(function() {
             })
 
 
-
-
-    //  });
 
       var url = location.origin+"/results?id=" + resultID;
       window.onunload = refreshParent;
@@ -110,6 +110,7 @@ $(document).ready(function() {
                 var obstDiv = document.getElementById('obst');
                 obstDiv.innerHTML += obstName;
                   //document.getElementById('obstID').value = obstName
+                  document.getElementById('obstID').value = data.participantResults[0].obstID;
                   document.getElementById('tier').value = data.participantResults[0].tier;
                   document.getElementById('success').value = data.participantResults[0].success;
                   document.getElementById('countScore').value = data.participantResults[0].countScore;
