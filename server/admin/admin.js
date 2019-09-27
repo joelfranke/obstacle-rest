@@ -35,6 +35,7 @@ function getResults(query) {
           { data: 'birthdate', title: 'Birthday' },
           { data: 'gender', title: 'Gender'},
           { data: 'heat', title: 'Heat Time' },
+          { data: 'bibNo', title: 'Bib #', defaultContent: ""},
           { title: 'Update' },
       ],
 

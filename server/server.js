@@ -368,8 +368,8 @@ function logEvent(body,res){
         var resultDiff = (((((timestamp - duplicate._id.getTimestamp())% 86400000) % 3600000) / 60000));
         if (resultDiff <= 2) {
           //update this with the actual req.body.* fields incl timestamp
-          eventResults.findByIdAndUpdate(duplicate._id, {success: body.success, timestamp: timestamp, tier: body.tier}, {new: true}).then((doc) => {
-            //insert call to score calculate function to calculate and update score for bibNo n
+
+          eventResults.findByIdAndUpdate(duplicate._id, {success: body.success, points: points, timestamp: timestamp, tier: body.tier}, {new: true}).then((doc) => {
 
 			// no courseTimeLimit check required for this edge case since the prevailing assumption is that the two minutes never happend.
 			updateScore(bibNo)
