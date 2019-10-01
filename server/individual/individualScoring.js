@@ -99,6 +99,7 @@ function createPage (aggIndvJSON){
           bStateSave: true,
           paging: false,
           processing: true,
+          searching: false,
           retrieve: true,
           deferRender: true,
           language: {
