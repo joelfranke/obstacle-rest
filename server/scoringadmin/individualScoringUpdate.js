@@ -150,6 +150,7 @@ function createPage (aggIndvJSON,participant){
           bStateSave: true,
           paging: false,
           processing: true,
+          searching: false,
           retrieve: true,
           deferRender: true,
           language: {
