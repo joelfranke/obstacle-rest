@@ -116,14 +116,21 @@ aggIndvJSON = [];
       var tier = json.participantResults[item].tier;
       var deviceTime = json.participantResults[item].deviceTime;
       var success = json.participantResults[item].success;
+      var countScore = json.participantResults[item].countScore;
       //update to include individual score
       if (success == true){
         success = 	"&#x2714;"
       } else {
         success = "&#x2715;"
       }
+
+      if (countScore == true){
+        countScore = 	"&#x2714;"
+      } else {
+        countScore = "&#x2715;"
+      }
       var indivResultArray = [];
-      indivResultArray.push(obstName,tier,success,deviceTime,_id);
+      indivResultArray.push(obstName,tier,success,countScore,deviceTime,_id);
       aggIndvJSON.push(indivResultArray);
     }
   })
@@ -156,6 +163,7 @@ function createPage (aggIndvJSON,participant){
               { title: "Obstacle" },
               { title: "Tier" },
               { title: "Result" },
+              { title: "Count Score?" },
               { title: "Time completed" },
               { title: "Result ID" },
               { title: 'Update' },
