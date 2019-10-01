@@ -1386,8 +1386,26 @@ app.post('/registrationupdate', (req, res) => {
 
 app.post('/scoringupdate', (req, res) => {
 	var body = req.body
-	var update = {'obstID':body.obstID,'tier':body.tier,'success': body.success,'countScore':body.countScore}
-	console.log(update)
+	//calculate points
+	var points = 0
+	var tier = body.tier;
+	if (body.success == true && body.countScore == true){
+		if (tier ==1){
+			points =1
+		}
+		if (tier == 2){
+			points = 3
+		}
+		if (tier == 3){
+			points = 5
+		}
+
+	} else {
+		points = 0
+	}
+	//end point value
+	var update = {'obstID':body.obstID,'tier':body.tier,'success': body.success,'countScore':body.countScore, 'points':points}
+	//console.log(update)
 	eventResults.findByIdAndUpdate(body.id, update, {new: true}).then((doc) => {
 		var successfulPost = ({
 			message: 'updated'
