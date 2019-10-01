@@ -1436,6 +1436,46 @@ app.post('/groupupdate', (req, res) => {
 	})
 })
 
+app.get('/endofracebutton', (req, res) => {
+	var key = req.query.k
+
+	if (key !==undefined) {
+		var tokenCheck = checkAuth(key);
+		tokenCheck.then((token) => {
+
+				if (token ===false){
+					return res.status(401).send(invalidToken);
+				} else {
+					Scoring.updateMany({}, {$set: {progress: "Course Complete", obstaclesCompleted: 12, next: 99.0}}).then((doc) => {
+						console.log(doc)
+						teamScoring.updateMany({}, {$set: {onCourse: 3}}).then((teamDoc) => {
+
+
+							var successfulPost = ({
+								message: 'race day complete'
+							});
+
+
+							console.log(teamDoc)
+								return res.status(200).send(successfulPost);
+						}).catch((e) => {
+							console.log('Something went wrong trying to close out race day.');
+						})
+
+							//return res.status(200).send(successfulPost);
+					}).catch((e) => {
+						console.log('Something went wrong trying to close out race day.');
+					})
+				}
+		}).catch((e) => {
+			res.status(500).send(e);
+			})
+
+		;}
+		else {
+		return res.status(401).send(invalidToken);
+	}
+})
 
 
 // Binds the root directory to display html results page
