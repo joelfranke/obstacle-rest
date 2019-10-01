@@ -1477,6 +1477,16 @@ app.get('/endofracebutton', (req, res) => {
 	}
 })
 
+app.get('/oncourse', (req, res) => {
+Participant.count({startTime:{$exists:true},finishTime:{$exists:false}}).then((doc) => {
+	var successfulPost = ({
+		onCourse: doc
+	});
+		return res.status(200).send(successfulPost);
+}).catch((e) => {
+	res.status(500).send(e);
+	})
+})
 
 // Binds the root directory to display html results page
 app.use('/', express.static(path.join(__dirname, 'reporting')))
