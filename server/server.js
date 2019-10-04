@@ -1448,7 +1448,7 @@ app.get('/endofracebutton', (req, res) => {
 				} else {
 					Scoring.updateMany({}, {$set: {progress: "Course Complete", obstaclesCompleted: 12, next: 99.0}}).then((doc) => {
 						console.log(doc)
-						teamScoring.updateMany({}, {$set: {onCourse: 3}}).then((teamDoc) => {
+						teamScoring.updateMany({}, {$set: {onCourse: 0}}).then((teamDoc) => {
 
 
 							var successfulPost = ({
