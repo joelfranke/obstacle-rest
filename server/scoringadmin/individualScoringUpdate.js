@@ -176,7 +176,7 @@ function createPage (aggIndvJSON,participant){
         var table = $('#results').DataTable();
               var data = table.row($(this)).data();
               console.log(data);
-              window.open(location.origin+"/update-score?id=" + data[4],'popUpWindow','height=500,width=500,left=100,top=100,resizable=yes,scrollbars=yes,toolbar=yes,menubar=no,location=no,directories=no, status=yes');
+              window.open(location.origin+"/update-score?id=" + data[5],'popUpWindow','height=500,width=500,left=100,top=100,resizable=yes,scrollbars=yes,toolbar=yes,menubar=no,location=no,directories=no, status=yes');
 
        } );
       // $("#results tbody").click(function(){
