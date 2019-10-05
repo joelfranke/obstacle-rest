@@ -1452,7 +1452,7 @@ app.get('/endofracebutton', (req, res) => {
 
 
 							var successfulPost = ({
-								message: 'race day complete'
+								message: 'Race day complete.'
 							});
 
 
