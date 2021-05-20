@@ -372,6 +372,7 @@ function logEvent(body,res){
           eventResults.findByIdAndUpdate(duplicate._id, {success: body.success, points: points, timestamp: timestamp, tier: body.tier}, {new: true}).then((doc) => {
 
 			// no courseTimeLimit check required for this edge case since the prevailing assumption is that the two minutes never happend.
+			// TODO: Update isDavid flag for participant
 			updateScore(bibNo)
 
 
@@ -1449,8 +1450,7 @@ app.get('/endofracebutton', (req, res) => {
 					Scoring.updateMany({}, {$set: {progress: "Course Complete", obstaclesCompleted: 12, next: 99.0}}).then((doc) => {
 						console.log(doc)
 						teamScoring.updateMany({}, {$set: {onCourse: 0}}).then((teamDoc) => {
-
-
+							// TODO: {url}/oncourse is actually looking at {startTime:{$exists:true},finishTime:{$exists:false}}. You would need to update the finish time of these records with the race complete timestamp.
 							var successfulPost = ({
 								message: 'Race day complete.'
 							});
