@@ -371,8 +371,10 @@ function logEvent(body,res){
 
           eventResults.findByIdAndUpdate(duplicate._id, {success: body.success, points: points, timestamp: timestamp, tier: body.tier}, {new: true}).then((doc) => {
 
-						console.log(id,isDavid,countScore,body.success,body.tier)
+
 			// //START OF TEST block
+			// no courseTimeLimit check required for this edge case since the prevailing assumption is that the two minutes never happend.
+			// TODO: Update isDavid flag for participant
 			 if (isDavid === true){
 			 	 if (countScore === false || (body.success === false || body.tier !== 3)){
 			 		 Participant.findByIdAndUpdate(id, {isDavid: false}, {new: true}).then((participant) => {
@@ -387,9 +389,8 @@ function logEvent(body,res){
 			 		updateScore(bibNo)
 			 }
 			// // END OF TEST BLOCK
-			// no courseTimeLimit check required for this edge case since the prevailing assumption is that the two minutes never happend.
-			// TODO: Update isDavid flag for participant
 
+			// uncomment the below if the above test block is not active
 			//updateScore(bibNo)
 
           return res.status(200).send(successfulPost);
