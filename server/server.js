@@ -633,6 +633,7 @@ function logEvent(body,res){
 
    ).catch((e) => {
 		 //throw 500 error if something goes wrong
+		 console.log(e)
    	res.status(500).send(status500);
    });
    }
