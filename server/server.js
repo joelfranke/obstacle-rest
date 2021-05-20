@@ -371,7 +371,7 @@ function logEvent(body,res){
 
           eventResults.findByIdAndUpdate(duplicate._id, {success: body.success, points: points, timestamp: timestamp, tier: body.tier}, {new: true}).then((doc) => {
 
-
+						console.log(id,isDavid,countScore,body.success,body.tier)
 			// //START OF TEST block
 			// if (isDavid === true){
 			// 	 if (countScore === false || (body.success === false || body.tier !== 3)){
@@ -390,7 +390,6 @@ function logEvent(body,res){
 			// no courseTimeLimit check required for this edge case since the prevailing assumption is that the two minutes never happend.
 			// TODO: Update isDavid flag for participant
 
-			//uncomment this
 			updateScore(bibNo)
 
           return res.status(200).send(successfulPost);
@@ -481,7 +480,7 @@ function logEvent(body,res){
     var status404  = ({message: "BibNo not found.", bibNo: body.bibNo, obstID: body.location});
 		var status500  = ({message: "Something went wrong processing this request.", bibNo: body.bibNo, obstID: body.location});
     Participant.findOne({bibNo: body.bibNo}).then((participant) => {
-			console.log(participant)
+
       var id = participant.id;
       var bibNo = participant.bibNo;
       var location = body.location;
