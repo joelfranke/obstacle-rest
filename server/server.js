@@ -465,7 +465,7 @@ function logEvent(body,res){
     var status404  = ({message: "BibNo not found.", bibNo: body.bibNo, obstID: body.location});
 		var status500  = ({message: "Something went wrong processing this request.", bibNo: body.bibNo, obstID: body.location});
     Participant.findOne({bibNo: body.bibNo}).then((participant) => {
-      var id = participant.id;
+      //var id = participant.id;
       var bibNo = participant.bibNo;
       var location = body.location;
       var time = body.deviceTime;
