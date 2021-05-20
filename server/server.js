@@ -372,26 +372,26 @@ function logEvent(body,res){
           eventResults.findByIdAndUpdate(duplicate._id, {success: body.success, points: points, timestamp: timestamp, tier: body.tier}, {new: true}).then((doc) => {
 
 
-			//START OF TEST block
-			if (isDavid === true){
-				 if (countScore === false || (body.success === false || body.tier !== 3)){
-					 Participant.findByIdAndUpdate(id, {isDavid: false}, {new: true}).then((participant) => {
-							 updateScore(bibNo)
-				}).catch((e) => {
-						 console.log('Something went wrong.');
-					 })
-				 } else {
-					 updateScore(bibNo)
-				 }
-			} else {
-					updateScore(bibNo)
-			}
-			// END OF TEST BLOCK
+			// //START OF TEST block
+			// if (isDavid === true){
+			// 	 if (countScore === false || (body.success === false || body.tier !== 3)){
+			// 		 Participant.findByIdAndUpdate(id, {isDavid: false}, {new: true}).then((participant) => {
+			// 				 updateScore(bibNo)
+			// 	}).catch((e) => {
+			// 			 console.log('Something went wrong.');
+			// 		 })
+			// 	 } else {
+			// 		 updateScore(bibNo)
+			// 	 }
+			// } else {
+			// 		updateScore(bibNo)
+			// }
+			// // END OF TEST BLOCK
 			// no courseTimeLimit check required for this edge case since the prevailing assumption is that the two minutes never happend.
 			// TODO: Update isDavid flag for participant
 
 			//uncomment this
-		//	updateScore(bibNo)
+			updateScore(bibNo)
 
           return res.status(200).send(successfulPost);
      }).catch((e) => { //
