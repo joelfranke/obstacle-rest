@@ -371,12 +371,28 @@ function logEvent(body,res){
 
           eventResults.findByIdAndUpdate(duplicate._id, {success: body.success, points: points, timestamp: timestamp, tier: body.tier}, {new: true}).then((doc) => {
 
+
+			//START OF TEST block
+			if (isDavid === true){
+				 if (countScore === false || (body.success === false || body.tier !== 3)){
+					 Participant.findByIdAndUpdate(id, {isDavid: false}, {new: true}).then((participant) => {
+							 updateScore(bibNo)
+				}).catch((e) => {
+						 console.log('Something went wrong.');
+					 })
+				 } else {
+					 updateScore(bibNo)
+				 }
+			} else {
+					updateScore(bibNo)
+			}
+			// END OF TEST BLOCK
 			// no courseTimeLimit check required for this edge case since the prevailing assumption is that the two minutes never happend.
 			// TODO: Update isDavid flag for participant
-			updateScore(bibNo)
 
+			//uncomment this
+		//	updateScore(bibNo)
 
-			//need to send to an update david function
           return res.status(200).send(successfulPost);
      }).catch((e) => { //
           console.log(e);
@@ -748,7 +764,7 @@ app.post('/post-result', (req, res) => {
   }
 });
 
-// Endpoint for POSTing results from tracker app
+// Endpoint for updating results
 app.post('/update-score', (req, res) => {
   var key = req.headers.k
   var bibNo = req.body.bibNo
