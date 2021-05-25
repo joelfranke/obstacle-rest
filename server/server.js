@@ -506,7 +506,7 @@ function logEvent(body,res){
 				var successfulPost = ({
 					message: `${firstName}`,
 					bibNo: `${bibNo}`,
-					obstID: `${newLocation}`,
+					obstID: newLocation,
 				//	obstID: `${location}`,
 					heat: `${newHeat}`
 				});
@@ -611,7 +611,7 @@ function logEvent(body,res){
 									var successfulPost = ({
 										message: `${firstName}`,
 										bibNo: `${bibNo}`,
-										obstID: `${newLocation}`,
+										obstID: newLocation,
 									//	obstID: `${location}`,
 										heat: `${newHeat}`
 									});
