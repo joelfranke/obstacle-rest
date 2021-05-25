@@ -493,13 +493,30 @@ function logEvent(body,res){
 
       var update
 			var needNewHeat = false
+
+			var newLocation
+			if (location === 'start'){
+				newLocation = 101
+			} else if (location === 'finish'){
+					newLocation = 102
+				} else {
+					newLocation = 103
+				}
+
+				var successfulPost = ({
+					message: `${firstName}`,
+					bibNo: `${bibNo}`,
+					obstID: `${newLocation}`,
+				//	obstID: `${location}`,
+					heat: `${newHeat}`
+				});
      //existing code
-      var successfulPost = ({
-        message: `${firstName}`,
-        bibNo: `${bibNo}`,
-        obstID: `${location}`,
-				heat: `${heat}`
-      });
+      // var successfulPost = ({
+      //   message: `${firstName}`,
+      //   bibNo: `${bibNo}`,
+      //   obstID: `${location}`,
+			// 	heat: `${heat}`
+      // });
 
       if (!participant) {
         return res.status(404).send(status404);
@@ -583,9 +600,9 @@ function logEvent(body,res){
 								//newHeat = newHeat.replace('a.m.','AM')
 								//newHeat = newHeat.replace('p.m.','PM')
 								var newLocation
-								if (location == 'start'){
+								if (location === 'start'){
 									newLocation = 101
-								} else if (location == 'finish'){
+								} else if (location === 'finish'){
 										newLocation = 102
 									} else {
 										newLocation = 103
