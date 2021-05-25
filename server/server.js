@@ -508,7 +508,7 @@ function logEvent(body,res){
 					bibNo: `${bibNo}`,
 					obstID: newLocation,
 				//	obstID: `${location}`,
-					heat: `${newHeat}`
+					heat: `${heat}`
 				});
      //existing code
       // var successfulPost = ({
