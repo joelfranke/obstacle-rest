@@ -371,7 +371,6 @@ function logEvent(body,res){
 
           eventResults.findByIdAndUpdate(duplicate._id, {success: body.success, points: points, timestamp: timestamp, tier: body.tier}, {new: true}).then((doc) => {
 
-
 			// //START OF TEST block
 			// no courseTimeLimit check required for this edge case since the prevailing assumption is that the two minutes never happend.
 			// TODO: Update isDavid flag for participant
@@ -583,11 +582,20 @@ function logEvent(body,res){
 								//newHeat = timeDate.format(newHeat, 'h:mm A');
 								//newHeat = newHeat.replace('a.m.','AM')
 								//newHeat = newHeat.replace('p.m.','PM')
+								var newLocation
+								if (location == 'start'){
+									newLocation = 101
+								} else if (location == 'finish'){
+										newLocation = 102
+									} else {
+										newLocation = 103
+									}
 
 									var successfulPost = ({
 										message: `${firstName}`,
 										bibNo: `${bibNo}`,
-										obstID: `${location}`,
+										obstID: `${newLocation}`,
+									//	obstID: `${location}`,
 										heat: `${newHeat}`
 									});
 
