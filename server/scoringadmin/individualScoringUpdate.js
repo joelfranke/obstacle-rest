@@ -3,16 +3,16 @@ var aggIndvJSON = [];
 var dbID
 
 var obstIndex = [{obstID: 1, value: "Water Carry"},
-    {obstID: 2, value: "Ninja Killer"},
-    {obstID: 3, value: "Hangman"},
-    {obstID: 4, value: "Arachnophobia"},
-    {obstID: 5, value: "Balancing Act"},
-    {obstID: 6, value: "Leap of Faith"},
-    {obstID: 7, value: "Slippery Wall Monkey"},
-    {obstID: 8, value: "Circus Maximus"},
-    {obstID: 9, value: "Skyclimb"},
-    {obstID: 10, value: "The Destroyer"},
-    {obstID: 11, value: "Rope Cross"},
+    {obstID: 2, value: "Arachnophobia"},
+    {obstID: 3, value: "Slippery Wall Monkey"},
+    {obstID: 4, value: "Skyclimb"},
+    {obstID: 5, value: "Circus Maximus"},
+    {obstID: 6, value: "The Destroyer"},
+    {obstID: 7, value: "Leap of Faith"},
+    {obstID: 8, value: "Balancing Act"},
+    {obstID: 9, value: "Rope Cross"},
+    {obstID: 10, value: "Hangman"},
+    {obstID: 11, value: "Ninja Killer"},
     {obstID: 12, value: "Over the Moon"}
 ];
 
