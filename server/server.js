@@ -2,6 +2,7 @@
 require('./config/config');
 //end general use functions
 
+// required packages
 const _ = require('lodash');
 const express = require('express');
 const bodyParser = require('body-parser');
@@ -9,12 +10,14 @@ const {ObjectID} = require('mongodb');
 const path = require('path');
 const compression = require('compression');
 let timeDate = require('date-and-time');
+//end required packages
 
 
+//db models
 var {mongoose} = require('./db/mongoose');
 var {Participant} = require('./models/participant');
 var {eventResults} = require('./models/eventresults');
-var {obstacle} = require('./models/obstacle');
+var {obstacles} = require('./models/obstacles');
 var {team} = require('./models/teamTable');
 var {counters} = require('./models/counters');
 var {dupeResults} = require('./models/duplicateresults');
@@ -22,11 +25,31 @@ var {Scoring} = require('./models/scoring');
 var {teamScoring} = require('./models/teamscoring');
 //var {heats} = require('./models/heats');
 
+//end db models
+
+//error messages
 var status404  = ({message: "Check request and try again."});
 var invalidToken = ({message: "Invalid or missing token."});
 
-var app = express();
+//end general error messages
 
+
+//define relevant ENV variables
+
+	//on start up, count and set an environment variable for the count of obstacles
+	function countObstacles(){
+		obstacles.find({scored:{$ne:false}}).then((obstacles) => {
+			var obstacleCount = JSON.stringify(obstacles.length)
+			process.env.totalObstacleCount = obstacleCount
+				 console.log(`There are: ${process.env.totalObstacleCount} obstacles.`)
+		}, (e) => {
+	    console.log('trouble with obstacle count calculation')
+	  });
+	}
+
+//end ENV variables
+
+var app = express();
 
 function updateTeamScore(teamID){
 
@@ -158,6 +181,7 @@ function updateScore(bibNo,tiebreaker){
            var participantName = "<a href='/individual/?id=" +personBib+"'>" + lastName + ', ' + firstName+"</a>";
            eventResults.find({bibNo: personBib}).then((events) => {
 
+						 	//would need to modify scoring here to d-G the tiers
                var g1 = 0;
                var g2 = 0;
                var g3 = 0;
@@ -183,14 +207,14 @@ function updateScore(bibNo,tiebreaker){
                    totEvents = totEvents + 1
                  }
                }
-
+						 	//point values would need to be pulled in on a per-obstacle basis
                totScore = (g1*1.0000001) + (g2*3.00001) + (g3*5.001);
-               if (totEvents == 12) {
+               if (totEvents == Number(process.env.totalObstacleCount)) {
 								 //should be refactored for G8
 								 progress = 'Course Complete';
 								 next  = 99
                } else {
-                 progress = totEvents + '/12';
+                 progress = totEvents + `/${process.env.totalObstacleCount}`;
 								 next = totEvents + 1
                }
 
@@ -1490,7 +1514,7 @@ app.get('/endofracebutton', (req, res) => {
 				if (token ===false){
 					return res.status(401).send(invalidToken);
 				} else {
-					Scoring.updateMany({}, {$set: {progress: "Course Complete", obstaclesCompleted: 12, next: 99.0}}).then((doc) => {
+					Scoring.updateMany({}, {$set: {progress: "Course Complete", obstaclesCompleted: Number(process.env.totalObstacleCount), next: 99.0}}).then((doc) => {
 						console.log(doc)
 						teamScoring.updateMany({}, {$set: {onCourse: 0}}).then((teamDoc) => {
 							// TODO: {url}/oncourse is actually looking at {startTime:{$exists:true},finishTime:{$exists:false}}. You would need to update the finish time of these records with the race complete timestamp.
@@ -1531,6 +1555,14 @@ Participant.count({startTime:{$exists:true},finishTime:{$exists:false}}).then((d
 	})
 })
 
+app.get('/obstacle-details', (req, res) => {
+obstacles.find({}).then((obstacle) => {
+		return res.status(200).send({obstacle});
+}).catch((e) => {
+	res.status(500).send(e);
+	})
+})
+
 // Binds the root directory to display html results page
 app.use('/', express.static(path.join(__dirname, 'reporting')))
 
@@ -1556,6 +1588,10 @@ app.use('/update-group', express.static(path.join(__dirname, 'groupupdate')))
 
 app.listen(port, () => {
   console.log(`API running on port: ${port}`);
+	countObstacles();
+	//console.log( `Obstacle count: ${totalObstacleCount}`)
 });
+
+
 
 module.exports = {app};
