@@ -4,7 +4,7 @@ mongoose.Promise = global.Promise;
 mongoose.connect(process.env.MONGODB_URI, {
   //useMongoClient: true,
   useNewUrlParser: true,
-  useFindAndModify: false,
+  //useFindAndModify: false,
   useUnifiedTopology: true
   /* other options */
 }).catch((e) => {
