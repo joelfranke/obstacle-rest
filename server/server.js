@@ -552,8 +552,11 @@ function logEvent(body,res){
 					 console.log(time)
 					 //time = time.replace('AM','a.m.')
 					 //time = time.replace('PM','p.m.')
-					 heat = heat.replace(' AM',':00 a.m.')
-					 heat = heat.replace(' PM',':00 p.m.')
+					 //heat = heat.replace(' AM',':00 a.m.')
+					 //heat = heat.replace(' PM',':00 p.m.')
+
+					 heat = heat.replace(' AM',':00 AM')
+					 heat = heat.replace(' PM',':00 PM')
 
 					 scanTime = timeDate.parse(time,'h:mm:ss A', false)
 					 heatTime = timeDate.parse(heat,'h:mm:ss A', false)
