@@ -549,6 +549,7 @@ function logEvent(body,res){
 
 					 // add update/calculate courseTimeLimit value
 					 // transform time from AM to a.m. format
+					 console.log(time)
 					 time = time.replace('AM','a.m.')
 					 time = time.replace('PM','p.m.')
 					 heat = heat.replace(' AM',':00 a.m.')
@@ -557,11 +558,9 @@ function logEvent(body,res){
 					 scanTime = timeDate.parse(time,'h:mm:ss A', false)
 					 heatTime = timeDate.parse(heat,'h:mm:ss A', false)
 
-					// console.log(time,scanTime,heat,heatTime)
-
 					 heatDiff = (timeDate.addMinutes(heatTime,2)-scanTime)/60000
-
-
+					 //logging for the dateTimeLib
+					 console.log(time,scanTime,heat,heatTime, heatDiff)
 
 
 					 if(heatDiff>15 || heatDiff<0){
