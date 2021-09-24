@@ -30,7 +30,6 @@ var {teamScoring} = require('./models/teamscoring');
 //error messages
 var status404  = ({message: "Check request and try again."});
 var invalidToken = ({message: "Invalid or missing token."});
-
 //end general error messages
 
 

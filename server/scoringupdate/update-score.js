@@ -3,16 +3,15 @@ var bib = []
 
 var obstIndex = [{obstID: 1, value: "Water Carry"},
     {obstID: 2, value: "Ninja Killer"},
-    {obstID: 3, value: "Hangman"},
-    {obstID: 4, value: "Arachnophobia"},
-    {obstID: 5, value: "Balancing Act"},
-    {obstID: 6, value: "Leap of Faith"},
-    {obstID: 7, value: "Slippery Wall Monkey"},
-    {obstID: 8, value: "Circus Maximus"},
-    {obstID: 9, value: "Skyclimb"},
-    {obstID: 10, value: "The Destroyer"},
-    {obstID: 11, value: "Rope Cross"},
-    {obstID: 12, value: "Over the Moon"}
+    {obstID: 3, value: "Arachnophobia"},
+    {obstID: 4, value: "Balancing Act"},
+    {obstID: 5, value: "Leap of Faith"},
+    {obstID: 6, value: "Slippery Wall Monkey"},
+    {obstID: 7, value: "Circus Maximus"},
+    {obstID: 8, value: "Skyclimb"},
+    {obstID: 9, value: "The Destroyer"},
+    {obstID: 10, value: "Rope Cross"},
+    {obstID: 11, value: "Over the Moon"}
 ];
 
 function getParameterByName(name, url) {
