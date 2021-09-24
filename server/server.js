@@ -550,8 +550,8 @@ function logEvent(body,res){
 					 // add update/calculate courseTimeLimit value
 					 // transform time from AM to a.m. format
 					 console.log(time)
-					 time = time.replace('AM','a.m.')
-					 time = time.replace('PM','p.m.')
+					 //time = time.replace('AM','a.m.')
+					 //time = time.replace('PM','p.m.')
 					 heat = heat.replace(' AM',':00 a.m.')
 					 heat = heat.replace(' PM',':00 p.m.')
 
