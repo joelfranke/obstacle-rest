@@ -871,6 +871,38 @@ app.get('/results', (req, res) => {
 
 
 //Complete GET ALL results
+
+
+//Complete GET ALL results
+// includes logic to send delta results based on an optional query value "q"
+app.get('/scoring/results', (req, res) => {
+  var delta = req.query.d
+	var _id = req.query.id
+  if (delta !==undefined) {
+  eventResults.find({ resultID: { $gt: delta } }).then((participantResults) => {
+    res.send({participantResults});
+  }, (e) => {
+    console.log(e);
+    res.status(400).send(e);
+    });
+  } else if (_id!==undefined) {
+		eventResults.find({ _id: _id }).then((participantResults) => {
+			res.send({participantResults});
+		}, (e) => {
+			console.log(e);
+			res.status(400).send(e);
+			});
+	}
+  else {
+  eventResults.find().then((participantResults) => {
+    res.send({participantResults});
+  }, (e) => {
+    console.log(e);
+    res.status(400).send(e);
+  });
+
+  }
+});
 // includes logic to send delta results based on an optional query value "q"
 app.get('/heats', (req, res) => {
 
@@ -1251,8 +1283,371 @@ var status404  = ({message: "BibNo not found."})
 
 });
 
+//adding duplicate, better versions of existing endpoints
+//modified individual scoring endpoint
+app.get('/scoring/participants', (req, res) => {
+// only one parameter is considered (regardless of how many are passed), in this order or precedence, gender, teamscores, team, onTeam, davids, bibNo, recent, otherwise all results are sent
+var status404  = ({message: "BibNo not found."})
+
+  	var gender = req.query.gender
+		var onTeam = req.query.onTeam
+		var davids = req.query.davids
+		var recent = req.query.recent
+		var limit = req.query.limit
+		if (limit !== undefined) {
+			n = Number(limit)
+		} else {
+			n=25
+		}
+
+//console.log(n, limit)
+
+  if (gender !==undefined) {
+	// get by gender
+  Scoring.find({ gender: gender}).limit( n ).sort( { score: -1, tiebreaker: 1  } ).then((participantScores ) => {
+    res.send({participantScores});
+  }, (e) => {
+    console.log(e);
+    res.status(400).send(e);
+    });
+  }
+
+	else if (onTeam !==undefined){
+		status404  = ({message: "Team not found."})
+		Scoring.find({ teamID: onTeam}).sort( { score: -1, tiebreaker:1 } ).then((participantScores) => {
+			if (!participantScores  || participantScores.length == 0) {
+				return res.status(404).send(status404);
+			}
+	    res.send({participantScores});
+	  }, (e) => {
+	    console.log(e);
+	    res.status(400).send(e);
+	    });
+	}
+	else if (davids == 'true'){
+	Scoring.find({
+			isDavid: true,
+			next: { $gte: 3 }
+		}).limit( n ).sort( { score: -1, tiebreaker:1 } ).then((participantScores) => {
+    res.send({participantScores});
+  }, (e) => {
+    console.log(e);
+    res.status(400).send(e);
+    });
+ }
+
+  else if (recent == 'true'){
+	 // looking at 15 minutes currently
+	Scoring.find({
+		progress: 'Course Complete',
+		updatedOn: { $gte: new Date(Date.now() - 900000).toISOString() }}).limit( n ).sort( { updatedOn: -1 } ).then((participantScores) => {
+    res.send({participantScores});
+  }, (e) => {
+    console.log(e);
+    res.status(400).send(e);
+    });
+  }
+  else {
+	  // get all and send
+  Scoring.find().sort( { score: -1, tiebreaker:1 } ).then((participantScores) => {
+    res.send({participantScores});
+  }, (e) => {
+    console.log(e);
+    res.status(400).send(e);
+  });
+
+  }
+
+});
+
+//updated GET scores for individual endpoint
+
+app.get('/scoring/participants/:bibNo', (req, res) => {
+// only one parameter is considered (regardless of how many are passed), in this order or precedence, gender, teamscores, team, onTeam, davids, bibNo, recent, otherwise all results are sent
+var status404  = ({message: "BibNo not found."})
+
+
+		var bibNo = req.params.bibNo
+		var ranks = req.query.ranks
+
+ if (bibNo !==undefined){
+		//console.log(bibNo)
+		Scoring.find({ bibNo: bibNo}).then((individualScores) => {
+			if (!individualScores || individualScores.length == 0) {
+				return res.status(404).send(status404);
+			}
+			individualScores = individualScores[0]
+			// insert aggregation pipeline and scoring request here based on values of participant scores
+			//start with scores from participantScores, then pull ranks/counts to create the master object that is sent
+			//should benchmark performance before changing code
+			// start testing
+				var id = individualScores._id
+				var firstName = individualScores.firstName
+				var lastName = individualScores.lastName
+				var gender = individualScores.gender
+				var g1 = individualScores.g1
+				var g2 = individualScores.g2
+				var g3 = individualScores.g3
+				var score = individualScores.score
+				var progress = individualScores.progress
+				var next = individualScores.next
+				var tiebreaker = individualScores.tiebreaker
+				var isDavid = individualScores.isDavid
+				var teamID = individualScores.teamID
+				var group = individualScores.group
+				var participant = individualScores.participant
+				var obstaclesCompleted = individualScores.obstaclesCompleted
+
+						// get rank from all scores
+						Scoring.aggregate([
+
+							{ $sort: { score: -1, tiebreaker:1 } },
+								{
+										"$group": {
+											"_id": false,
+											"count":{$sum:1},
+											"participant": {
+												"$push": {
+													"_id":"$_id",
+													"bibNo": "$bibNo"
+												}
+											}
+										}
+									},
+							{
+								"$unwind": {
+									"path": "$participant",
+									"includeArrayIndex": "rank"
+								}
+							},
+								{
+									"$match": {
+										"participant.bibNo": Number(bibNo)
+									}
+								}
+							]).then((totalRank) => {
+									var rank = totalRank[0].rank + 1
+									var rankCount = totalRank[0].count
+
+									// get rank by gender
+									Scoring.aggregate([
+										// use this for gender match
+										{
+											$match: {
+												gender: gender
+											}
+										},
+										{ $sort: { score: -1, tiebreaker:1 } },
+											{
+													"$group": {
+														"_id": false,
+														"genderCount":{$sum:1},
+														"participant": {
+															"$push": {
+																"_id":"$_id",
+																"bibNo": "$bibNo"
+															}
+														}
+													}
+												},
+										{
+											"$unwind": {
+												"path": "$participant",
+												"includeArrayIndex": "genderRank"
+											}
+										},
+											{
+												"$match": {
+													"participant.bibNo": Number(bibNo)
+												}
+											}
+										]).then((genderRank) => {
+											var sexRank = genderRank[0].genderRank + 1
+											var sexRankCount = genderRank[0].genderCount
+											//console.log(sexRank,sexRankCount)
+											//get rank by group
+											Scoring.aggregate([
+
+												//use this for group match
+												{
+												"$match": {
+												group: group
+												}
+												},
+
+												{ $sort: { score: -1, tiebreaker:1 } },
+													{
+															"$group": {
+																"_id": false,
+																"groupcount":{$sum:1},
+																"participant": {
+																	"$push": {
+																		"_id":"$_id",
+																		"bibNo": "$bibNo"
+																	}
+																}
+															}
+														},
+												{
+													"$unwind": {
+														"path": "$participant",
+														"includeArrayIndex": "grouprank"
+													}
+												},
+													{
+														"$match": {
+															"participant.bibNo": Number(bibNo)
+														}
+													}
+												]).then((groupingRank) => {
+													var groupRank = groupingRank[0].grouprank + 1
+													var groupRankCount = groupingRank[0].groupcount
+													var participantScores = [{
+													 	_id:id,
+														firstName: firstName,
+														 lastName:lastName,
+														gender: gender,
+														bibNo:Number(bibNo),
+														g1:g1,
+														g2:g2,
+														g3:g3,
+														score:score,
+														progress:progress,
+														next:next,
+														tiebreaker:tiebreaker,
+														isDavid:isDavid,
+														teamID:teamID,
+														group:group,
+														obstaclesCompleted:obstaclesCompleted,
+														participant:participant,
+														rank:rank,
+														rankCount:rankCount,
+														sexRank:sexRank,
+														sexRankCount:sexRankCount,
+														groupRank:groupRank,
+														groupRankCount:groupRankCount
+
+													 }]
+
+													//send results
+													res.send({participantScores})
+
+
+												}, (e) => {
+													console.log(e);
+												})
+
+
+										}, (e) => {
+											console.log(e);
+										})
+
+							}, (e) => {
+								console.log(e);
+							})
+//end testing
+	  }, (e) => {
+	    console.log(e);
+	    res.status(400).send(e);
+	    });
+	}
+
+});
+
+app.get('/scoring/teams', (req, res) => {
+// only one parameter is considered (regardless of how many are passed), in this order or precedence, gender, teamscores, team, onTeam, davids, bibNo, recent, otherwise all results are sent
+	  var teamScores = 'true'
+
+	// TEAM SCORING -- ALL 'teamscores'
+ if (teamScores == 'true'){
+			// get all and send
+				teamScoring.find().sort( { score: -1 } ).then((teamScores) => {
+					res.send({teamScores});
+				}, (e) => {
+					console.log(e);
+					res.status(400).send(e);
+				});
+  }
+});
+
+app.get('/scoring/teams/:team', (req, res) => {
+// only one parameter is considered (regardless of how many are passed), in this order or precedence, gender, teamscores, team, onTeam, davids, bibNo, recent, otherwise all results are sent
+		var team = req.params.team
+
+	// TEAM SCORING -- ALL 'teamscores'
+	if (team !==undefined){
+			status404  = ({message: "Team not found."})
+			teamScoring.aggregate([
+				{$sort: { score: -1 } },
+				{$group: {
+						_id: false,
+						team: {
+								$push: {
+										_id:"$_id",
+										teamID: "$teamID",
+										score: "$score",
+										g1: "$g1",
+										g2: "$g2",
+										g3: "$g3",
+										onCourse: "$onCourse"
+										}
+								}
+						}
+				},
+				{$unwind:
+					{
+						path: "$team",
+						includeArrayIndex: "rank"
+					}
+				},
+				{$match:
+					{
+						"team.teamID": team
+					}
+				}
+				]
+		).allowDiskUse(true)//better memory handling
+		.then((withRanks) => {
+		//added 404 for zero results
+		if (!withRanks  || withRanks.length == 0) {
+			return res.status(404).send(status404);
+		}
+			var rankOffset = withRanks[0].rank + 1
+			var teamScores = [{
+				_id: withRanks[0].team._id,
+				 g1: withRanks[0].team.g1,
+				 g2: withRanks[0].team.g2,
+				 g3: withRanks[0].team.g3,
+				 score: withRanks[0].team.score,
+				 onCourse: withRanks[0].team.onCourse,
+				 teamID: withRanks[0].team.teamID,
+			 rank: rankOffset
+			}]
+
+			//send results
+			res.send({teamScores});
+	}, (e) => {
+		console.log(e);
+		res.status(400).send(e);
+	});
+
+}
+});
 // GET results by bib number
 app.get('/results/:id', (req, res) => {
+  var id = req.params.id;
+  eventResults.find({bibNo: id}).then((participantResults) => {
+    if (!participantResults || participantResults.length == 0) {
+      return res.status(404).send(status404);
+    }
+    res.send({participantResults});
+  }, (e) => {
+    res.status(400).send(e);
+  });
+});
+
+// GET results by bib number
+app.get('/scoring/results/:id', (req, res) => {
   var id = req.params.id;
   eventResults.find({bibNo: id}).then((participantResults) => {
     if (!participantResults || participantResults.length == 0) {
@@ -1371,6 +1766,16 @@ app.get('/timing', (req, res) => {
     });
 })
 
+//get rope climb times Endpoint
+app.get('/scoring/tiebreaker', (req, res) => {
+	Scoring.find({$and:[ { tiebreaker: { $ne: 999.99 } }, { tiebreaker: { $gt: 0 } } ] } ).sort( { tiebreaker: 1 } ).then((participants) => {
+		res.send({participants});
+	}, (e) => {
+    console.log(e);
+    res.status(400).send(e);
+    });
+})
+
 app.get('/teams', (req, res) => {
 	var team = req.query.id
 	if (team === undefined ) {
@@ -1414,7 +1819,7 @@ app.get('/teams', (req, res) => {
 	}
 })
 
-
+//should be PUT /registration
 app.post('/registrationupdate', (req, res) => {
 	var body = req.body
 
