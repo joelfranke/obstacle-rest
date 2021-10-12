@@ -1767,7 +1767,7 @@ app.get('/timing', (req, res) => {
 })
 
 //get rope climb times Endpoint
-app.get('/scoring/tiebreaker', (req, res) => {
+app.get('/scoring/participants/tiebreaker', (req, res) => {
 	Scoring.find({$and:[ { tiebreaker: { $ne: 999.99 } }, { tiebreaker: { $gt: 0 } } ] } ).sort( { tiebreaker: 1 } ).then((participants) => {
 		res.send({participants});
 	}, (e) => {
