@@ -1,0 +1,578 @@
+swagger: "2.0"
+info:
+  description: "This is a REST API (nodeJS + express) intended to capture and report out real-time event-day results of an obstacle course race."
+  version: "1.0.0"
+  title: "Goliathon Participant App APIs"
+  contact:
+    email: "joelfranke@gmail.com"
+host: "dev-goliathon.herokuapp.com"
+tags:
+- name: "participants"
+  description: "Stored participant data from registration enriched by event-day actions"
+- name: "course"
+  description: "Event course information including obstacle definitions"
+- name: "scores"
+  description: "Retrieve individual and aggregated results at individual and team levels"
+schemes:
+- "https"
+- "http"
+paths:
+  /participant:
+    get:
+      tags:
+      - "participants"
+      summary: "Retrieve one or more participant(s) by using one of a series of optional parameters"
+      description: "Data for participants will be returned as one or more objects in an array. Optional parameters processed in order of precedence as listed below; multiple parameters are ignored."
+      produces:
+      - "application/json"
+      parameters:
+      - in: "query"
+        name: "lastName"
+        description: "Case insensitive representation of a participant's last name"
+        required: false
+        type: "string"
+      - in: "query"
+        name: "bday"
+        description: "Single birthday, in the format 'MM/DD/YYYY'"
+        required: false
+        type: "string"
+      - in: "query"
+        name: "bibNo"
+        description: "Single value (expressed in as an integer) that represents the race bib # assigned to a participant on event day"
+        required: false
+        type: "string"
+      - in: "query"
+        name: "dbId"
+        description: "The database _id of a given participant"
+        required: false
+        type: "string"
+      - in: "query"
+        name: "onTeam"
+        description: "Use to return participant data for all participants for a given team"
+        required: false
+        type: "string"
+      responses:
+        "200":
+          description: "Array of zero (0) or more objects based on the query parameters"
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/participant'
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+      security:
+      - api_key: []
+  /scoring/results:
+    get:
+      tags:
+      - "scores"
+      summary: "Retrieve obstacle-by-obstacle results"
+      description: "Returns an array of zero (0) or more obstacle level results including the ability to return a delta of results based on an autoincrementing db item count"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "d"
+        in: "query"
+        description: "Value of autoincrementing count for used as a greater than/delta comparison for returning a subset of results"
+        required: false
+        type: "string"
+      responses:
+        "200":
+          description: "Array of zero (0) or more objects based on the query parameters"
+          schema:
+            type: array
+            items:
+              $ref:  '#/definitions/results'
+        "400":
+          $ref: "#/components/responses/BadRequest"
+  /scoring/results/{bibNo}:
+    get:
+      tags:
+      - "scores"
+      summary: "Retrieve obstacle-by-obstacle results for a given participant"
+      description: "Returns an array of zero (0) or more obstacle level results for a given participant"
+      produces:
+      - "application/json"
+      parameters: 
+      - name: "bibNo"
+        in: "path"
+        description: "Assigned race bib number for a given participant"
+        required: true
+        type: "string"
+      responses:
+        "200":
+          description: "Array of zero (0) or more objects based on the path parameter"
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/results'
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NoUserFound"
+  /scoring/participants:
+    get:
+      tags:
+      - "scores"
+      summary: "Returns scores for individuals and segments thereof"
+      description: "Supports following parameters, no token required. Other than 'limit', only one parameter is considered (regardless of how many are passed), in this order of precedence, gender, davids, recent, otherwise all results are sent. Results are returned in DESC ranked order by score, then # of g3s completed, then tiebreaker."
+      produces:
+      - "application/json"
+      parameters:
+      - in: "query"
+        name: "gender"
+        description: "Case-sensitive ENUM [M,F] - Returns individual scores for either the top ?limit=n Males or Females"
+        required: false
+        type: "string"
+      - in: "query"
+        name: "onTeam"
+        description: "Returns zero or more individual scores for a given team based on the parameter onTeam"
+        required: false
+        type: "string"
+      - in: "query"
+        name: "davids"
+        description: "Returns zero or more scores objects (regardless of ?limit=n) for any individuals who has successfully completed the first two (2) G3s"
+        required: false
+        type: "boolean"
+      - in: "query"
+        name: "recent"
+        description: "Returns zero or more scores (regardless of ?limit=n) for any individual who has finished in the preceding 15 minutes when the request is made"
+        required: false
+        type: "string"
+      - in: "query"
+        name: "limit"
+        description: "Limit on number of results returned; used with parameters recent, davids, and gender. Default value is 25."
+        required: false
+        type: "integer"
+      responses:
+        "200":
+          description: "Array of zero (0) or more objects based on the query parameters"
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/participantScores'
+        "400":
+          $ref: "#/components/responses/BadRequest"
+  /scoring/participants/{bibNo}:
+    get:
+      tags:
+      - "scores"
+      summary: "Returns scores and relevant ranks for a given individual"
+      description: "Given a participant bibNo, return the score object for that user, including detailed ranks for that user for in given groups (gender/age/overall)."
+      produces:
+      - "application/json"
+      parameters:
+      - in: "path"
+        name: "bibNo"
+        description: "Returns the scores for a single individual participant"
+        required: true
+        type: "string"
+      responses:
+        "200":
+          description: "Array of zero (0) or one (1) object based on the path parameter"
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/participantScoresRank'
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NoUserFound"
+  /scoring/participants/tiebreaker:
+    get:
+      tags:
+      - "scores"
+      summary: "Returns scores for individuals who have completed the tiebreaker"
+      description: "Returns only those users which have completed the tiebreaker. Results are returned in DESC ranked order by score, then # of g3s completed, then tiebreaker."
+      produces:
+      - "application/json"
+      parameters:
+      - in: "query"
+        name: "limit"
+        description: "Limit on number of results returned; the default value is 25."
+        required: false
+        type: "integer"
+      responses:
+        "200":
+          description: "Array of zero (0) or more objects based on the query parameter"
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/participantScores'
+        "400":
+          $ref: "#/components/responses/BadRequest"
+  /scoring/teams:
+    get:
+      tags:
+      - "scores"
+      summary: "Returns scores for all teams"
+      description: "Returns the scores for all teams in rank order (DESC by total score). The 'rank' field in the response model will not be returned because the rank order can be inferred by the position in the array of objects. Results are returned in DESC ranked order by score, then # of g3s completed."
+      produces:
+      - "application/json"
+      responses:
+        "200":
+          description: "Array of zero (0) or more objects based on the number of qualifying teams (teams with at least three males and three females recording a result on at least one obstacle."
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/teamScores'
+        "400":
+          $ref: "#/components/responses/BadRequest"
+  /scoring/teams/{team}:
+    get:
+      tags:
+      - "scores"
+      summary: "Returns score for a given team."
+      description: "Based on the path parameter, return the score object for a single team. Includes a 'rank' field indicating the overall rank of the team vs. all teams."
+      produces:
+      - "application/json"
+      parameters:
+      - in: "path"
+        name: "team"
+        description: "Defines the team name to be queried in the DB. Should be UTF-8 encoded."
+        required: true
+        type: "string"
+      responses:
+        "200":
+          description: "Array of zero (0) or more objects based on the path parameter"
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/teamScores'
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NoUserFound"
+  /obstacle-details:
+    get:
+      tags:
+      - "course"
+      summary: "Retrieve obstacle/course metadata"
+      description: "Returns an array of zero (0) or more course-item specific details, including obstacles."
+      produces:
+      - "application/json"
+      parameters: []
+      responses:
+        "200":
+          description: "Array of zero (0) or more objects as represented in the db."
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/obstacles'
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+securityDefinitions:
+  api_key:
+    type: "apiKey"
+    name: "k"
+    in: "header"
+definitions:
+  results:
+    type: "object"
+    properties:
+      _id:
+        type: "string"
+      bibNo:
+        type: "string"
+      obstID:
+        type: "integer"
+        format: "int32"
+        description: "Obstacle id corresponding to the key value returned by /obstacle-details obstacle[n].sequence"
+      tier:
+        type: "integer"
+        format: "int32"
+      success:
+        type: "boolean"
+      bibFromBand:
+        type: "boolean"
+        description: "Indicates whether or not the result was the bibNo associated with the result was scanned or manually input."
+      timestamp:
+        type: "string"
+        description: "UTC timestamp of the result, ex. '2021-10-02T12:35:08.247Z'."
+      deviceTime:
+        type: "string"
+        description: "Local device time of the result, ex. 8:35:07 AM."
+      resultID:
+        type: "integer"
+        format: "int32"
+        description: "Autoincrementing db count for the result, used by /results?d={n}."
+      points:
+        type: "integer"
+        format: "int32"
+        description: "Total scored points for the result based on the success/failure of the obstacle and the tier."
+      countScore:
+        type: "boolean"
+        description: "Flag to determin whether or not the score counts (by virtue of time, etc.)"
+  obstacles:
+    type: "object"
+    properties:
+      scored:
+        type: "boolean"
+      scoring:
+        type: "array"
+        items: {}
+      _id:
+        type: "string"
+      name:
+        type: "string"
+      version:
+        type: "string"
+      recordable:
+        type: "boolean"
+        description: "Indicates whether or not the obstacle will record results."
+      sequence:
+        type: "integer"
+        format: "int32"
+        description: "The on-course order of the obstacle."
+      attemptsAllowed:
+        type: "integer"
+        format: "int32"
+      coordinate:
+        type: "array"
+        items: {}
+      obstacleDescription:
+        type: "string"
+      rules:
+        type: "string"
+  teamScores:
+    type: "object"
+    properties:
+      _id:
+        type: "string"
+      g1:
+        type: "integer"
+        format: "int32"
+      g2:
+        type: "integer"
+        format: "int32"
+      g3:
+        type: "integer"
+        format: "int32"
+      score:
+        type: "number"
+        format: "double"
+      onCourse:
+        type: "integer"
+        format: "int32"
+        description: "Count of participants registered to the team where the completed obstacle count is less than the total count of obstacles."
+      teamID:
+        type: "string"
+      rank:
+        type: "integer"
+        format: "int32"
+        description: "This field is only sent when a specific team is requested. The full set of team scores is in rank order (DESC) based on total Score."
+  participant:
+    type: "object"
+    properties:
+      _id:
+        type: "string"
+      bibNo:
+        type: "integer"
+        format: "int32"
+      teamID:
+        type: "string"
+      isDavid:
+        type: "boolean"
+      group:
+        type: "string"      
+      gender:
+        type: "string"
+      firstName:
+        type: "string"
+      lastName:
+        type: "string"
+      tiebreaker:
+        type: "object"
+        items: {}
+      startTime:
+        type: "object"
+        items: {}
+      finishTime:
+        type: "object"
+        items: {}
+      email:
+        type: "string"
+      startHeat:
+        type: "string"
+        description: "String representation of the actual heat the participant ran with, based on the start time scan."
+      courseTimeLimit:
+        type: "string"
+        description: "String representation of the time limit as calculated from the startHeat time: 'Thu Jan 01 1970 12:46:00 GMT-0500 (Eastern Standard Time)'."
+      address1:
+        type: "string"
+      address2:
+        type: "string"  
+      phone:
+        type: "string"  
+      heat:
+        type: "string"  
+        description: "Assigned heat, per registration. May differ from startHeat."
+      birthdate:
+        type: "string"  
+      city:
+        type: "string"  
+      state:
+        type: "string" 
+      zip:
+        type: "string"  
+  participantScores:
+    type: "object"
+    properties:
+      _id:
+        type: "string"
+      g1:
+        type: "integer"
+        format: "int32"
+      g2:
+        type: "integer"
+        format: "int32"
+      g3:
+        type: "integer"
+        format: "int32"
+      score:
+        type: "number"
+        format: "double"
+      bibNo:
+        type: "integer"
+        format: "int32"
+      teamID:
+        type: "string"
+      isDavid:
+        type: "boolean"
+      group:
+        type: "string"      
+      gender:
+        type: "string"
+      firstName:
+        type: "string"
+      lastName:
+        type: "string"
+      participant:
+        type: "string"
+        description: "HTML stub used for populating browser-based representations of the scoring details."
+      updatedOn:
+        type: "string"
+      progress:
+        type: "string"
+        description: "String representation (ex. '4/11') showing obstacles completed over the total number of obstacles."
+      obstaclesCompleted:
+        type: "integer"
+        format: "int32"
+        description: "Integer representation (ex. 4) showing the count of obstacles completed."
+      tiebreaker:
+        type: "number"
+        format: "double"
+        description: "Numeric representation (ex. 29.79123294353485) of the time in seconds a participant took to attempt the tiebreaker. 999.99 = not attempted."
+      next:
+        type: "integer"
+        format: "int32"
+        description: "Integer representation (ex. 4) showing the obstacle id of the next obstacle to be attempted. Corresponds to the key value returned by /obstacle-details obstacle[n].sequence. 99 = course complete."
+  participantScoresRank:
+    type: "object"
+    properties:
+      _id:
+        type: "string"
+      g1:
+        type: "integer"
+        format: "int32"
+      g2:
+        type: "integer"
+        format: "int32"
+      g3:
+        type: "integer"
+        format: "int32"
+      score:
+        type: "number"
+        format: "double"
+      bibNo:
+        type: "integer"
+        format: "int32"
+      teamID:
+        type: "string"
+      isDavid:
+        type: "boolean"
+      group:
+        type: "string"      
+      gender:
+        type: "string"
+      firstName:
+        type: "string"
+      lastName:
+        type: "string"
+      participant:
+        type: "string"
+        description: "HTML stub used for populating browser-based representations of the scoring details."
+      updatedOn:
+        type: "string"
+      progress:
+        type: "string"
+        description: "String representation (ex. '4/11') showing obstacles completed over the total number of obstacles."
+      obstaclesCompleted:
+        type: "integer"
+        format: "int32"
+        description: "Integer representation (ex. 4) showing the count of obstacles completed."
+      tiebreaker:
+        type: "number"
+        format: "double"
+        description: "Numeric representation (ex. 29.79123294353485) of the time in seconds a participant took to attempt the tiebreaker. 999.99 = not attempted."
+      next:
+        type: "integer"
+        format: "int32"
+        description: "Integer representation (ex. 4) showing the obstacle id of the next obstacle to be attempted. Corresponds to the key value returned by /obstacle-details obstacle[n].sequence. 99 = course complete."
+      rank:
+        type: "integer"
+        format: "int32"
+        description: "Integer representation (ex. 4) of the participant's overall rank."
+      rankCount:
+        type: "integer"
+        format: "int32"
+        description: "Integer representation (ex. 4) of total number of participants with a valid score."
+      sexRank:
+        type: "integer"
+        format: "int32"
+        description: "Integer representation (ex. 4) of the participant's rank relative to the other of the same gender."
+      sexRankCount:
+        type: "integer"
+        format: "int32"
+        description: "Integer representation (ex. 4) of total number of participants of the same gender with a valid score."
+      groupRank:
+        type: "integer"
+        format: "int32"
+        description: "Integer representation (ex. 4) of the participant's rank relative to the other of the same gender and relative age range."
+      groupRankCount:
+        type: "integer"
+        format: "int32"
+        description: "Integer representation (ex. 4) of total number of participants of the same gender and age range with a valid score."
+components:
+  responses:
+    UnauthorizedError:
+      description: "Invalid or missing token."
+      headers:
+        WWW_Authenticate:
+          schema:
+            type: string
+    BadRequest:
+      description: "Bad request, parameters may contain unexpected characters or the request body is not well-formed."
+      headers:
+        WWW_Authenticate:
+          schema:
+            type: string
+    NoUserFound:
+      description: "The lookup id cannot be found."
+      headers:
+        WWW_Authenticate:
+          schema:
+            type: string
+  ApiResponse:
+    type: "object"
+    properties:
+      code:
+        type: "integer"
+        format: "int32"
+      type:
+        type: "string"
+      message:
+        type: "string"
