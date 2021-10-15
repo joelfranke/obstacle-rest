@@ -1,18 +1,6 @@
 var resultID = getParameterByName('id');
 var bib = []
 
-var obstIndex = [{obstID: 1, value: "Water Carry"},
-    {obstID: 2, value: "Ninja Killer"},
-    {obstID: 3, value: "Arachnophobia"},
-    {obstID: 4, value: "Balancing Act"},
-    {obstID: 5, value: "Leap of Faith"},
-    {obstID: 6, value: "Slippery Wall Monkey"},
-    {obstID: 7, value: "Circus Maximus"},
-    {obstID: 8, value: "Skyclimb"},
-    {obstID: 9, value: "The Destroyer"},
-    {obstID: 10, value: "Rope Cross"},
-    {obstID: 11, value: "Over the Moon"}
-];
 
 function getParameterByName(name, url) {
     if (!url) url = window.location.href;
@@ -50,6 +38,23 @@ function updateResult(update){
 
 
 $(document).ready(function() {
+  //start testing new obstacle array
+var obstIndex = [];
+var jsonData = "/obstacle-details";
+
+$.getJSON( jsonData, function( obstacleJson ) {
+  var obstacles = obstacleJson.obstacle
+  for (var i = 0; i < obstacles.length; i++) {
+      if (obstacles[i].scored == true){
+      var newObstacle = new Object();
+        newObstacle.obstID = obstacles[i].sequence;
+        newObstacle.value = obstacles[i].name;
+      obstIndex.push(newObstacle);
+    }
+  }
+
+});
+//end testing
       $("#updateButton").click(function(){
         //var obstID = document.getElementById("obstID").value
         var tier = document.getElementById("tier").value
@@ -76,7 +81,6 @@ $(document).ready(function() {
                 success: success,
                 countScore: countScore
               });
-              //console.log(updatedRes)
               updateResult(updatedRes)
             })
 
@@ -98,6 +102,7 @@ $(document).ready(function() {
                 participantDiv.innerHTML += participantName;
                 bib.push(participantName);
                 var obstName;
+                console.log(obstIndex)
                 Object.keys(obstIndex).forEach(function (key)
                   {
                     if(obstIndex[key].obstID == data.participantResults[0].obstID){

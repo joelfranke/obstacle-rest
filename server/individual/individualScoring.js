@@ -1,23 +1,27 @@
 var aggJSON = [];
 var aggIndvJSON = [];
 
-var obstIndex = [{obstID: 1, value: "Water Carry"},
-    {obstID: 2, value: "Ninja Killer"},
-    {obstID: 3, value: "Arachnophobia"},
-    {obstID: 4, value: "Balancing Act"},
-    {obstID: 5, value: "Leap of Faith"},
-    {obstID: 6, value: "Slippery Wall Monkey"},
-    {obstID: 7, value: "Circus Maximus"},
-    {obstID: 8, value: "Skyclimb"},
-    {obstID: 9, value: "The Destroyer"},
-    {obstID: 10, value: "Rope Cross"},
-    {obstID: 11, value: "Over the Moon"}
-];
-
 
 function getResults(participantID,callback) {
   var jsonData = "/results/" + participantID;
    var personData = "/scoring/?bibNo=" + participantID;
+
+
+			var obstIndex = [];
+			var obstacleData = "/obstacle-details";
+
+			$.getJSON( obstacleData, function( obstacleJson ) {
+				var obstacles = obstacleJson.obstacle
+				for (var i = 0; i < obstacles.length; i++) {
+						if (obstacles[i].scored == true){
+						console.log(obstacles[i].name)
+						var newObstacle = new Object();
+							newObstacle.obstID = obstacles[i].sequence;
+							newObstacle.value = obstacles[i].name;
+						obstIndex.push(newObstacle);
+					}
+				}
+		  });
 
   $.getJSON( personData, function( personJson ) {
 
