@@ -1992,6 +1992,7 @@ app.use('/update-group', express.static(path.join(__dirname, 'groupupdate')))
 app.listen(port, () => {
   console.log(`API running on port: ${port}`);
 	countObstacles();
+	console.log(Date.now());
 	//console.log( `Obstacle count: ${totalObstacleCount}`)
 });
 
