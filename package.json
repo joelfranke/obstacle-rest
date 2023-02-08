@@ -17,7 +17,7 @@
     "date-and-time": ">=0.14.2",
     "express": "^4.14.0",
     "lodash": "^4.15.0",
-    "mongodb": "^3",
+    "mongodb": "^5",
     "mongoose": ">=5.12.10"
   }
 }
