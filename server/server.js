@@ -754,12 +754,7 @@ function logEvent(body,res){
            res.status(400).send(e);
          });
        }
-
-
-
 		 }
-
-
 	 )}
 
 
@@ -867,11 +862,6 @@ app.get('/results', (req, res) => {
 
   }
 });
-
-
-
-//Complete GET ALL results
-
 
 //Complete GET ALL results
 // includes logic to send delta results based on an optional query value "q"

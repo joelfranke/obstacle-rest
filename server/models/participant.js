@@ -11,6 +11,12 @@ var Participant = mongoose.model('Participant', {
     type: Boolean,
     required: true
   },
+  waiver: {
+    type: Boolean
+  },
+  g8: {
+    type: Boolean
+  },
   lastName: {
     type: String,
     required: true,
