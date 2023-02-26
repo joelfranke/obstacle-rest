@@ -15,7 +15,8 @@ var Participant = mongoose.model('Participant', {
     type: Boolean
   },
   g8: {
-    type: Boolean
+    type: Boolean,
+    default: false
   },
   lastName: {
     type: String,
