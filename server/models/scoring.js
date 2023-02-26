@@ -36,6 +36,10 @@ var Scoring = mongoose.model('score', {
 	 type: Boolean,
 	 default: true
   },
+  g8: {
+   type: Boolean,
+   default: false
+  },
   g1: {
     type: Number,
     required: true

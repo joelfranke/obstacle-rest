@@ -177,6 +177,7 @@ function updateScore(bibNo,tiebreaker){
            var teamName = participant.teamID;
 		   		 var isDavid = participant.isDavid;
 					 var group = participant.group;
+					 var g8 = participant.g8;
            var participantName = "<a href='/individual/?id=" +personBib+"'>" + lastName + ', ' + firstName+"</a>";
            eventResults.find({bibNo: personBib}).then((events) => {
 
@@ -231,6 +232,7 @@ function updateScore(bibNo,tiebreaker){
 				 					gender: gender,
 									group: group,
                  bibNo: personBib,
+								 g8:g8,
 				 			 	isDavid: isDavid,
                  teamID: teamName,
                  g1:g1,
