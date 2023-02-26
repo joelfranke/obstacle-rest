@@ -95,7 +95,7 @@ paths:
       description: "Returns an array of zero (0) or more obstacle level results for a given participant"
       produces:
       - "application/json"
-      parameters: 
+      parameters:
       - name: "bibNo"
         in: "path"
         description: "Assigned race bib number for a given participant"
@@ -376,8 +376,12 @@ definitions:
         type: "string"
       isDavid:
         type: "boolean"
+      waiver:
+        type: "boolean"
+      g8:
+        type: "boolean"
       group:
-        type: "string"      
+        type: "string"
       gender:
         type: "string"
       firstName:
@@ -404,20 +408,20 @@ definitions:
       address1:
         type: "string"
       address2:
-        type: "string"  
+        type: "string"
       phone:
-        type: "string"  
+        type: "string"
       heat:
-        type: "string"  
+        type: "string"
         description: "Assigned heat, per registration. May differ from startHeat."
       birthdate:
-        type: "string"  
+        type: "string"
       city:
-        type: "string"  
+        type: "string"
       state:
-        type: "string" 
+        type: "string"
       zip:
-        type: "string"  
+        type: "string"
   participantScores:
     type: "object"
     properties:
@@ -442,8 +446,10 @@ definitions:
         type: "string"
       isDavid:
         type: "boolean"
+      g8:
+        type: "boolean"
       group:
-        type: "string"      
+        type: "string"
       gender:
         type: "string"
       firstName:
@@ -495,7 +501,7 @@ definitions:
       isDavid:
         type: "boolean"
       group:
-        type: "string"      
+        type: "string"
       gender:
         type: "string"
       firstName:
