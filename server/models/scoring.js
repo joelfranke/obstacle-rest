@@ -40,6 +40,10 @@ var Scoring = mongoose.model('score', {
    type: Boolean,
    default: false
   },
+  lapScore: {
+   type: Boolean,
+   default: false
+  },
   g1: {
     type: Number,
     required: true

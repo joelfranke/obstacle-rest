@@ -178,6 +178,7 @@ function updateScore(bibNo,tiebreaker){
 		   		 var isDavid = participant.isDavid;
 					 var group = participant.group;
 					 var g8 = participant.g8;
+					 var lapScore = participant.lapScore
            var participantName = "<a href='/individual/?id=" +personBib+"'>" + lastName + ', ' + firstName+"</a>";
            eventResults.find({bibNo: personBib}).then((events) => {
 
@@ -233,6 +234,7 @@ function updateScore(bibNo,tiebreaker){
 									group: group,
                  bibNo: personBib,
 								 g8:g8,
+								 lapScore:lapScore,
 				 			 	isDavid: isDavid,
                  teamID: teamName,
                  g1:g1,
@@ -1263,14 +1265,13 @@ var status404  = ({message: "BibNo not found."})
     });
   }
   else {
-	  // get all and send
-  Scoring.find().sort( { score: -1, tiebreaker:1 } ).then((participantScores) => {
+	  // get all non-g8 scores (except for the first circut) and send
+  Scoring.find({lapScore:{$ne:true}}).sort( { score: -1, tiebreaker:1 } ).then((participantScores) => {
     res.send({participantScores});
   }, (e) => {
     console.log(e);
     res.status(400).send(e);
   });
-
   }
 
 });
@@ -1340,8 +1341,8 @@ var status404  = ({message: "BibNo not found."})
     });
   }
   else {
-	  // get all and send
-  Scoring.find().sort( { score: -1, tiebreaker:1 } ).then((participantScores) => {
+		// get all non-g8 scores (except for the first circut) and send
+  Scoring.find({lapScore:{$ne:true}}).sort( { score: -1, tiebreaker:1 } ).then((participantScores) => {
     res.send({participantScores});
   }, (e) => {
     console.log(e);
@@ -1561,6 +1562,40 @@ app.get('/scoring/teams', (req, res) => {
 				});
   }
 });
+
+app.get('/scoring/g8', (req, res) => {
+	Scoring.aggregate( [
+	// First Stage, find only g8 items
+			{
+			    $match : { "g8": true}
+			},
+	// Second Stage, combine items and update scores
+			{
+                            $group : {
+                                _id : {firstName:"$firstName" , lastName:"$lastName", group:"$group", gender:"$gender"},
+                                g1: { $sum: "$g1"},
+                                g2: { $sum: "$g2"},
+                                g3: { $sum: "$g3"},
+                                score: { $sum: "$score"},
+                                obstaclesCompleted: {$sum: "$obstaclesCompleted"}
+    		}
+			},
+		// Third Stage
+			{
+				$sort : { score: -1 }
+			},
+                // Fourth Stage, filter out ID and project values
+                        { $project: { "_id": 0, "firstName" : "$_id.firstName", "lastName":"$_id.lastName", "group":"$_id.group", "gender":"$_id.gender", "g1": 1, "g2": 1, "g3":1,"score":1,"obstaclesCompleted":1 } }
+		]
+)
+.then((participantScores) => {
+		// we could iterate through this array and create an array consistent with the other scoring objects...
+			res.send({participantScores});
+		}, (e) => {
+			console.log(e);
+			res.status(400).send(e);
+	    });
+   });
 
 app.get('/scoring/teams/:team', (req, res) => {
 // only one parameter is considered (regardless of how many are passed), in this order or precedence, gender, teamscores, team, onTeam, davids, bibNo, recent, otherwise all results are sent

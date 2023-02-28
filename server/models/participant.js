@@ -19,6 +19,10 @@ var Participant = mongoose.model('Participant', {
     type: Boolean,
     default: false
   },
+  lapScore: {
+   type: Boolean,
+   default: false
+  },
   lastName: {
     type: String,
     required: true,
