@@ -969,7 +969,7 @@ var status404  = ({message: "BibNo not found."})
 
   if (gender !==undefined) {
 	// get by gender
-  Scoring.find({ gender: gender}).limit( n ).sort( { score: -1, tiebreaker: 1  } ).then((participantScores ) => {
+  Scoring.find({ gender: gender, lapScore:{$ne:true}}).limit( n ).sort( { score: -1, tiebreaker: 1  } ).then((participantScores ) => {
     res.send({participantScores});
   }, (e) => {
     console.log(e);
@@ -1297,7 +1297,7 @@ var status404  = ({message: "BibNo not found."})
 
   if (gender !==undefined) {
 	// get by gender
-  Scoring.find({ gender: gender}).limit( n ).sort( { score: -1, tiebreaker: 1  } ).then((participantScores ) => {
+  Scoring.find({ gender: gender,lapScore:{$ne:true}}).limit( n ).sort( { score: -1, tiebreaker: 1  } ).then((participantScores ) => {
     res.send({participantScores});
   }, (e) => {
     console.log(e);
