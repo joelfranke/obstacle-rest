@@ -1698,9 +1698,9 @@ app.get('/participant', (req, res) => {
 	//var headerKey = req.headers.k
 
 	if (qLastName !==undefined){
-      getList = Participant.find({ lastName: qLastName  }).collation( { locale: 'en', strength: 2 } );
+      getList = Participant.find({ lastName: qLastName,lapScore:{$ne:true}  }).collation( { locale: 'en', strength: 2 } );
 	} else if (birth !==undefined){
-      getList = Participant.find({ birthdate: birth  });
+      getList = Participant.find({ birthdate: birth,lapScore:{$ne:true}  });
 	} else if (bibNo !== undefined){
     getList = Participant.find({ bibNo: bibNo  });
   }
