@@ -1718,8 +1718,8 @@ app.get('/participant', (req, res) => {
     var tokenCheck = checkAuth(key);
     tokenCheck.then((token) => {
         if (token ===false){
-					getPerson(getList,res)
-          //return res.status(401).send(invalidToken);
+
+          return res.status(401).send(invalidToken);
         } else {
           getPerson(getList,res)
         }
@@ -1729,8 +1729,8 @@ app.get('/participant', (req, res) => {
     ;}
     else {
       //invert comments below to make token optional/mandatory
-      //getPerson(getList,res)
-    return res.status(401).send(invalidToken);
+      getPerson(getList,res)
+    //return res.status(401).send(invalidToken);
   }
 });
 
