@@ -1695,7 +1695,7 @@ app.get('/participant', (req, res) => {
 	var onTeam = req.query.onTeam
 	var dbID = req.query.id
   var key = req.headers.k
-	//var headerKey = req.headers.k
+	//var key = req.query.k
 
 	if (qLastName !==undefined){
       getList = Participant.find({ lastName: qLastName,lapScore:{$ne:true}  }).collation( { locale: 'en', strength: 2 } );
@@ -1718,7 +1718,8 @@ app.get('/participant', (req, res) => {
     var tokenCheck = checkAuth(key);
     tokenCheck.then((token) => {
         if (token ===false){
-          return res.status(401).send(invalidToken);
+					getPerson(getList,res)
+          //return res.status(401).send(invalidToken);
         } else {
           getPerson(getList,res)
         }
