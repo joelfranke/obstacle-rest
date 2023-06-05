@@ -1683,7 +1683,7 @@ app.get('/results/:id', (req, res) => {
 // GET results by bib number
 app.get('/scoring/results/:id', (req, res) => {
   var id = req.params.id;
-  eventResults.find({bibNo: id}).then((participantResults) => {
+  eventResults.find({bibNo: id}).sort({obstID:1}).then((participantResults) => {
     if (!participantResults || participantResults.length == 0) {
       return res.status(404).send(status404);
     }
