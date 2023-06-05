@@ -1393,7 +1393,12 @@ var status404  = ({message: "BibNo not found."})
 
 						// get rank from all scores
 						Scoring.aggregate([
-
+							// exclude g8s
+							{
+								$match: {
+									lapScore: false
+								}
+							},
 							{ $sort: { score: -1, tiebreaker:1 } },
 								{
 										"$group": {
@@ -1427,6 +1432,7 @@ var status404  = ({message: "BibNo not found."})
 										// use this for gender match
 										{
 											$match: {
+												lapScore:false,
 												gender: gender
 											}
 										},
@@ -1464,6 +1470,7 @@ var status404  = ({message: "BibNo not found."})
 												//use this for group match
 												{
 												"$match": {
+													lapScore:false,
 												group: group
 												}
 												},
