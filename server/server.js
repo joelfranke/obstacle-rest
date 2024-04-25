@@ -609,6 +609,7 @@ function logEvent(body,res){
 								update = {'startTime.deviceTime': time, 'startTime.bibFromBand':bibFromBand, 'startHeat':newHeat, 'courseTimeLimit':courseTimeLimit,'lapCount':lapCount};
 
 							Participant.findOneAndUpdate({ bibNo:bibNo }, { $set: update }, {returnNewDocument : true}).then((participant) => {
+								//these lines removed to account for changes to the date-and-time package
 								//newHeat = timeDate.format(newHeat, 'h:mm A');
 								//newHeat = newHeat.replace('a.m.','AM')
 								//newHeat = newHeat.replace('p.m.','PM')
@@ -647,7 +648,6 @@ function logEvent(body,res){
 						 if (g8 == true){
 							 if (lapCount == 0){
 								 lapCount = lapCount+1
-								 //TODO: this should basically be hardcoded from 8 hours from the first heat
 								 courseTimeLimit = timeDate.addHours(heatTime,8)
 								 courseTimeLimit = timeDate.addMinutes(courseTimeLimit,1)
 								 heatTime = timeDate.format(heatTime, 'h:mm A');
@@ -678,9 +678,6 @@ function logEvent(body,res){
          } else {
            res.status(400).send(e);
          }
-         //console.log(update);
-         //no duplicate handling, will need to be added here
-				 // issue with time vs timestamp vs body.time from POST request
 
 				 if(needNewHeat === false){
          Participant.findOneAndUpdate({ bibNo:bibNo }, { $set: update }, {returnNewDocument : true}).then((participant) => {
