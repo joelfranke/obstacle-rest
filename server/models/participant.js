@@ -7,6 +7,10 @@ var Participant = mongoose.model('Participant', {
     minlength: 1,
     trim: true
   },
+  lapCount:{
+  type: Number,
+  default: 0
+  },
   isDavid: {
     type: Boolean,
     required: true

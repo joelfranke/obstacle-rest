@@ -19,6 +19,11 @@ var eventResults = mongoose.model('results', {
     minlength: 1,
     trim: true
   },
+  lapCount: {
+    type: Number,
+    required: true,
+    default: 1
+  },
   success: {
     type: Boolean,
     required: true,
@@ -28,6 +33,11 @@ var eventResults = mongoose.model('results', {
     type: Boolean,
     required: false,
     default: true
+  },
+  g8: {
+    type: Boolean,
+    required: true,
+    default: false
   },
   timestamp: {
     type: Date,

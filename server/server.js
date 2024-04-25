@@ -45,9 +45,7 @@ var invalidToken = ({message: "Invalid or missing token."});
 	    console.log('trouble with obstacle count calculation')
 	  });
 	}
-
 //end ENV variables
-
 var app = express();
 
 function updateTeamScore(teamID){
@@ -84,7 +82,6 @@ function updateTeamScore(teamID){
 						g2= g2 + results[result].g2
 						g3= g3 + results[result].g3;
 						totScore= totScore + results[result].score;
-
 				}
 					Scoring.find({
 						teamID: teamID,
@@ -123,20 +120,13 @@ function updateTeamScore(teamID){
 									});
 							} else {
 							// if this is an update to a team's score, update
-
 							teamScoring.findOneAndUpdate({ teamID:teamID }, { $set: {'g1':g1,'g2':g2,'g3':g3,'score':totScore,'updatedOn': timestamp,'onCourse':count}} , {returnNewDocument : true}).then((doc) => {
-
-							//console.log(doc)
 							}, (e) => {
 										console.log(e);
-										//log the error
 							});
-
 							}
-
 						}, (e) => {
 									console.log(e);
-									//log the error
 						});
 					//end of female else
 					}
@@ -163,7 +153,7 @@ function updateScore(bibNo,tiebreaker){
   });
 	eventResults.find({bibNo: bibNo}).then((results) => {
     if (!results || results.length == 0) {
-    }
+}
 	//
 	// start of getting all participant data
 	Participant.findOne({bibNo: bibNo}).then((participant) => {
@@ -181,8 +171,6 @@ function updateScore(bibNo,tiebreaker){
 					 var lapScore = participant.lapScore
            var participantName = "<a href='/individual/?id=" +personBib+"'>" + lastName + ', ' + firstName+"</a>";
            eventResults.find({bibNo: personBib}).then((events) => {
-
-						 	//would need to modify scoring here to d-G the tiers
                var g1 = 0;
                var g2 = 0;
                var g3 = 0;
@@ -210,14 +198,20 @@ function updateScore(bibNo,tiebreaker){
                }
 						 	//point values would need to be pulled in on a per-obstacle basis
                totScore = (g1*1.0000001) + (g2*3.00001) + (g3*5.001);
-               if (totEvents == Number(process.env.totalObstacleCount)) {
-								 //should be refactored for G8
-								 progress = 'Course Complete';
-								 next  = 99
-               } else {
-                 progress = totEvents + `/${process.env.totalObstacleCount}`;
-								 next = totEvents + 1
-               }
+							 if(g8==false){
+               	if (totEvents == Number(process.env.totalObstacleCount)) {
+								 	//should be refactored for G8
+								 	progress = 'Course Complete';
+								 	next  = 99
+               	} else {
+                 	progress = totEvents + `/${process.env.totalObstacleCount}`;
+								 	next = totEvents + 1
+               	}
+						 	} else {
+								//just write the total events and
+									progress = totEvents + `/??`;
+									next = totEvents + 1
+							}
 
 			if (newScore == true){
 				if (tiebreaker){
@@ -228,24 +222,24 @@ function updateScore(bibNo,tiebreaker){
 				// if this is the first result for the participant, write a new score.
 				var score = new Scoring({
 							participant: participantName,
-                 firstName: firstName,
+                firstName: firstName,
 				 			 	lastName: lastName,
-				 					gender: gender,
-									group: group,
-                 bibNo: personBib,
-								 g8:g8,
-								 lapScore:lapScore,
+				 				gender: gender,
+								group: group,
+                bibNo: personBib,
+								g8:g8,
+								lapScore:lapScore,
 				 			 	isDavid: isDavid,
-                 teamID: teamName,
-                 g1:g1,
-                 g2:g2,
-                 g3:g3,
-                 score:totScore,
+                teamID: teamName,
+                g1:g1,
+                g2:g2,
+                g3:g3,
+                score:totScore,
 				 			 	updatedOn: timestamp,
-                 progress:progress,
-								 obstaclesCompleted:totEvents,
-								 next: next,
-								 tiebreaker: tiebreaker
+                progress:progress,
+								obstaclesCompleted:totEvents,
+								next: next,
+								tiebreaker: tiebreaker
           });
           score.save().then((doc) => {
 						if (teamName && teamName.length > 0) {
@@ -271,11 +265,8 @@ function updateScore(bibNo,tiebreaker){
 				if (teamName && teamName.length > 0) {
 					updateTeamScore(teamName)
 				}
-
-			//console.log(doc)
 			}, (e) => {
             console.log(e);
-            //log the error
 			});
 
 
@@ -334,7 +325,8 @@ function logEvent(body,res){
       var lastName = participant.lastName;
       var bibNo = participant.bibNo;
       var obstID = body.obstID;
-
+			var g8 = participant.g8
+			var lapCount = participant.lapCount
 
 			//start testing
 			var deviceTime= body.deviceTime.replace('AM','a.m.')
@@ -345,9 +337,9 @@ function logEvent(body,res){
 			scanTime = timeDate.parse(deviceTime,'h:mm:ss A', false)
 
 			if(Date.parse(scanTime)<Date.parse(courseTimeLimit)){
-				countScore=true
-				secondsRemaining= (Date.parse(courseTimeLimit)-Date.parse(scanTime))/1000
-			} else{
+				  countScore=true
+					secondsRemaining= (Date.parse(courseTimeLimit)-Date.parse(scanTime))/1000
+			} else {
 				countScore=false
 				secondsRemaining=0
 			}
@@ -367,13 +359,10 @@ function logEvent(body,res){
 				if (tier == 3){
 					points = 5
 				}
-
 			} else {
 				points = 0
 			}
 			//end point value
-
-
       var successfulPost = ({
         message: `${firstName}`,
         bibNo: `${bibNo}`,
@@ -385,33 +374,31 @@ function logEvent(body,res){
    if (!participant) {
     return res.status(404).send(status404);
    } else {
-
     //start of duplicate handling
-    eventResults.findOne({bibNo: body.bibNo, obstID: body.obstID}).then((duplicate) => {
-
+		//use lapCount as a way to differentiate the obstacle submissions
+    eventResults.findOne({bibNo: body.bibNo, obstID: body.obstID, lapCount:lapCount}).then((duplicate) => {
       var timestamp = Date.now()
       if (duplicate) {
-        // testing block
         var resultDiff = (((((timestamp - duplicate._id.getTimestamp())% 86400000) % 3600000) / 60000));
         if (resultDiff <= 2) {
           //update this with the actual req.body.* fields incl timestamp
-
           eventResults.findByIdAndUpdate(duplicate._id, {success: body.success, points: points, timestamp: timestamp, tier: body.tier}, {new: true}).then((doc) => {
-
-			// //START OF TEST block
 			// no courseTimeLimit check required for this edge case since the prevailing assumption is that the two minutes never happend.
 			// TODO: Update isDavid flag for participant
 			 if (isDavid === true){
 			 	 if (countScore === false || (body.success === false || body.tier !== 3)){
 			 		 Participant.findByIdAndUpdate(id, {isDavid: false}, {new: true}).then((participant) => {
+						 //conditionally use updateG8Score()
 			 				 updateScore(bibNo)
 			 	}).catch((e) => {
 			 			 console.log('Something went wrong.');
 			 		 })
 			 	 } else {
+					 //conditionally use updateG8Score()
 			 		 updateScore(bibNo)
 			 	 }
 			 } else {
+				 //conditionally use updateG8Score()
 			 		updateScore(bibNo)
 			 }
 			// // END OF TEST BLOCK
@@ -425,37 +412,36 @@ function logEvent(body,res){
           res.status(400).send(e);
         })
       } else {
-          // end testing block
+          // end of 2 minute duplicate handling block
+				//if duplicate and greater than 2 minutes after the first recorded result, throw a 409 error but write results to a new log table anyway
 
-                //if duplicate and greater than 2 minutes after the first recorded result, throw a 409 error but write results to a new log table anyway
-                var obstResults = new dupeResults({
-                  bibNo: body.bibNo,
-                  obstID: body.obstID,
-                  tier: body.tier,
-                  success: body.success,
-                  bibFromBand: body.bibFromBand,
-                  timestamp: timestamp,
-									points: points,
-                  deviceTime: body.deviceTime,
-									countScore: countScore
-                });
-                console.log('Duplicate logged: ' + JSON.stringify(obstResults));
-                obstResults.save().then((doc) => {
-								//!!
-								//do NOT update score for bibNo = n
-								//!!
-                  return res.status(409).send(successfulPost);
-                }, (e) => {
-                  console.log(e);
-                  res.status(400).send(e);
-                });
+
+						var obstResults = new dupeResults({
+							bibNo: body.bibNo,
+							obstID: body.obstID,
+							tier: body.tier,
+							success: body.success,
+							bibFromBand: body.bibFromBand,
+							timestamp: timestamp,
+							points: points,
+							deviceTime: body.deviceTime,
+							g8:g8,
+							countScore: countScore,
+							lapCount: lapCount
+						});
+						console.log('Duplicate logged: ' + JSON.stringify(obstResults));
+						obstResults.save().then((doc) => {
+							return res.status(409).send(successfulPost);
+						}, (e) => {
+							console.log(e);
+							res.status(400).send(e);
+						});
+
       }
         // end of duplicate handler
       }
       // start of new result logging
       else {
-
-
         var getSeq = getNextSequence('results');
         getSeq.then((nextSeq) => {
           var obstResults = new eventResults({
@@ -468,10 +454,12 @@ function logEvent(body,res){
             deviceTime: body.deviceTime,
 						points: points,
             resultID: nextSeq,
-						countScore: countScore
+						countScore: countScore,
+						lapCount: lapCount
           });
           obstResults.save().then((doc) => {
 			//insert call to score calculate function to calculate and update score for bibNo n
+			//create a new function to update the score for g8s.
 			if (isDavid === true){
 				 if (countScore === false || (body.success === false || body.tier !== 3)){
 					 Participant.findByIdAndUpdate(id, {isDavid: false}, {new: true}).then((participant) => {
@@ -517,6 +505,8 @@ function logEvent(body,res){
 	  	var bibFromBand = body.bibFromBand;
 			var heat = participant.heat;
 			var ropeTime = body.time;
+			var g8 = participant.g8
+			var lapCount = participant.lapCount
 
       var update
 			var needNewHeat = false
@@ -537,13 +527,7 @@ function logEvent(body,res){
 				//	obstID: `${location}`,
 					heat: `${heat}`
 				});
-     //existing code
-      // var successfulPost = ({
-      //   message: `${firstName}`,
-      //   bibNo: `${bibNo}`,
-      //   obstID: `${location}`,
-			// 	heat: `${heat}`
-      // });
+
 
       if (!participant) {
         return res.status(404).send(status404);
@@ -552,23 +536,26 @@ function logEvent(body,res){
 					 // start of new code https://trello.com/c/0vlmzDx5/106-time-limit-for-scores
 
 					 // add update/calculate courseTimeLimit value
-					 // transform time from AM to a.m. format
+					 // transform time from AM to a.m. format REMOVED 4/24 with new date time library
 					 //console.log(time)
-					 time = time.replace('AM','a.m.')
-					 time = time.replace('PM','p.m.')
-					 heat = heat.replace(' AM',':00 a.m.')
-					 heat = heat.replace(' PM',':00 p.m.')
+					 //time = time.replace('AM','a.m.')
+					 //time = time.replace('PM','p.m.')
+					 heat = heat.replace(' AM',':00 AM')
+					 heat = heat.replace(' PM',':00 PM')
 
+
+
+
+					 console.log(heat, time)
 					 scanTime = timeDate.parse(time,'h:mm:ss A', false)
 					 heatTime = timeDate.parse(heat,'h:mm:ss A', false)
 
 					 heatDiff = (timeDate.addMinutes(heatTime,2)-scanTime)/60000
 					 //logging for the dateTimeLib
 					// console.log(time,scanTime,heat,heatTime, heatDiff)
+					 console.log(heatTime, scanTime)
 
-
-					 if(heatDiff>15 || heatDiff<0){
-						 //console.log('revise heat time')
+					 if((heatDiff>15 || heatDiff<0) && g8 == false){
 						 //revise startHeat to correct heat time then
 						 var needNewHeat = true
 						 var newHeat
@@ -612,16 +599,16 @@ function logEvent(body,res){
 					 		}
 
 					 		//do something
-							courseTimeLimit = timeDate.addHours(newHeat,4)
-							courseTimeLimit = timeDate.addMinutes(courseTimeLimit,1)
-							newHeat = timeDate.format(newHeat, 'h:mm A');
-							newHeat = newHeat.replace('a.m.','AM')
-							newHeat = newHeat.replace('p.m.','PM')
- 						 //set course time limit and new heat time
- 						  update = {'startTime.deviceTime': time, 'startTime.bibFromBand':bibFromBand, 'startHeat':newHeat, 'courseTimeLimit':courseTimeLimit};
-							//console.log(update)
-							Participant.findOneAndUpdate({ bibNo:bibNo }, { $set: update }, {returnNewDocument : true}).then((participant) => {
+								lapCount = 1
+								courseTimeLimit = timeDate.addHours(newHeat,4)
+								courseTimeLimit = timeDate.addMinutes(courseTimeLimit,1)
+								newHeat = timeDate.format(newHeat, 'h:mm A');
+								newHeat = newHeat.replace('a.m.','AM')
+								newHeat = newHeat.replace('p.m.','PM')
+							 //set course time limit and new heat time + lapcount
+								update = {'startTime.deviceTime': time, 'startTime.bibFromBand':bibFromBand, 'startHeat':newHeat, 'courseTimeLimit':courseTimeLimit,'lapCount':lapCount};
 
+							Participant.findOneAndUpdate({ bibNo:bibNo }, { $set: update }, {returnNewDocument : true}).then((participant) => {
 								//newHeat = timeDate.format(newHeat, 'h:mm A');
 								//newHeat = newHeat.replace('a.m.','AM')
 								//newHeat = newHeat.replace('p.m.','PM')
@@ -654,21 +641,34 @@ function logEvent(body,res){
 
 						 // end get correct heat time
 
-					 } else{
+					 } else {
 						 //set startHeat parameter with current heat assignment
 						 //set course time limit
+						 if (g8 == true){
+							 if (lapCount == 0){
+								 lapCount = lapCount+1
+								 //TODO: this should basically be hardcoded from 8 hours from the first heat
+								 courseTimeLimit = timeDate.addHours(heatTime,8)
+								 courseTimeLimit = timeDate.addMinutes(courseTimeLimit,1)
+								 heatTime = timeDate.format(heatTime, 'h:mm A');
+								 heatTime = heatTime.replace('a.m.','AM')
+								 heatTime = heatTime.replace('p.m.','PM')
+								 update = {'startTime.deviceTime': time, 'startTime.bibFromBand':bibFromBand, 'startHeat':heatTime, 'courseTimeLimit':courseTimeLimit, 'lapCount':lapCount};
+							 } else{
+								 lapCount = lapCount+1
+								 update = {'lapCount':lapCount};
+							 }
 
-						 courseTimeLimit = timeDate.addHours(heatTime,4)
-						 courseTimeLimit = timeDate.addMinutes(courseTimeLimit,1)
-
-						heatTime = timeDate.format(heatTime, 'h:mm A');
-						heatTime = heatTime.replace('a.m.','AM')
-						heatTime = heatTime.replace('p.m.','PM')
-						//console.log(heatTime)
-						 update = {'startTime.deviceTime': time, 'startTime.bibFromBand':bibFromBand, 'startHeat':heatTime, 'courseTimeLimit':courseTimeLimit};
+						 } else {
+							lapCount = 1
+							courseTimeLimit = timeDate.addHours(heatTime,4)
+							courseTimeLimit = timeDate.addMinutes(courseTimeLimit,1)
+							heatTime = timeDate.format(heatTime, 'h:mm A');
+							heatTime = heatTime.replace('a.m.','AM')
+							heatTime = heatTime.replace('p.m.','PM')
+							update = {'startTime.deviceTime': time, 'startTime.bibFromBand':bibFromBand, 'startHeat':heatTime, 'courseTimeLimit':courseTimeLimit, 'lapCount':lapCount};
+						 }
 					 }
-
-
 					 // end of new code
          } else if (location === 'finish'){
             update = {'finishTime.deviceTime': time, 'finishTime.bibFromBand':bibFromBand, 'progress':'Course Complete' };
@@ -682,7 +682,7 @@ function logEvent(body,res){
          //no duplicate handling, will need to be added here
 				 // issue with time vs timestamp vs body.time from POST request
 
-				 if(needNewHeat ===false){
+				 if(needNewHeat === false){
          Participant.findOneAndUpdate({ bibNo:bibNo }, { $set: update }, {returnNewDocument : true}).then((participant) => {
            if (participant){
 			   			if(ropeTime){
@@ -1579,6 +1579,7 @@ app.get('/scoring/g8', (req, res) => {
 	// Second Stage, combine items and update scores
 			{
                             $group : {
+															//TODO: add bibNo to this _id object because we will only have one bibNo going forward
                                 _id : {firstName:"$firstName" , lastName:"$lastName", group:"$group", gender:"$gender"},
                                 g1: { $sum: "$g1"},
                                 g2: { $sum: "$g2"},
