@@ -153,7 +153,7 @@ function updateScore(bibNo,tiebreaker){
   });
 	eventResults.find({bibNo: bibNo}).then((results) => {
     if (!results || results.length == 0) {
-}
+		}
 	//
 	// start of getting all participant data
 	Participant.findOne({bibNo: bibNo}).then((participant) => {
@@ -170,35 +170,83 @@ function updateScore(bibNo,tiebreaker){
 					 var g8 = participant.g8;
 					 var lapScore = participant.lapScore
            var participantName = "<a href='/individual/?id=" +personBib+"'>" + lastName + ', ' + firstName+"</a>";
-           eventResults.find({bibNo: personBib}).then((events) => {
+					 //.sort( { obstID: 1 } ) to sort by obstID, will take the max score per obstacle ID
+           eventResults.find({bibNo: personBib}).sort( { obstID: 1 } ).then((events) => {
                var g1 = 0;
                var g2 = 0;
                var g3 = 0;
                var totScore = 0;
                var totEvents = 0
 							 var next
+							 var currentObstID = 0
+							 var currentPoints = 0
+							  var obstID
+								 var points
+								 var countScore
                for(var event in events){
-                 var success = events[event].success
-                 var tier = events[event].tier
-								 var countScore = events[event].countScore
-                 if (success == true && countScore==true){
-                   if (tier ==1){
-                     g1 = g1 + 1;
-                   }
-                   if (tier == 2){
-                     g2 = g2 + 1;
-                   }
-                   if (tier == 3){
-                     g3 = g3 + 1;
-                   }
-                   totEvents = totEvents + 1
-                 } else {
-                   totEvents = totEvents + 1
-                 }
+
+								 obstID = events[event].obstID
+								 points = events[event].points
+								 countScore = events[event].countScore
+								 var success = events[event].success
+								 var tier = events[event].tier
+								 var success = events[event].success
+								 var tier = events[event].tier
+								 console.log(currentObstID,currentPoints, tier,g1,g2,g3)
+
+								 if (currentObstID == obstID){
+									 //this logic handles g8/lap scores by updating the g tier counts but not the event count or other variables
+									 if (currentPoints < points && countScore == true){
+										 //change the tier counts before incrementing based on a higher score
+										 if (currentPoints == 1){
+											 g1 = g1 - 1
+										 }
+										 if (currentPoints == 3){
+											 g2 = g2 - 1
+										 }
+										 // don't do g3 because that is the max. We'd never peg that down.
+										 if (success == true && countScore==true){
+											 if (tier == 1){
+												 g1 = g1 + 1;
+											 }
+											 if (tier == 2){
+												 g2 = g2 + 1;
+											 }
+											 if (tier == 3){
+												 g3 = g3 + 1;
+											 }
+											 	currentPoints = points
+												totEvents = totEvents + 1
+										 }
+									 } else {
+										 //skip because this shouldn't factor into the score but it should count toward the number of totEvents
+										 totEvents = totEvents + 1
+										 continue
+									 }
+								 } else {
+									 //this logic handles regular scores/existing code where there is no duplicate obstID
+									 if (success == true && countScore==true){
+										 if (tier ==1){
+											 g1 = g1 + 1;
+										 }
+										 if (tier == 2){
+											 g2 = g2 + 1;
+										 }
+										 if (tier == 3){
+											 g3 = g3 + 1;
+										 }
+										 totEvents = totEvents + 1
+									 } else {
+										 totEvents = totEvents + 1
+									 }
+									 currentObstID = obstID
+									 currentPoints = points
+								 }
                }
 						 	//point values would need to be pulled in on a per-obstacle basis
                totScore = (g1*1.0000001) + (g2*3.00001) + (g3*5.001);
 							 if(g8==false){
+								 //update totEvents logic for g8 to feed this
                	if (totEvents == Number(process.env.totalObstacleCount)) {
 								 	//should be refactored for G8
 								 	progress = 'Course Complete';
@@ -208,8 +256,8 @@ function updateScore(bibNo,tiebreaker){
 								 	next = totEvents + 1
                	}
 						 	} else {
-								//just write the total events and
 									progress = totEvents + `/??`;
+									//is this logic used in the app?
 									next = totEvents + 1
 							}
 
@@ -268,10 +316,7 @@ function updateScore(bibNo,tiebreaker){
 			}, (e) => {
             console.log(e);
 			});
-
-
 			}
-
              }, (e) => {
                //res.status(400).send(e);
              });
