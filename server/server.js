@@ -192,7 +192,7 @@ function updateScore(bibNo,tiebreaker){
 								 var tier = events[event].tier
 								 var success = events[event].success
 								 var tier = events[event].tier
-								console.log(currentObstID,g1,g2,g3)
+								//console.log(currentObstID,g1,g2,g3)
 								 if (obstID == currentObstID){
 										 continue
 								 } else {
@@ -589,8 +589,11 @@ function logEvent(body,res){
 
 					 			heat = heats[i]
 					 			// transform time from AM to a.m. format
-					 			heat = heat.replace(' AM',':00 a.m.')
-					 			heat = heat.replace(' PM',':00 p.m.')
+					 			//heat = heat.replace(' AM',':00 a.m.')
+					 			//heat = heat.replace(' PM',':00 p.m.')
+
+								heat = heat.replace(' AM',':00 AM')
+		 					 heat = heat.replace(' PM',':00 PM')
 					 			heatTime = timeDate.parse(heat,'h:mm:ss A', false)
 
 					 			heatResponse.push(heatTime)
@@ -934,7 +937,7 @@ app.get('/heats', (req, res) => {
 		heat = heat.replace(' PM',':00 PM')
 
 			heatTime = timeDate.parse(heat,'h:mm:ss A', false)
-			console.log(heatTime)
+			//console.log(heatTime)
 			heatResponse.push(heatTime)
 		}
 
@@ -947,7 +950,7 @@ app.get('/heats', (req, res) => {
 
 				heat = heatFormat.replace('p.m.','PM')
 				heat = heat.replace('a.m.','AM')
-				console.log(heat)
+				//console.log(heat)
 				heatTimes.push({heat})
 		}
 
