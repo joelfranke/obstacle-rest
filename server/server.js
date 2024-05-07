@@ -351,6 +351,7 @@ function logEvent(body,res){
 
 
 			scanTime = timeDate.parse(deviceTime,'h:mm:ss A', false)
+			console.log(courseTimeLimit,deviceTime,scanTime)
 
 			if(Date.parse(scanTime)<Date.parse(courseTimeLimit)){
 				  countScore=true
@@ -593,7 +594,7 @@ function logEvent(body,res){
 					 			//heat = heat.replace(' PM',':00 p.m.')
 
 								heat = heat.replace(' AM',':00 AM')
-		 					 heat = heat.replace(' PM',':00 PM')
+		 					  heat = heat.replace(' PM',':00 PM')
 					 			heatTime = timeDate.parse(heat,'h:mm:ss A', false)
 
 					 			heatResponse.push(heatTime)
@@ -674,7 +675,7 @@ function logEvent(body,res){
 								 heatTime = heatTime.replace('a.m.','AM')
 								 heatTime = heatTime.replace('p.m.','PM')
 								 update = {'startTime.deviceTime': time, 'startTime.bibFromBand':bibFromBand, 'startHeat':heatTime, 'courseTimeLimit':courseTimeLimit, 'lapCount':lapCount};
-							 } else{
+							 } else {
 								 lapCount = lapCount+1
 								 update = {'lapCount':lapCount};
 							 }
