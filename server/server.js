@@ -349,8 +349,8 @@ function logEvent(body,res){
 			//deviceTime=deviceTime.replace('PM','p.m.')
 			//heat = heat.replace(' AM',':00 AM')
 		//	heat = heat.replace(' PM',':00 PM')
-		var deviceTime= body.deviceTime.replace(' AM',':00 AM')
-		deviceTime=deviceTime.replace(' PM',':00 PM')
+		var deviceTime= body.deviceTime
+		//deviceTime=deviceTime.replace(' PM',':00 PM')
 			var courseTimeLimit = participant.courseTimeLimit;
 
 
