@@ -1786,7 +1786,7 @@ app.get('/scoring/g8/test', (req, res) => {
 				success = participantResults[i].success
 				countScore = participantResults[i].countScore
 				tier = participantResults[i].tier
-				getList = Participant.find({ bibNo: bibNo  });
+				getList = Participant.find({bibNo: bibNo});
 				if (bibNo == currentBibNo) {
 					if(countScore == true && success == true) {
 						totalObstacleCount = totalObstacleCount + 1
@@ -1830,6 +1830,20 @@ app.get('/scoring/g8/test', (req, res) => {
 					g2=0
 					g3=0
 					totalObstacleCount = 0
+					if(countScore == true && success == true) {
+						totalObstacleCount = totalObstacleCount + 1
+						if (tier ==1){
+							g1 = g1 + 1;
+						}
+						if (tier == 2){
+							g2 = g2 + 1;
+						}
+						if (tier == 3){
+							g3 = g3 + 1;
+						}
+					} else {
+						totalObstacleCount = totalObstacleCount + 1
+					}
 				} //end else if it's a new bibNo
 			}
 
