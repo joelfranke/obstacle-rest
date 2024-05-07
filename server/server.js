@@ -355,7 +355,7 @@ function logEvent(body,res){
 
 
 			scanTime = timeDate.parse(deviceTime,'h:mm:ss A', false)
-			console.log(courseTimeLimit,deviceTime,scanTime)
+		//	console.log(courseTimeLimit,deviceTime,scanTime)
 
 			if(Date.parse(scanTime)<Date.parse(courseTimeLimit)){
 				  countScore=true
