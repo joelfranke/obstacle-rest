@@ -927,8 +927,11 @@ app.get('/heats', (req, res) => {
 			heat = heats[i]
 			    //Do something
 			// transform time from AM to a.m. format
-			heat = heat.replace(' AM',':00 a.m.')
-			heat = heat.replace(' PM',':00 p.m.')
+			//heat = heat.replace(' AM',':00 a.m.')
+		//	heat = heat.replace(' PM',':00 p.m.')
+
+		heat = heat.replace(' AM',':00 AM')
+		heat = heat.replace(' PM',':00 PM')
 
 			heatTime = timeDate.parse(heat,'h:mm:ss A', false)
 			console.log(heatTime)
