@@ -345,8 +345,12 @@ function logEvent(body,res){
 			var lapCount = participant.lapCount
 
 			//start testing
-			var deviceTime= body.deviceTime.replace('AM','a.m.')
-			deviceTime=deviceTime.replace('PM','p.m.')
+			//var deviceTime= body.deviceTime.replace('AM','a.m.')
+			//deviceTime=deviceTime.replace('PM','p.m.')
+			//heat = heat.replace(' AM',':00 AM')
+		//	heat = heat.replace(' PM',':00 PM')
+		var deviceTime= body.deviceTime.replace(' AM',':00 AM')
+		deviceTime=deviceTime.replace(' PM',':00 PM')
 			var courseTimeLimit = participant.courseTimeLimit;
 
 
