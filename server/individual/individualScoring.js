@@ -3,8 +3,8 @@ var aggIndvJSON = [];
 
 
 function getResults(participantID,callback) {
-  var jsonData = "/results/" + participantID;
-   var personData = "/scoring/?bibNo=" + participantID;
+  var jsonData = "/scoring/results/" + participantID+"/all";
+   var personData = "/scoring/participants/" + participantID;
 
 
 			var obstIndex = [];

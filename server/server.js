@@ -170,8 +170,8 @@ function updateScore(bibNo,tiebreaker){
 					 var g8 = participant.g8;
 					 var lapScore = participant.lapScore
            var participantName = "<a href='/individual/?id=" +personBib+"'>" + lastName + ', ' + firstName+"</a>";
-					 //.sort( { obstID: 1 } ) to sort by obstID, will take the max score per obstacle ID
-           eventResults.find({bibNo: personBib}).sort( { obstID: 1 } ).then((events) => {
+					 //.sort( { obstID: 1, points: -1 } ) to sort by obstID and desc for points, to take the max score per obstacle ID
+           eventResults.find({bibNo: personBib}).sort( { obstID: 1, points: -1 } ).then((events) => {
                var g1 = 0;
                var g2 = 0;
                var g3 = 0;
@@ -179,10 +179,10 @@ function updateScore(bibNo,tiebreaker){
                var totEvents = 0
 							 var next
 							 var currentObstID = 0
-							 var currentPoints = 0
-							  var obstID
-								 var points
-								 var countScore
+							 var obstID
+							 var points
+							 var countScore
+
                for(var event in events){
 
 								 obstID = events[event].obstID
@@ -192,39 +192,11 @@ function updateScore(bibNo,tiebreaker){
 								 var tier = events[event].tier
 								 var success = events[event].success
 								 var tier = events[event].tier
-								 console.log(currentObstID,currentPoints, tier,g1,g2,g3)
-
-								 if (currentObstID == obstID){
-									 //this logic handles g8/lap scores by updating the g tier counts but not the event count or other variables
-									 if (currentPoints < points && countScore == true){
-										 //change the tier counts before incrementing based on a higher score
-										 if (currentPoints == 1){
-											 g1 = g1 - 1
-										 }
-										 if (currentPoints == 3){
-											 g2 = g2 - 1
-										 }
-										 // don't do g3 because that is the max. We'd never peg that down.
-										 if (success == true && countScore==true){
-											 if (tier == 1){
-												 g1 = g1 + 1;
-											 }
-											 if (tier == 2){
-												 g2 = g2 + 1;
-											 }
-											 if (tier == 3){
-												 g3 = g3 + 1;
-											 }
-											 	currentPoints = points
-												totEvents = totEvents + 1
-										 }
-									 } else {
-										 //skip because this shouldn't factor into the score but it should count toward the number of totEvents
-										 totEvents = totEvents + 1
+								console.log(currentObstID,g1,g2,g3)
+								 if (obstID == currentObstID){
 										 continue
-									 }
 								 } else {
-									 //this logic handles regular scores/existing code where there is no duplicate obstID
+									 //this logic handles regular scores/existing code where there is no redundant obstID
 									 if (success == true && countScore==true){
 										 if (tier ==1){
 											 g1 = g1 + 1;
@@ -240,7 +212,6 @@ function updateScore(bibNo,tiebreaker){
 										 totEvents = totEvents + 1
 									 }
 									 currentObstID = obstID
-									 currentPoints = points
 								 }
                }
 						 	//point values would need to be pulled in on a per-obstacle basis
@@ -498,6 +469,7 @@ function logEvent(body,res){
             timestamp: timestamp,
             deviceTime: body.deviceTime,
 						points: points,
+						g8:g8,
             resultID: nextSeq,
 						countScore: countScore,
 						lapCount: lapCount
@@ -591,14 +563,14 @@ function logEvent(body,res){
 
 
 
-					 console.log(heat, time)
+					// console.log(heat, time)
 					 scanTime = timeDate.parse(time,'h:mm:ss A', false)
 					 heatTime = timeDate.parse(heat,'h:mm:ss A', false)
 
 					 heatDiff = (timeDate.addMinutes(heatTime,2)-scanTime)/60000
 					 //logging for the dateTimeLib
 					// console.log(time,scanTime,heat,heatTime, heatDiff)
-					 console.log(heatTime, scanTime)
+					// console.log(heatTime, scanTime)
 
 					 if((heatDiff>15 || heatDiff<0) && g8 == false){
 						 //revise startHeat to correct heat time then
@@ -703,7 +675,6 @@ function logEvent(body,res){
 								 lapCount = lapCount+1
 								 update = {'lapCount':lapCount};
 							 }
-
 						 } else {
 							lapCount = 1
 							courseTimeLimit = timeDate.addHours(heatTime,4)
@@ -1710,30 +1681,156 @@ app.get('/scoring/teams/:team', (req, res) => {
 
 }
 });
-// GET results by bib number
-app.get('/results/:id', (req, res) => {
+// GET results by bib number by forwarding to the correct route
+app.get('/results/:id', (req,res,next) => {
   var id = req.params.id;
-  eventResults.find({bibNo: id}).then((participantResults) => {
+	req.url = "/scoring/results/"+id;
+	next();
+});
+
+// GET results by bib number, but get all results.
+app.get('/scoring/results/:id/all', (req, res) => {
+  var id = req.params.id;
+  eventResults.find({bibNo: id}).sort({obstID:1, points:-1}).then((participantResults) => {
     if (!participantResults || participantResults.length == 0) {
       return res.status(404).send(status404);
     }
-    res.send({participantResults});
+			res.send({participantResults});
   }, (e) => {
     res.status(400).send(e);
   });
 });
 
-// GET results by bib number
+// GET only max results by bib number
 app.get('/scoring/results/:id', (req, res) => {
   var id = req.params.id;
-  eventResults.find({bibNo: id}).sort({obstID:1}).then((participantResults) => {
+	//sort by obstacleID ascending
+  eventResults.find({bibNo: id}).sort( { obstID: 1, points: -1 } ).then((participantResults) => {
     if (!participantResults || participantResults.length == 0) {
       return res.status(404).send(status404);
     }
-    res.send({participantResults});
+		//console.log(participantResults[0])
+		if (participantResults[0].g8==false){
+			//this is the typical behavior, only one lap, no logic required
+			res.send({participantResults});
+		} else {
+			var maxResult = participantResults[0]
+			var maxScoreParticipantResults = []
+			//start with the second item, knowing the first is already set
+			//this logic currently leaves the results for the last event  on the table and doesn't write them to the response array
+			for (let i = 1; i < participantResults.length; i++) {
+				if (participantResults[i].obstID > maxResult.obstID){
+						//push the current max value to the max array
+						maxScoreParticipantResults.push(maxResult)
+						//then set the max result to the current object
+						maxResult = participantResults[i]
+						//write the last row since there is nothing to compare it to
+						if (i == participantResults.length-1){
+							maxScoreParticipantResults.push(maxResult)
+						}
+						//console.log('use this')
+				} else if (participantResults[i].points > maxResult.points){
+						//push the current max value to the max array
+						//then set the max result to the current object
+						maxResult = participantResults[i]
+						//console.log('new high water mark')
+						//write the last row since there is nothing to compare it to
+						if (i == participantResults.length-1){
+							maxScoreParticipantResults.push(maxResult)
+						}
+				} else {
+						//if it's the last row, write write the max result to the array since there is nothing further to compare it to
+						if (i == participantResults.length-1){
+							maxScoreParticipantResults.push(maxResult)
+						}
+						continue
+				}
+			}
+			//replace the participantResults object with the deduped object
+			participantResults = maxScoreParticipantResults
+			//send response
+			res.send({participantResults});
+		}
   }, (e) => {
     res.status(400).send(e);
   });
+});
+
+// GET only max results by bib number
+app.get('/scoring/g8/test', (req, res) => {
+	eventResults.find({g8:true}).sort( {bibNo: 1, obstID: 1, points: -1 } ).then((participantResults) => {
+		if (!participantResults || participantResults.length == 0) {
+			return res.status(200).send('[]');
+		}
+			var g8 = []
+			var obstacleCount = 0
+			var currentBibNo = 0
+			var g1 = 0
+			var g2 = 0
+			var g3 = 0
+			var totalObstacleCount = 0
+
+			for (let i = 0; i < participantResults.length; i++) {
+				bibNo = participantResults[i].bibNo
+				success = participantResults[i].success
+				countScore = participantResults[i].countScore
+				tier = participantResults[i].tier
+				getList = Participant.find({ bibNo: bibNo  });
+				if (bibNo == currentBibNo) {
+					if(countScore == true && success == true) {
+						totalObstacleCount = totalObstacleCount + 1
+						if (tier ==1){
+							g1 = g1 + 1;
+						}
+						if (tier == 2){
+							g2 = g2 + 1;
+						}
+						if (tier == 3){
+							g3 = g3 + 1;
+						}
+					} else {
+						totalObstacleCount = totalObstacleCount + 1
+					}
+					//if it is the very last eventResult for a person, just push it
+					if(i==participantResults.length-1){
+							var participantScore = new Object()
+							participantScore.bibNo=currentBibNo
+							participantScore.g1=g1
+							participantScore.g2=g2
+							participantScore.g3=g3
+							participantScore.score=(g1*1.0000001) + (g2*3.00001) + (g3*5.001);
+							g8.push(participantScore)
+
+					}
+				} else {
+						var participantScore = new Object()
+						participantScore.bibNo=currentBibNo
+						participantScore.g1=g1
+						participantScore.g2=g2
+						participantScore.g3=g3
+						participantScore.score=(g1*1.0000001) + (g2*3.00001) + (g3*5.001);
+						//could conditionally call participants to get the other details before doing this??
+						if(currentBibNo !=0){
+							g8.push(participantScore)
+						}
+					currentBibNo = bibNo
+					score=0
+					g1=0
+					g2=0
+					g3=0
+					totalObstacleCount = 0
+				} //end else if it's a new bibNo
+			}
+			
+			g8 = g8.sort((a, b) => {
+  		if (a.score < b.score) {
+    	return 1;
+  		}
+		});
+			res.send(g8);
+		}, (e) => {
+		res.status(400).send(e);
+	});
 });
 
 // GET query of participant table
@@ -2071,7 +2168,6 @@ app.listen(port, () => {
   console.log(`API running on port: ${port}`);
 	countObstacles();
 	console.log(Date.now());
-	//console.log( `Obstacle count: ${totalObstacleCount}`)
 });
 
 
