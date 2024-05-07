@@ -931,7 +931,7 @@ app.get('/heats', (req, res) => {
 			heat = heat.replace(' PM',':00 p.m.')
 
 			heatTime = timeDate.parse(heat,'h:mm:ss A', false)
-			//console.log(heatTime)
+			console.log(heatTime)
 			heatResponse.push(heatTime)
 		}
 
@@ -944,7 +944,7 @@ app.get('/heats', (req, res) => {
 
 				heat = heatFormat.replace('p.m.','PM')
 				heat = heat.replace('a.m.','AM')
-
+				console.log(heat)
 				heatTimes.push({heat})
 		}
 
@@ -1821,7 +1821,7 @@ app.get('/scoring/g8/test', (req, res) => {
 					totalObstacleCount = 0
 				} //end else if it's a new bibNo
 			}
-			
+
 			g8 = g8.sort((a, b) => {
   		if (a.score < b.score) {
     	return 1;
