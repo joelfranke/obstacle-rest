@@ -1751,6 +1751,7 @@ app.get('/scoring/results/:id', (req, res) => {
 						}
 				} else {
 						//if it's the last row, write write the max result to the array since there is nothing further to compare it to
+						console.log(i,participantResults.length)
 						if (i == participantResults.length-1){
 							maxScoreParticipantResults.push(maxResult)
 						}
