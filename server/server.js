@@ -228,7 +228,9 @@ function updateScore(bibNo,tiebreaker){
 								 	next = totEvents + 1
                	}
 						 	} else {
-								  progress = events.length + `/${process.env.totalObstacleCount}`;
+								//for g8 just take the total number of scans
+									totEvents = events.length
+									progress = totEvents + `/${process.env.totalObstacleCount}`;
 									//progress = totEvents + `/??`;
 									//is this logic used in the app?
 									//should we make this be some sort of tracker for g8s?
