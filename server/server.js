@@ -1730,6 +1730,7 @@ app.get('/scoring/results/:id', (req, res) => {
 			//start with the second item, knowing the first is already set
 			//this logic currently leaves the results for the last event  on the table and doesn't write them to the response array
 			for (let i = 1; i < participantResults.length; i++) {
+				console.log(i,participantResults.length)
 				if (participantResults[i].obstID > maxResult.obstID){
 						//push the current max value to the max array
 						maxScoreParticipantResults.push(maxResult)
