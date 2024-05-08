@@ -223,13 +223,15 @@ function updateScore(bibNo,tiebreaker){
 								 	progress = 'Course Complete';
 								 	next  = 99
                	} else {
-									progress = events.length + `/${process.env.totalObstacleCount}`;
-                 	//progress = totEvents + `/${process.env.totalObstacleCount}`;
+
+                 	progress = totEvents + `/${process.env.totalObstacleCount}`;
 								 	next = totEvents + 1
                	}
 						 	} else {
-									progress = totEvents + `/??`;
+								  progress = events.length + `/${process.env.totalObstacleCount}`;
+									//progress = totEvents + `/??`;
 									//is this logic used in the app?
+									//should we make this be some sort of tracker for g8s?
 									next = totEvents + 1
 							}
 
