@@ -223,7 +223,8 @@ function updateScore(bibNo,tiebreaker){
 								 	progress = 'Course Complete';
 								 	next  = 99
                	} else {
-                 	progress = totEvents + `/${process.env.totalObstacleCount}`;
+									progress = events.length + `/${process.env.totalObstacleCount}`;
+                 	//progress = totEvents + `/${process.env.totalObstacleCount}`;
 								 	next = totEvents + 1
                	}
 						 	} else {
@@ -1730,7 +1731,7 @@ app.get('/scoring/results/:id', (req, res) => {
 			//start with the second item, knowing the first is already set
 			//this logic currently leaves the results for the last event  on the table and doesn't write them to the response array
 			for (let i = 0; i < participantResults.length; i++) {
-				
+
 				if (participantResults[i].obstID > maxResult.obstID){
 						//push the current max value to the max array
 						maxScoreParticipantResults.push(maxResult)
@@ -2119,6 +2120,7 @@ app.get('/endofracebutton', (req, res) => {
 				if (token ===false){
 					return res.status(401).send(invalidToken);
 				} else {
+					//TODO: this overwrites the g8-ers; it shouldnt.
 					Scoring.updateMany({}, {$set: {progress: "Course Complete", obstaclesCompleted: Number(process.env.totalObstacleCount), next: 99.0}}).then((doc) => {
 						console.log(doc)
 						teamScoring.updateMany({}, {$set: {onCourse: 0}}).then((teamDoc) => {
