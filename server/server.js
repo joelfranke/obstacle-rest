@@ -1412,6 +1412,7 @@ var status404  = ({message: "BibNo not found."})
 				var g1 = individualScores.g1
 				var g2 = individualScores.g2
 				var g3 = individualScores.g3
+				var g8 = individualScores.g8
 				var score = individualScores.score
 				var progress = individualScores.progress
 				var next = individualScores.next
@@ -1542,6 +1543,7 @@ var status404  = ({message: "BibNo not found."})
 														g1:g1,
 														g2:g2,
 														g3:g3,
+														g8:g8,
 														score:score,
 														progress:progress,
 														next:next,
