@@ -2165,8 +2165,8 @@ Participant.countDocuments({}).then((registrations) => {
 	console.log(registrations)
 	Participant.countDocuments({bibNo:{$ne:null}}).then((checkins) => {
 		console.log(checkins)
-		Participant.countDocuments({_id : { $gt : ObjectId(Math.floor(new Date(new Date().getFullYear()+'/'+(new Date().getMonth()+1)+'/'+new Date().getDate())/1000).toString(16)+"0000000000000000") }}).then((newRegistrations) => {
-    //Participant.countDocuments({}).then((newRegistrations) => {
+		//Participant.countDocuments({_id : { $gt : ObjectId(Math.floor(new Date(new Date().getFullYear()+'/'+(new Date().getMonth()+1)+'/'+new Date().getDate())/1000).toString(16)+"0000000000000000") }}).then((newRegistrations) => {
+    				Participant.countDocuments({}).then((newRegistrations) => {
 						//registrations = total registered including new, onsite registrations
 						console.log(newRegistration)
 						var checkedInPercent = (checkins/registrations)*100
@@ -2175,13 +2175,12 @@ Participant.countDocuments({}).then((registrations) => {
 													checkedIn: checkins,
 													newRegistrations: newRegistrations,
 													checkedInPercent: checkedInPercent
-												});
+													});
 													return res.status(200).send(successfulPost);
 													}).catch((e) => {
 														console.log('This fails in the new registration query')
-													res.status(500).send(e);
-													})
-												//return res.status(200).send(successfulPost);
+														res.status(500).send(e);
+														})
 												}).catch((e) => {
 													console.log('This fails in the get checkins query')
 												res.status(500).send(e);
