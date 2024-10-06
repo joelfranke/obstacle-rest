@@ -2128,8 +2128,8 @@ app.get('/endofracebutton', (req, res) => {
 				if (token ===false){
 					return res.status(401).send(invalidToken);
 				} else {
-					//TODO: this overwrites the g8-ers; it shouldnt.
-					Scoring.updateMany({}, {$set: {progress: "Course Complete", obstaclesCompleted: Number(process.env.totalObstacleCount), next: 99.0}}).then((doc) => {
+					//TODO: this only sets the obstacles completed to 12 for non-g8-ers
+					Scoring.updateMany({g8:false}, {$set: {progress: "Course Complete", obstaclesCompleted: Number(process.env.totalObstacleCount), next: 99.0}}).then((doc) => {
 						console.log(doc)
 						teamScoring.updateMany({}, {$set: {onCourse: 0}}).then((teamDoc) => {
 							// TODO: {url}/oncourse is actually looking at {startTime:{$exists:true},finishTime:{$exists:false}}. You would need to update the finish time of these records with the race complete timestamp.
@@ -2159,15 +2159,24 @@ app.get('/endofracebutton', (req, res) => {
 	}
 })
 
-app.get('/oncourse', (req, res) => {
-Participant.count({startTime:{$exists:true},finishTime:{$exists:false}}).then((doc) => {
-	var successfulPost = ({
-		onCourse: doc
-	});
-		return res.status(200).send(successfulPost);
-}).catch((e) => {
-	res.status(500).send(e);
-	})
+app.get('/analytics', (req, res) => {
+//Participant.countDocuments({startTime:{$exists:true},finishTime:{$exists:false}}).then((registrations) => {
+Participant.countDocuments({}).then((registrations) => {
+	Participant.countDocuments({bibNo:{$ne:null}}).then((checkins) => {
+		//registrations = total registered including new
+		var checkedInPercent = (checkins/registrations)*100
+											var successfulPost = ({
+												registered: registrations,
+												checkedin: checkins,
+												checkedInPercent: checkedInPercent
+											});
+												return res.status(200).send(successfulPost);
+												}).catch((e) => {
+												res.status(500).send(e);
+												})
+						}).catch((e) => {
+							res.status(500).send(e);
+				})
 })
 
 app.get('/obstacle-details', (req, res) => {
