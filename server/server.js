@@ -2163,8 +2163,8 @@ app.get('/analytics', (req, res) => {
 //Participant.countDocuments({startTime:{$exists:true},finishTime:{$exists:false}}).then((registrations) => {
 Participant.countDocuments({}).then((registrations) => {
 	Participant.countDocuments({bibNo:{$ne:null}}).then((checkins) => {
-		Participant..countDocuments({_id : { $gt : ObjectId(Math.floor(new Date(new Date().getFullYear()+'/'+(new Date().getMonth()+1)+'/'+new Date().getDate())/1000).toString(16)+"0000000000000000") }}).then((newRegistrations) => {
-						//registrations = total registered including new
+		Participant.countDocuments({_id : { $gt : ObjectId(Math.floor(new Date(new Date().getFullYear()+'/'+(new Date().getMonth()+1)+'/'+new Date().getDate())/1000).toString(16)+"0000000000000000") }}).then((newRegistrations) => {
+						//registrations = total registered including new, onsite registrations
 						var checkedInPercent = (checkins/registrations)*100
 												var successfulPost = ({
 													registered: registrations,
