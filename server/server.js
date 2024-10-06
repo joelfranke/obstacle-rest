@@ -2174,6 +2174,7 @@ Participant.countDocuments({}).then((registrations) => {
 												});
 													return res.status(200).send(successfulPost);
 													}).catch((e) => {
+														console.log('This fails in the new registration query')
 													res.status(500).send(e);
 													})
 												return res.status(200).send(successfulPost);
