@@ -2179,9 +2179,11 @@ Participant.countDocuments({}).then((registrations) => {
 													})
 												return res.status(200).send(successfulPost);
 												}).catch((e) => {
+													console.log('This fails in the get checkins query')
 												res.status(500).send(e);
 												})
 						}).catch((e) => {
+							console.log('This fails in the first query')
 							res.status(500).send(e);
 				})
 })
