@@ -2168,7 +2168,7 @@ Participant.countDocuments({}).then((registrations) => {
 		//Participant.countDocuments({_id : { $gt : ObjectId(Math.floor(new Date(new Date().getFullYear()+'/'+(new Date().getMonth()+1)+'/'+new Date().getDate())/1000).toString(16)+"0000000000000000") }}).then((newRegistrations) => {
     				Participant.countDocuments({}).then((newRegistrations) => {
 						//registrations = total registered including new, onsite registrations
-						console.log(newRegistration)
+						console.log(newRegistrations)
 						var checkedInPercent = (checkins/registrations)*100
 												var successfulPost = ({
 													registered: registrations,
