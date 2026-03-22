@@ -8,12 +8,13 @@ goliathon_db.vsd
 instructions.txt
 
 goliathon_db.vsd
-
+package-lock.json
 teamtable.csv
-
+.gitignore
 obstacle.csv
 nextSteps.txt
 Registrants for DB.xlsx
 RegistrantsforDB.csv
 RegistrantsforDB_old.csv
-package-lock.json
+Obstacle Info (3).json
+obstacleold.json

@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>G8 Real-Time Scoring</title>
+    <link rel="stylesheet" href="style.css" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  </head>
+  <body>
+    <div class="page">
+      <header class="top">
+        <div class="titleWrap">
+          <div class="badge">G8</div>
+          <h1>Real-Time Scoring Dashboard</h1>
+        </div>
+
+        <div class="metaRow">
+          <div class="metaItem">
+            Polling every <strong><span id="pollInterval">15</span>s</strong>
+          </div>
+          <div class="metaItem">
+            Last updated: <strong><span id="lastUpdated">--</span></strong>
+          </div>
+          <div class="metaItem">
+            Status: <strong><span id="status">--</span></strong>
+          </div>
+        </div>
+
+        <div class="controlsRow">
+          <div class="tabs" role="tablist" aria-label="Gender filter">
+            <button class="tab active" id="btnAll" type="button" role="tab" aria-selected="true">
+              All
+            </button>
+            <button class="tab" id="btnM" type="button" role="tab" aria-selected="false">
+              Males
+            </button>
+            <button class="tab" id="btnF" type="button" role="tab" aria-selected="false">
+              Females
+            </button>
+          </div>
+
+          <button id="btnRefresh" class="btn" type="button">Refresh</button>
+        </div>
+      </header>
+
+      <section class="grid">
+        <div class="card">
+          <h2 class="cardTitle">Podium</h2>
+          <div class="podium" id="podium"></div>
+          <div class="hint">Top 3 overall (regardless of gender filter)</div>
+        </div>
+      </section>
+
+      <section class="card leaderboardCard">
+        <div class="leaderboardHeader">
+          <h2 class="cardTitle" style="margin:0;">Leaderboard</h2>
+          <div class="subtle" id="rowCount"></div>
+        </div>
+
+        <div id="emptyState" class="emptyState" hidden>
+          No G8 results yet. Wait for your team to start logging obstacle scans.
+        </div>
+
+        <div class="tableWrap" role="region" aria-label="G8 leaderboard table">
+          <table id="leaderboard" class="g8-table">
+            <thead>
+              <tr>
+                <th style="width:64px;">Rank</th>
+                <th>Participant</th>
+                <th style="width:140px;">Group</th>
+                <th style="width:90px;">Gender</th>
+                <th style="width:56px;">G1</th>
+                <th style="width:56px;">G2</th>
+                <th style="width:56px;">G3</th>
+                <th style="width:92px;">Score</th>
+                <th style="width:160px;">Obstacles</th>
+                <th style="width:170px;">Avg Lap (h)</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+      <div id="lapModal" class="modal" hidden>
+        <div class="modalBackdrop" id="lapModalBackdrop"></div>
+        <div class="modalCard" role="dialog" aria-modal="true" aria-labelledby="lapModalTitle">
+          <div class="modalHeader">
+            <div>
+              <div class="modalTitle" id="lapModalTitle">Time per lap</div>
+              <div class="modalSubtle" id="lapModalParticipant">—</div>
+            </div>
+            <button id="btnCloseLap" class="btn" type="button">Close</button>
+          </div>
+
+          <div id="lapModalOverall" class="modalSubtle" style="margin-top:8px;"></div>
+
+          <div class="modalGrid">
+            <section class="modalPanel">
+              <div class="panelTitle">Lap timeline</div>
+              <div class="tableWrap" style="margin-top:10px;">
+                <table id="lapTable" class="g8-table">
+                  <thead>
+                    <tr>
+                      <th style="width:80px;">Lap</th>
+                      <th>Start</th>
+                      <th>Finish</th>
+                      <th style="width:120px;">Duration</th>
+                      <th style="width:120px;">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+            </section>
+
+            <section class="modalPanel">
+              <div class="panelTitle" id="lapResultTitle">Lap results</div>
+              <div class="modalSubtle" id="lapResultHint" style="margin-top:6px;">Select a lap to view obstacle-by-obstacle results.</div>
+              <div class="tableWrap" style="margin-top:10px;">
+                <table id="lapResultTable" class="g8-table lap-results-table">
+                  <thead>
+                    <tr>
+                      <th class="lapColNum">#</th>
+                      <th class="lapColObst">Obstacle</th>
+                      <th class="lapColTier">Tier</th>
+                      <th class="lapColRes">Result</th>
+                      <th class="lapColTime">Time</th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+            </section>
+          </div>
+          <div id="lapStatus" class="modalSubtle" style="margin-top:10px;">Loading…</div>
+        </div>
+      </div>
+
+      <footer class="footer">
+        <div class="footerInner">
+          G8 real-time dashboard polling <code>/api/scoring/g8</code>.
+        </div>
+      </footer>
+    </div>
+
+    <script src="g8.js"></script>
+  </body>
+</html>
+
