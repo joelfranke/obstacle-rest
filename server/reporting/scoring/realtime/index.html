@@ -99,14 +99,13 @@
     .swatch.g3 { background: var(--teal); }
 
     .grid {
-      display: flex;
+      display: grid;
+      grid-template-columns: 2fr 3fr;
       gap: 20px;
-      align-items: flex-start;
+      align-items: start;
     }
 
     .col-tables {
-      flex: 0 0 calc(50% - 10px);
-      max-width: calc(50% - 10px);
       min-width: 0;
       display: flex;
       gap: 16px;
@@ -119,19 +118,12 @@
     }
 
     .col-chart {
-      flex: 0 0 calc(50% - 10px);
-      max-width: calc(50% - 10px);
       min-width: 0;
     }
 
     @media (max-width: 900px) {
       .grid {
-        flex-direction: column;
-      }
-      .col-tables,
-      .col-chart {
-        flex: 1 1 100%;
-        max-width: 100%;
+        grid-template-columns: 1fr;
       }
     }
 
@@ -528,6 +520,35 @@
     return table ? parseFloat(getComputedStyle(table).fontSize) : 13;
   }
 
+  var totalLabelsPlugin = {
+    id: 'totalLabels',
+    afterDatasetsDraw: function (chart) {
+      var totals = chart.$totals;
+      if (!totals || !totals.length) return;
+      var ctx = chart.ctx;
+      var meta = chart.getDatasetMeta(chart.data.datasets.length - 1);
+      if (!meta || !meta.data) return;
+      var labelFont = tableFontSizePx();
+      ctx.save();
+      ctx.fillStyle = '#1a1a1a';
+      ctx.font = '600 ' + labelFont + 'px Segoe UI, Roboto, Arial, sans-serif';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      for (var i = 0; i < meta.data.length; i++) {
+        var bar = meta.data[i];
+        var total = totals[i];
+        var x = bar.x + 6;
+        var y = bar.y;
+        if (x > chart.chartArea.right - 36) {
+          ctx.textAlign = 'right';
+          x = bar.x - 6;
+        }
+        ctx.fillText(String(total), x, y);
+      }
+      ctx.restore();
+    }
+  };
+
   function buildTeamChart(teams) {
     var list = teams || [];
     var labelFont = tableFontSizePx();
@@ -552,26 +573,45 @@
     var xMax = Math.ceil(maxScore * 1.1);
     var tickStep = Math.max(10, Math.round(xMax / 6 / 10) * 10);
 
+    var rowPitch = 34;
     var chartContainer = chartCanvas.parentElement;
-    chartContainer.style.height = Math.min(Math.max(320, list.length * 26 + 48), 900) + 'px';
+    chartContainer.style.height = Math.max(320, list.length * rowPitch + 56) + 'px';
 
-    if (teamChart) teamChart.destroy();
+    if (teamChart) {
+      teamChart.data.labels = labels;
+      teamChart.data.datasets[0].data = g3Data;
+      teamChart.data.datasets[1].data = g2Data;
+      teamChart.data.datasets[2].data = g1Data;
+      teamChart.options.scales.x.max = xMax;
+      teamChart.options.scales.x.ticks.stepSize = tickStep;
+      teamChart.options.scales.y.ticks.font.size = labelFont;
+      teamChart.$totals = totals;
+      teamChart.resize();
+      teamChart.update('none');
+      return;
+    }
 
     teamChart = new Chart(chartCanvas, {
       type: 'bar',
       data: {
         labels: labels,
         datasets: [
-          { label: 'G1 (1 pt each)', data: g1Data, backgroundColor: COLORS.g1, stack: 'stack' },
+          { label: 'G3 (5 pts each)', data: g3Data, backgroundColor: COLORS.g3, stack: 'stack' },
           { label: 'G2 (3 pts each)', data: g2Data, backgroundColor: COLORS.g2, stack: 'stack' },
-          { label: 'G3 (5 pts each)', data: g3Data, backgroundColor: COLORS.g3, stack: 'stack' }
+          { label: 'G1 (1 pt each)', data: g1Data, backgroundColor: COLORS.g1, stack: 'stack' }
         ]
       },
       options: {
         indexAxis: 'y',
         responsive: true,
         maintainAspectRatio: false,
-        animation: { duration: 400 },
+        animation: false,
+        datasets: {
+          bar: {
+            categoryPercentage: 0.72,
+            barPercentage: 0.92
+          }
+        },
         plugins: {
           legend: {
             position: 'bottom',
@@ -581,8 +621,10 @@
             callbacks: {
               footer: function (items) {
                 if (!items.length) return '';
-                var idx = items[0].dataIndex;
-                return 'Total: ' + totals[idx];
+                var chart = items[0].chart;
+                var t = chart.$totals;
+                if (!t) return '';
+                return 'Total: ' + t[items[0].dataIndex];
               }
             }
           }
@@ -602,32 +644,9 @@
           }
         }
       },
-      plugins: [{
-        id: 'totalLabels',
-        afterDatasetsDraw: function (chart) {
-          var ctx = chart.ctx;
-          var meta = chart.getDatasetMeta(chart.data.datasets.length - 1);
-          if (!meta || !meta.data) return;
-          ctx.save();
-          ctx.fillStyle = '#1a1a1a';
-          ctx.font = '600 11px Segoe UI, Roboto, Arial, sans-serif';
-          ctx.textAlign = 'left';
-          ctx.textBaseline = 'middle';
-          for (var i = 0; i < meta.data.length; i++) {
-            var bar = meta.data[i];
-            var total = totals[i];
-            var x = bar.x + 6;
-            var y = bar.y;
-            if (x > chart.chartArea.right - 36) {
-              ctx.textAlign = 'right';
-              x = bar.x - 6;
-            }
-            ctx.fillText(String(total), x, y);
-          }
-          ctx.restore();
-        }
-      }]
+      plugins: [totalLabelsPlugin]
     });
+    teamChart.$totals = totals;
   }
 
   function load() {
