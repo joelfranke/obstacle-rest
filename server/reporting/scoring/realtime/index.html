@@ -519,9 +519,10 @@
     var labels = list.map(function (t, i) {
       return (i + 1) + '. ' + t.teamID;
     });
-    var g1Data = list.map(function (t) { return t.g1 || 0; });
-    var g2Data = list.map(function (t) { return t.g2 || 0; });
-    var g3Data = list.map(function (t) { return t.g3 || 0; });
+    // API g1/g2/g3 are completion counts; score is points (g1×1 + g2×3 + g3×5).
+    var g1Data = list.map(function (t) { return (t.g1 || 0) * 1; });
+    var g2Data = list.map(function (t) { return (t.g2 || 0) * 3; });
+    var g3Data = list.map(function (t) { return (t.g3 || 0) * 5; });
     var totals = list.map(function (t) { return Math.round(t.score); });
 
     var maxScore = Math.max.apply(null, totals.concat([1]));
@@ -538,9 +539,9 @@
       data: {
         labels: labels,
         datasets: [
-          { label: 'G1 points', data: g1Data, backgroundColor: COLORS.g1, stack: 'stack' },
-          { label: 'G2 points', data: g2Data, backgroundColor: COLORS.g2, stack: 'stack' },
-          { label: 'G3 points', data: g3Data, backgroundColor: COLORS.g3, stack: 'stack' }
+          { label: 'G1 (1 pt each)', data: g1Data, backgroundColor: COLORS.g1, stack: 'stack' },
+          { label: 'G2 (3 pts each)', data: g2Data, backgroundColor: COLORS.g2, stack: 'stack' },
+          { label: 'G3 (5 pts each)', data: g3Data, backgroundColor: COLORS.g3, stack: 'stack' }
         ]
       },
       options: {
