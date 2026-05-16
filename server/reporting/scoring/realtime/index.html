@@ -523,8 +523,14 @@
     davidsList.innerHTML = html;
   }
 
+  function tableFontSizePx() {
+    var table = document.querySelector('.col-tables table');
+    return table ? parseFloat(getComputedStyle(table).fontSize) : 13;
+  }
+
   function buildTeamChart(teams) {
     var list = teams || [];
+    var labelFont = tableFontSizePx();
     if (list.length === 0) {
       if (teamChart) {
         teamChart.destroy();
@@ -592,7 +598,7 @@
           y: {
             stacked: true,
             grid: { display: false },
-            ticks: { font: { size: 11 }, autoSkip: false }
+            ticks: { font: { size: labelFont }, autoSkip: false }
           }
         }
       },
