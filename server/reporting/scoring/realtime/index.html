@@ -108,12 +108,20 @@
     .col-tables {
       min-width: 0;
       display: flex;
+      flex-direction: column;
       gap: 16px;
     }
 
-    .col-left,
-    .col-mid {
-      flex: 1 1 0;
+    .tables-top,
+    .tables-leaders {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      align-items: start;
+    }
+
+    .tables-top > *,
+    .tables-leaders > * {
       min-width: 0;
     }
 
@@ -154,7 +162,6 @@
 
     .davids-card {
       padding: 12px 14px;
-      margin-bottom: 16px;
       border-left: 4px solid var(--red);
     }
 
@@ -336,59 +343,62 @@
 
     <div class="grid">
       <div class="col-tables">
-      <div class="col-left">
-        <h2 class="section-title">Top 3 Teams</h2>
-        <div class="card" style="margin-bottom: 20px;">
-          <table id="topTeamsTable">
-            <thead>
-              <tr>
-                <th class="num">No.</th>
-                <th>Team</th>
-                <th class="pts">Points</th>
-              </tr>
-            </thead>
-            <tbody id="topTeamsBody"></tbody>
-          </table>
+        <div class="tables-top">
+          <div>
+            <h2 class="section-title">Top 3 Teams</h2>
+            <div class="card">
+              <table id="topTeamsTable">
+                <thead>
+                  <tr>
+                    <th class="num">No.</th>
+                    <th>Team</th>
+                    <th class="pts">Points</th>
+                  </tr>
+                </thead>
+                <tbody id="topTeamsBody"></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="card davids-card">
+            <h2 class="section-title">Davids</h2>
+            <ul class="david-list" id="davidsList"></ul>
+            <p class="david-note">Completed G3 tier on all obstacles</p>
+          </div>
         </div>
-
-        <h2 class="section-title">Top 25 Men</h2>
-        <div class="card">
-          <table>
-            <thead>
-              <tr>
-                <th class="num">No.</th>
-                <th>Participant</th>
-                <th class="pts">Points</th>
-                <th class="g3">G3s</th>
-              </tr>
-            </thead>
-            <tbody id="menBody"></tbody>
-          </table>
+        <div class="tables-leaders">
+          <div>
+            <h2 class="section-title">Top 25 Men</h2>
+            <div class="card">
+              <table>
+                <thead>
+                  <tr>
+                    <th class="num">No.</th>
+                    <th>Participant</th>
+                    <th class="pts">Points</th>
+                    <th class="g3">G3s</th>
+                  </tr>
+                </thead>
+                <tbody id="menBody"></tbody>
+              </table>
+            </div>
+          </div>
+          <div>
+            <h2 class="section-title">Top 25 Women</h2>
+            <div class="card">
+              <table>
+                <thead>
+                  <tr>
+                    <th class="num">No.</th>
+                    <th>Participant</th>
+                    <th class="pts">Points</th>
+                    <th class="g3">G3s</th>
+                  </tr>
+                </thead>
+                <tbody id="womenBody"></tbody>
+              </table>
+            </div>
+          </div>
         </div>
-      </div>
-
-      <div class="col-mid">
-        <div class="card davids-card">
-          <h2 class="section-title">Davids</h2>
-          <ul class="david-list" id="davidsList"></ul>
-          <p class="david-note">Completed G3 tier on all obstacles</p>
-        </div>
-
-        <h2 class="section-title">Top 25 Women</h2>
-        <div class="card">
-          <table>
-            <thead>
-              <tr>
-                <th class="num">No.</th>
-                <th>Participant</th>
-                <th class="pts">Points</th>
-                <th class="g3">G3s</th>
-              </tr>
-            </thead>
-            <tbody id="womenBody"></tbody>
-          </table>
-        </div>
-      </div>
       </div>
 
       <div class="col-chart">
