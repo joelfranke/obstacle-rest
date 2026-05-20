@@ -500,10 +500,10 @@ var status404  = ({message: "BibNo not found."})
 	    });
 	}
   else if (recent == 'true'){
-	 // looking at 15 minutes currently
 	Scoring.find({
 		progress: 'Course Complete',
-		updatedOn: { $gte: new Date(Date.now() - 900000).toISOString() }}).sort( { updatedOn: -1 } ).then((participantScores) => {
+		lapScore: { $ne: true }
+	}).sort( { updatedOn: -1 } ).limit( n ).then((participantScores) => {
     res.send({participantScores});
   }, (e) => {
     console.log(e);
@@ -576,10 +576,10 @@ var status404  = ({message: "BibNo not found."})
  }
 
   else if (recent == 'true'){
-	 // looking at 15 minutes currently
 	Scoring.find({
 		progress: 'Course Complete',
-		updatedOn: { $gte: new Date(Date.now() - 900000).toISOString() }}).limit( n ).sort( { updatedOn: -1 } ).then((participantScores) => {
+		lapScore: { $ne: true }
+	}).sort( { updatedOn: -1 } ).limit( n ).then((participantScores) => {
     res.send({participantScores});
   }, (e) => {
     console.log(e);

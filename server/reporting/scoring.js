@@ -1,7 +1,7 @@
 function mostRecent (){
 	//Needs to be updated to pull in only recent finishers
 	// should be updated more frequenty than all the rest
-  var url = "/scoring?recent=true";
+  var url = "/scoring?recent=true&limit=30";
     $(document).ready (function() {
     $('#results-recent').DataTable( {
       ajax: {

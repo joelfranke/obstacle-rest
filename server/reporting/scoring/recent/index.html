@@ -283,7 +283,7 @@
     </div>
 
     <h2 class="section-title">Most Recent Finishers</h2>
-    <p class="section-sub">Up to 30 participants who completed the course in the last 15 minutes (most recent first)</p>
+    <p class="section-sub">The 30 most recent course finishers (newest first)</p>
 
     <div class="card">
       <table id="recentTable">
@@ -314,7 +314,7 @@
       <details class="scoring-help">
         <summary>How does scoring work?</summary>
         <div class="help-body">
-          Points come from obstacle tiers: G3 = 5, G2 = 3, G1 = 1. Only successful completions count. This board lists participants who have finished the full course within the last 15 minutes, ordered by finish time.
+          Points come from obstacle tiers: G3 = 5, G2 = 3, G1 = 1. Only successful completions count. This board lists the most recent course finishers, ordered by finish time.
         </div>
       </details>
     </footer>
@@ -410,7 +410,7 @@
 
   function renderRecent(entries) {
     if (!entries || entries.length === 0) {
-      recentBody.innerHTML = '<tr><td colspan="11" class="empty">No recent finishers in the last 15 minutes</td></tr>';
+      recentBody.innerHTML = '<tr><td colspan="11" class="empty">No course finishers yet</td></tr>';
       return;
     }
     var html = '';

@@ -138,7 +138,7 @@ paths:
         type: "boolean"
       - in: "query"
         name: "recent"
-        description: "Returns zero or more scores (regardless of ?limit=n) for any individual who has finished in the preceding 15 minutes when the request is made"
+        description: "Returns the most recently finished participants (course complete), ordered by updatedOn descending and limited by ?limit=n (default 25)"
         required: false
         type: "string"
       - in: "query"
