@@ -137,8 +137,18 @@
       white-space: nowrap;
     }
 
+    thead th.team {
+      width: 22%;
+      min-width: 10rem;
+    }
+
+    thead th.group-rank {
+      width: 4.25rem;
+      text-align: right;
+    }
+
     thead th.pts, thead th.g1, thead th.g2, thead th.g3, thead th.time,
-    thead th.rank, thead th.group-rank {
+    thead th.rank {
       text-align: right;
     }
 
@@ -180,7 +190,7 @@
 
     tbody td.g2 {
       background-color: var(--tan);
-      color: var(--ink);
+      color: #fff;
       font-weight: 600;
     }
 
@@ -194,7 +204,7 @@
     tbody tr:nth-child(even) td.g2 { background-color: var(--tan); }
     tbody tr:nth-child(even) td.g3 { background-color: var(--teal); }
 
-    tbody td.name, tbody td.team {
+    tbody td.name {
       font-weight: 500;
       max-width: 0;
       overflow: hidden;
@@ -205,6 +215,16 @@
     tbody td.team {
       color: var(--muted);
       font-weight: 400;
+      width: 22%;
+      min-width: 10rem;
+      max-width: 14rem;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    tbody td.group-rank {
+      width: 4.25rem;
     }
 
     tbody td.time {
@@ -299,15 +319,12 @@
       <span><span class="swatch g3"></span> G3: 5 points</span>
     </div>
 
-    <h2 class="section-title">Most Recent Finishers</h2>
-    <p class="section-sub">The 30 most recent course finishers (newest first)</p>
-
     <div class="card">
       <table id="recentTable">
         <thead>
           <tr>
             <th>Participant</th>
-            <th>Team</th>
+            <th class="team">Team</th>
             <th class="pts">Points</th>
             <th class="rank">Overall</th>
             <th>Group</th>
@@ -373,6 +390,11 @@
     var d = new Date(iso);
     if (isNaN(d.getTime())) return '—';
     return d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+  }
+
+  function formatOverallRank(rank) {
+    if (rank == null) return '—';
+    return String(rank);
   }
 
   function formatRank(rank, count) {
@@ -441,7 +463,7 @@
       var name = displayName(p);
       var team = p.teamID || '—';
       var groupDef = displayGroup(p, ranks);
-      var overallRank = ranks ? formatRank(ranks.rank, ranks.rankCount) : '—';
+      var overallRank = ranks ? formatOverallRank(ranks.rank) : '—';
       var groupRank = ranks ? formatRank(ranks.groupRank, ranks.groupRankCount) : '—';
       html +=
         '<tr>' +
