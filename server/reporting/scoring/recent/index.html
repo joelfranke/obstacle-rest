@@ -30,7 +30,7 @@
     }
 
     .page {
-      max-width: 1100px;
+      max-width: 1280px;
       margin: 0 auto;
       padding: 16px 24px 32px 20px;
     }
@@ -138,7 +138,8 @@
     }
 
     thead th.num { width: 2.5rem; text-align: center; }
-    thead th.pts, thead th.g1, thead th.g2, thead th.g3, thead th.time {
+    thead th.pts, thead th.g1, thead th.g2, thead th.g3, thead th.time,
+    thead th.rank, thead th.group-rank {
       text-align: right;
     }
     thead th.gender { width: 2.5rem; text-align: center; }
@@ -156,12 +157,19 @@
       font-variant-numeric: tabular-nums;
     }
 
-    tbody td.pts, tbody td.g1, tbody td.g2, tbody td.g3, tbody td.time {
+    tbody td.pts, tbody td.g1, tbody td.g2, tbody td.g3, tbody td.time,
+    tbody td.rank, tbody td.group-rank {
       text-align: right;
       font-variant-numeric: tabular-nums;
+      white-space: nowrap;
     }
 
     tbody td.pts { font-weight: 600; }
+
+    tbody td.rank, tbody td.group-rank {
+      color: var(--muted);
+      font-size: 0.75rem;
+    }
 
     tbody td.gender {
       text-align: center;
@@ -285,6 +293,8 @@
             <th>Participant</th>
             <th>Team</th>
             <th class="gender">M/F</th>
+            <th class="rank">Overall</th>
+            <th class="group-rank">Group</th>
             <th class="g1">G1</th>
             <th class="g2">G2</th>
             <th class="g3">G3</th>
@@ -349,6 +359,43 @@
     return d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
   }
 
+  function formatRank(rank, count) {
+    if (rank == null || count == null) return '—';
+    return rank + '/' + count;
+  }
+
+  function fetchParticipantRanks(bibNo) {
+    return fetchJson('/scoring/participants/' + encodeURIComponent(bibNo))
+      .then(function (data) {
+        var p = data.participantScores && data.participantScores[0];
+        if (!p) return null;
+        return {
+          rank: p.rank,
+          rankCount: p.rankCount,
+          groupRank: p.groupRank,
+          groupRankCount: p.groupRankCount,
+          group: p.group
+        };
+      })
+      .catch(function () {
+        return null;
+      });
+  }
+
+  function enrichWithRanks(rows) {
+    if (!rows || rows.length === 0) {
+      return Promise.resolve([]);
+    }
+    return Promise.all(rows.map(function (row) {
+      if (row.bibNo == null || row.bibNo === '') {
+        return Promise.resolve({ row: row, ranks: null });
+      }
+      return fetchParticipantRanks(row.bibNo).then(function (ranks) {
+        return { row: row, ranks: ranks };
+      });
+    }));
+  }
+
   function setStatus(state, message) {
     statusDot.className = 'status-dot ' + (state || '');
     statusText.textContent = message;
@@ -361,23 +408,29 @@
     });
   }
 
-  function renderRecent(rows) {
-    if (!rows || rows.length === 0) {
-      recentBody.innerHTML = '<tr><td colspan="9" class="empty">No recent finishers in the last 15 minutes</td></tr>';
+  function renderRecent(entries) {
+    if (!entries || entries.length === 0) {
+      recentBody.innerHTML = '<tr><td colspan="11" class="empty">No recent finishers in the last 15 minutes</td></tr>';
       return;
     }
     var html = '';
-    for (var i = 0; i < rows.length; i++) {
-      var p = rows[i];
+    for (var i = 0; i < entries.length; i++) {
+      var p = entries[i].row;
+      var ranks = entries[i].ranks;
       var name = displayName(p);
       var team = p.teamID || '—';
       var gender = p.gender === 'M' || p.gender === 'F' ? p.gender : '—';
+      var overallRank = ranks ? formatRank(ranks.rank, ranks.rankCount) : '—';
+      var groupRank = ranks ? formatRank(ranks.groupRank, ranks.groupRankCount) : '—';
+      var groupTitle = ranks && ranks.group ? ranks.group : '';
       html +=
         '<tr>' +
         '<td class="num">' + (i + 1) + '</td>' +
         '<td class="name" title="' + esc(name) + '">' + esc(name) + '</td>' +
         '<td class="team" title="' + esc(team) + '">' + esc(team) + '</td>' +
         '<td class="gender">' + esc(gender) + '</td>' +
+        '<td class="rank">' + esc(overallRank) + '</td>' +
+        '<td class="group-rank" title="' + esc(groupTitle) + '">' + esc(groupRank) + '</td>' +
         '<td class="g1">' + esc(p.g1) + '</td>' +
         '<td class="g2">' + esc(p.g2) + '</td>' +
         '<td class="g3">' + esc(p.g3) + '</td>' +
@@ -393,7 +446,12 @@
 
     fetchJson(API_URL)
       .then(function (data) {
-        renderRecent(data.participantScores || []);
+        var rows = data.participantScores || [];
+        setStatus('loading', 'Loading ranks…');
+        return enrichWithRanks(rows);
+      })
+      .then(function (entries) {
+        renderRecent(entries);
         lastUpdatedEl.textContent = new Date().toLocaleString();
         setStatus('', 'Live');
       })
