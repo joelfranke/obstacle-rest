@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Goliathon — Recent Finishers</title>
+  <link rel="shortcut icon" href="https://static.wixstatic.com/media/31b0eb_50b696c341a04b4796f8bdf45cc48e24.jpeg/v1/fill/w_32%2Ch_32%2Clg_1%2Cusm_0.66_1.00_0.01/31b0eb_50b696c341a04b4796f8bdf45cc48e24.jpeg" type="image/png" />
+  <style>
+    :root {
+      --teal: #005b71;
+      --tan: #c69c6d;
+      --green: #59b95f;
+      --red: #8b1a1a;
+      --ink: #1a1a1a;
+      --muted: #5c5c5c;
+      --row-alt: #f4f6f7;
+      --header-bg: #2d2d2d;
+      --border: #d8dde0;
+      --shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Roboto, Arial, sans-serif;
+      color: var(--ink);
+      background: #fff;
+      line-height: 1.4;
+    }
+
+    .page {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 16px 24px 32px 20px;
+    }
+
+    .header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 20px;
+      padding-bottom: 16px;
+      border-bottom: 2px solid var(--teal);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .brand img {
+      width: 140px;
+      height: auto;
+    }
+
+    .brand h1 {
+      margin: 0;
+      font-size: clamp(1.5rem, 3vw, 2rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .meta {
+      text-align: right;
+      font-size: 0.875rem;
+      color: var(--muted);
+    }
+
+    .meta strong { color: var(--ink); }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px 20px;
+      margin-bottom: 16px;
+      font-size: 0.8125rem;
+    }
+
+    .legend span {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .swatch {
+      width: 14px;
+      height: 14px;
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+
+    .swatch.g1 { background: var(--green); }
+    .swatch.g2 { background: var(--tan); }
+    .swatch.g3 { background: var(--teal); }
+
+    .section-title {
+      font-family: Georgia, "Times New Roman", serif;
+      color: var(--red);
+      font-size: 1.05rem;
+      font-weight: 700;
+      margin: 0 0 8px;
+    }
+
+    .section-sub {
+      font-family: Georgia, "Times New Roman", serif;
+      color: var(--red);
+      font-size: 0.75rem;
+      font-style: italic;
+      margin: 0 0 12px;
+      line-height: 1.35;
+    }
+
+    .card {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8125rem;
+    }
+
+    thead th {
+      background: var(--header-bg);
+      color: #fff;
+      font-weight: 600;
+      text-align: left;
+      padding: 8px 10px;
+      white-space: nowrap;
+    }
+
+    thead th.num { width: 2.5rem; text-align: center; }
+    thead th.pts, thead th.g1, thead th.g2, thead th.g3, thead th.time {
+      text-align: right;
+    }
+    thead th.gender { width: 2.5rem; text-align: center; }
+
+    tbody td {
+      padding: 7px 10px;
+      border-bottom: 1px solid #e8ecef;
+    }
+
+    tbody tr:nth-child(even) { background: var(--row-alt); }
+
+    tbody td.num {
+      text-align: center;
+      color: var(--muted);
+      font-variant-numeric: tabular-nums;
+    }
+
+    tbody td.pts, tbody td.g1, tbody td.g2, tbody td.g3, tbody td.time {
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+
+    tbody td.pts { font-weight: 600; }
+
+    tbody td.gender {
+      text-align: center;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    tbody td.name, tbody td.team {
+      font-weight: 500;
+      max-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    tbody td.team {
+      color: var(--muted);
+      font-weight: 400;
+    }
+
+    tbody td.time {
+      color: var(--muted);
+      font-size: 0.75rem;
+      white-space: nowrap;
+    }
+
+    .status-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.8125rem;
+      color: var(--muted);
+      margin-top: 8px;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--green);
+      flex-shrink: 0;
+    }
+
+    .status-dot.error { background: #c0392b; }
+    .status-dot.loading { background: var(--tan); animation: pulse 1s ease infinite; }
+
+    @keyframes pulse {
+      50% { opacity: 0.4; }
+    }
+
+    .empty {
+      padding: 24px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.875rem;
+    }
+
+    .footer-links {
+      margin-top: 24px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+      font-size: 0.8125rem;
+      color: var(--muted);
+    }
+
+    .footer-links a { color: var(--teal); }
+
+    details.scoring-help {
+      display: inline;
+    }
+
+    details.scoring-help summary {
+      cursor: pointer;
+      color: var(--teal);
+      list-style: none;
+    }
+
+    details.scoring-help summary::-webkit-details-marker { display: none; }
+
+    details.scoring-help .help-body {
+      margin-top: 8px;
+      max-width: 520px;
+      padding: 12px;
+      background: #f8f9fa;
+      border-radius: 4px;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="header">
+      <div class="brand">
+        <img src="https://static.wixstatic.com/media/31b0eb_897c23eccf174cc0b77f617aaf0ba9c3.png/v1/fill/w_167,h_105,al_c,usm_0.66_1.00_0.01/31b0eb_897c23eccf174cc0b77f617aaf0ba9c3.png" alt="Goliathon" width="140" height="88" />
+        <h1>Recent Finishers</h1>
+      </div>
+      <div class="meta">
+        <div>Refreshes every <strong>30 seconds</strong></div>
+        <div>Last updated: <strong id="lastUpdated">—</strong></div>
+        <div class="status-bar">
+          <span class="status-dot loading" id="statusDot" aria-hidden="true"></span>
+          <span id="statusText">Loading…</span>
+        </div>
+      </div>
+    </header>
+
+    <div class="legend" aria-label="Scoring tiers">
+      <span><span class="swatch g1"></span> G1: 1 point</span>
+      <span><span class="swatch g2"></span> G2: 3 points</span>
+      <span><span class="swatch g3"></span> G3: 5 points</span>
+    </div>
+
+    <h2 class="section-title">Most Recent Finishers</h2>
+    <p class="section-sub">Up to 30 participants who completed the course in the last 15 minutes (most recent first)</p>
+
+    <div class="card">
+      <table id="recentTable">
+        <thead>
+          <tr>
+            <th class="num">No.</th>
+            <th>Participant</th>
+            <th>Team</th>
+            <th class="gender">M/F</th>
+            <th class="g1">G1</th>
+            <th class="g2">G2</th>
+            <th class="g3">G3</th>
+            <th class="pts">Points</th>
+            <th class="time">Finished</th>
+          </tr>
+        </thead>
+        <tbody id="recentBody"></tbody>
+      </table>
+    </div>
+
+    <footer class="footer-links">
+      <a href="/scoring/realtime">Real-time results</a>
+      ·
+      <a href="/">Classic results view</a>
+      ·
+      <details class="scoring-help">
+        <summary>How does scoring work?</summary>
+        <div class="help-body">
+          Points come from obstacle tiers: G3 = 5, G2 = 3, G1 = 1. Only successful completions count. This board lists participants who have finished the full course within the last 15 minutes, ordered by finish time.
+        </div>
+      </details>
+    </footer>
+  </div>
+
+  <script>
+(function () {
+  'use strict';
+
+  var LIMIT = 30;
+  var REFRESH_MS = 30000;
+  var API_URL = '/scoring/participants?recent=true&limit=' + LIMIT;
+
+  var recentBody = document.getElementById('recentBody');
+  var lastUpdatedEl = document.getElementById('lastUpdated');
+  var statusDot = document.getElementById('statusDot');
+  var statusText = document.getElementById('statusText');
+
+  function esc(s) {
+    var d = document.createElement('div');
+    d.textContent = s == null ? '' : String(s);
+    return d.innerHTML;
+  }
+
+  function displayName(row) {
+    if (row.firstName && row.lastName) {
+      return row.lastName + ', ' + row.firstName;
+    }
+    var raw = row.participant;
+    if (raw == null || raw === '') return '';
+    if (String(raw).indexOf('<') === -1) return String(raw);
+    var el = document.createElement('div');
+    el.innerHTML = raw;
+    var link = el.querySelector('a');
+    return (link ? link.textContent : el.textContent).trim();
+  }
+
+  function formatFinished(iso) {
+    if (!iso) return '—';
+    var d = new Date(iso);
+    if (isNaN(d.getTime())) return '—';
+    return d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+  }
+
+  function setStatus(state, message) {
+    statusDot.className = 'status-dot ' + (state || '');
+    statusText.textContent = message;
+  }
+
+  function fetchJson(url) {
+    return fetch(url, { cache: 'no-store' }).then(function (res) {
+      if (!res.ok) throw new Error(url + ' returned ' + res.status);
+      return res.json();
+    });
+  }
+
+  function renderRecent(rows) {
+    if (!rows || rows.length === 0) {
+      recentBody.innerHTML = '<tr><td colspan="9" class="empty">No recent finishers in the last 15 minutes</td></tr>';
+      return;
+    }
+    var html = '';
+    for (var i = 0; i < rows.length; i++) {
+      var p = rows[i];
+      var name = displayName(p);
+      var team = p.teamID || '—';
+      var gender = p.gender === 'M' || p.gender === 'F' ? p.gender : '—';
+      html +=
+        '<tr>' +
+        '<td class="num">' + (i + 1) + '</td>' +
+        '<td class="name" title="' + esc(name) + '">' + esc(name) + '</td>' +
+        '<td class="team" title="' + esc(team) + '">' + esc(team) + '</td>' +
+        '<td class="gender">' + esc(gender) + '</td>' +
+        '<td class="g1">' + esc(p.g1) + '</td>' +
+        '<td class="g2">' + esc(p.g2) + '</td>' +
+        '<td class="g3">' + esc(p.g3) + '</td>' +
+        '<td class="pts">' + esc(Math.round(p.score)) + '</td>' +
+        '<td class="time">' + esc(formatFinished(p.updatedOn)) + '</td>' +
+        '</tr>';
+    }
+    recentBody.innerHTML = html;
+  }
+
+  function load() {
+    setStatus('loading', 'Updating…');
+
+    fetchJson(API_URL)
+      .then(function (data) {
+        renderRecent(data.participantScores || []);
+        lastUpdatedEl.textContent = new Date().toLocaleString();
+        setStatus('', 'Live');
+      })
+      .catch(function (err) {
+        console.error(err);
+        setStatus('error', 'Update failed — retrying…');
+      });
+  }
+
+  load();
+  setInterval(load, REFRESH_MS);
+})();
+  </script>
+</body>
+</html>

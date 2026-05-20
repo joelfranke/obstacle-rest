@@ -115,9 +115,12 @@ registerLegacyRoutes(app, {
   registration,
 });
 
-// Real-time scoring dashboard (before static so /scoring/realtime is not shadowed)
+// Scoring dashboards (before static so routes are not shadowed)
 app.get('/scoring/realtime', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'server', 'reporting', 'scoring', 'realtime', 'index.html'));
+});
+app.get('/scoring/recent', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'server', 'reporting', 'scoring', 'recent', 'index.html'));
 });
 
 // Binds the root directory to display html results page
