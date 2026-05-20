@@ -177,6 +177,87 @@ function parseDeviceTimeToMs(timeStr) {
   return (hours * 3600 + minutes * 60 + seconds) * 1000;
 }
 
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
+
+function sameDayMsFromDate(d) {
+  if (!(d instanceof Date) || Number.isNaN(d.getTime())) return NaN;
+  return (d.getHours() * 3600 + d.getMinutes() * 60 + d.getSeconds()) * 1000 + d.getMilliseconds();
+}
+
+function elapsedMsSameDay(startMs, endMs) {
+  if (!Number.isFinite(startMs) || !Number.isFinite(endMs)) return NaN;
+  let totalMs = endMs - startMs;
+  if (totalMs < 0) totalMs += MS_PER_DAY;
+  return totalMs;
+}
+
+function computeAvgLapHours(startMs, endMs, completedLaps) {
+  const totalMs = elapsedMsSameDay(startMs, endMs);
+  if (!Number.isFinite(totalMs) || !(completedLaps > 0)) return NaN;
+  return (totalMs / completedLaps) / (60 * 60 * 1000);
+}
+
+function eventTimeMs(ev) {
+  const fromDevice = parseDeviceTimeToMs(ev?.deviceTime);
+  if (Number.isFinite(fromDevice)) return fromDevice;
+  return sameDayMsFromDate(new Date(ev?.timestamp));
+}
+
+function extremeEventMs(events, pick) {
+  let best = NaN;
+  for (const ev of events) {
+    const t = eventTimeMs(ev);
+    if (!Number.isFinite(t)) continue;
+    if (!Number.isFinite(best) || (pick === 'max' ? t > best : t < best)) best = t;
+  }
+  return best;
+}
+
+function resolveStartEndMs(participant, events) {
+  let startMs = parseDeviceTimeToMs(participant?.startTime?.deviceTime);
+  let endMs = parseDeviceTimeToMs(participant?.finishTime?.deviceTime);
+
+  if (events.length) {
+    const earliest = extremeEventMs(events, 'min');
+    const latest = extremeEventMs(events, 'max');
+    if (!Number.isFinite(startMs) && Number.isFinite(earliest)) startMs = earliest;
+    if (!Number.isFinite(endMs) && Number.isFinite(latest)) endMs = latest;
+  }
+  if (!Number.isFinite(endMs)) endMs = sameDayMsFromDate(new Date());
+
+  return { startMs, endMs };
+}
+
+async function resolveAvgLapHours(bibNo, obstaclesCompleted) {
+  const completedLaps = obstaclesCompleted / 12;
+  if (!(completedLaps > 0)) return NaN;
+
+  try {
+    const participantResp = await fetch(`/participant?bibNo=${bibNo}`, { method: 'GET', cache: 'no-store' });
+    if (!participantResp.ok) return NaN;
+
+    const participantData = await participantResp.json();
+    const participant = participantData?.participants?.[0] || null;
+
+    const hasStart = Number.isFinite(parseDeviceTimeToMs(participant?.startTime?.deviceTime));
+    const hasFinish = Number.isFinite(parseDeviceTimeToMs(participant?.finishTime?.deviceTime));
+
+    let events = [];
+    if (!hasStart || !hasFinish) {
+      const resultsResp = await fetch(`/scoring/results/${bibNo}/all`, { method: 'GET', cache: 'no-store' });
+      if (resultsResp.ok) {
+        const resultsData = await resultsResp.json();
+        events = resultsData?.participantResults || [];
+      }
+    }
+
+    const { startMs, endMs } = resolveStartEndMs(participant, events);
+    return computeAvgLapHours(startMs, endMs, completedLaps);
+  } catch (e) {
+    return NaN;
+  }
+}
+
 function formatTimeMs(ms) {
   if (!Number.isFinite(ms)) return '—';
   const d = new Date(ms);
@@ -521,26 +602,7 @@ async function fetchOnce() {
   latestParticipants = await Promise.all(list.map(async (p) => {
     const bibNo = safeNumber(p.bibNo);
     const obstaclesCompleted = safeNumber(p.obstaclesCompleted);
-    const completedLaps = obstaclesCompleted / 12;
-
-    let avgLapHours = NaN;
-    try {
-      const participantResp = await fetch(`/participant?bibNo=${bibNo}`, { method: 'GET', cache: 'no-store' });
-      if (participantResp.ok) {
-        const participantData = await participantResp.json();
-        const participant = participantData?.participants?.[0] || null;
-        const startMs = parseDeviceTimeToMs(participant?.startTime?.deviceTime);
-        const finishMs = parseDeviceTimeToMs(participant?.finishTime?.deviceTime);
-
-        if (Number.isFinite(startMs) && Number.isFinite(finishMs) && completedLaps > 0) {
-          let totalMs = finishMs - startMs;
-          if (totalMs < 0) totalMs += 24 * 60 * 60 * 1000;
-          avgLapHours = (totalMs / completedLaps) / (60 * 60 * 1000);
-        }
-      }
-    } catch (e) {
-      avgLapHours = NaN;
-    }
+    const avgLapHours = await resolveAvgLapHours(bibNo, obstaclesCompleted);
 
     return {
       bibNo,
