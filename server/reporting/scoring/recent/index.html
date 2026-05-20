@@ -137,12 +137,10 @@
       white-space: nowrap;
     }
 
-    thead th.num { width: 2.5rem; text-align: center; }
     thead th.pts, thead th.g1, thead th.g2, thead th.g3, thead th.time,
     thead th.rank, thead th.group-rank {
       text-align: right;
     }
-    thead th.gender { width: 2.5rem; text-align: center; }
 
     tbody td {
       padding: 7px 10px;
@@ -150,12 +148,6 @@
     }
 
     tbody tr:nth-child(even) { background: var(--row-alt); }
-
-    tbody td.num {
-      text-align: center;
-      color: var(--muted);
-      font-variant-numeric: tabular-nums;
-    }
 
     tbody td.pts, tbody td.g1, tbody td.g2, tbody td.g3, tbody td.time,
     tbody td.rank, tbody td.group-rank {
@@ -171,11 +163,36 @@
       font-size: 0.75rem;
     }
 
-    tbody td.gender {
-      text-align: center;
+    tbody td.group-def {
       color: var(--muted);
+      font-size: 0.75rem;
+      max-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    tbody td.g1 {
+      background-color: var(--green);
+      color: #fff;
       font-weight: 600;
     }
+
+    tbody td.g2 {
+      background-color: var(--tan);
+      color: var(--ink);
+      font-weight: 600;
+    }
+
+    tbody td.g3 {
+      background-color: var(--teal);
+      color: #fff;
+      font-weight: 600;
+    }
+
+    tbody tr:nth-child(even) td.g1 { background-color: var(--green); }
+    tbody tr:nth-child(even) td.g2 { background-color: var(--tan); }
+    tbody tr:nth-child(even) td.g3 { background-color: var(--teal); }
 
     tbody td.name, tbody td.team {
       font-weight: 500;
@@ -289,16 +306,15 @@
       <table id="recentTable">
         <thead>
           <tr>
-            <th class="num">No.</th>
             <th>Participant</th>
             <th>Team</th>
-            <th class="gender">M/F</th>
+            <th class="pts">Points</th>
             <th class="rank">Overall</th>
-            <th class="group-rank">Group</th>
+            <th>Group</th>
+            <th class="group-rank">Group Rank</th>
             <th class="g1">G1</th>
             <th class="g2">G2</th>
             <th class="g3">G3</th>
-            <th class="pts">Points</th>
             <th class="time">Finished</th>
           </tr>
         </thead>
@@ -408,9 +424,14 @@
     });
   }
 
+  function displayGroup(row, ranks) {
+    var group = (ranks && ranks.group) || row.group;
+    return group == null || group === '' ? '—' : String(group);
+  }
+
   function renderRecent(entries) {
     if (!entries || entries.length === 0) {
-      recentBody.innerHTML = '<tr><td colspan="11" class="empty">No course finishers yet</td></tr>';
+      recentBody.innerHTML = '<tr><td colspan="10" class="empty">No course finishers yet</td></tr>';
       return;
     }
     var html = '';
@@ -419,22 +440,20 @@
       var ranks = entries[i].ranks;
       var name = displayName(p);
       var team = p.teamID || '—';
-      var gender = p.gender === 'M' || p.gender === 'F' ? p.gender : '—';
+      var groupDef = displayGroup(p, ranks);
       var overallRank = ranks ? formatRank(ranks.rank, ranks.rankCount) : '—';
       var groupRank = ranks ? formatRank(ranks.groupRank, ranks.groupRankCount) : '—';
-      var groupTitle = ranks && ranks.group ? ranks.group : '';
       html +=
         '<tr>' +
-        '<td class="num">' + (i + 1) + '</td>' +
         '<td class="name" title="' + esc(name) + '">' + esc(name) + '</td>' +
         '<td class="team" title="' + esc(team) + '">' + esc(team) + '</td>' +
-        '<td class="gender">' + esc(gender) + '</td>' +
+        '<td class="pts">' + esc(Math.round(p.score)) + '</td>' +
         '<td class="rank">' + esc(overallRank) + '</td>' +
-        '<td class="group-rank" title="' + esc(groupTitle) + '">' + esc(groupRank) + '</td>' +
+        '<td class="group-def" title="' + esc(groupDef) + '">' + esc(groupDef) + '</td>' +
+        '<td class="group-rank">' + esc(groupRank) + '</td>' +
         '<td class="g1">' + esc(p.g1) + '</td>' +
         '<td class="g2">' + esc(p.g2) + '</td>' +
         '<td class="g3">' + esc(p.g3) + '</td>' +
-        '<td class="pts">' + esc(Math.round(p.score)) + '</td>' +
         '<td class="time">' + esc(formatFinished(p.updatedOn)) + '</td>' +
         '</tr>';
     }
