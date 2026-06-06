@@ -1,6 +1,22 @@
 /* global Chart */
 
-const API_URL = '/api/scoring/g8';
+const G8_LEADERBOARD_PATH = '/api/scoring/g8';
+
+function getApiBase() {
+  if (typeof window !== 'undefined' && window.G8_API_BASE) {
+    return String(window.G8_API_BASE).replace(/\/$/, '');
+  }
+  const params = new URLSearchParams(window.location.search);
+  const fromQuery = params.get('apiBase') || params.get('api');
+  if (fromQuery) return String(fromQuery).replace(/\/$/, '');
+  return '';
+}
+
+function apiUrl(path) {
+  const normalized = path.startsWith('/') ? path : `/${path}`;
+  const base = getApiBase();
+  return base ? `${base}${normalized}` : normalized;
+}
 
 function $(id) {
   return document.getElementById(id);
@@ -154,105 +170,67 @@ function formatDurationMs(ms) {
 
 function formatHours(hours) {
   if (!Number.isFinite(hours)) return '—';
-  return `${hours.toFixed(2)} h`;
+  return formatDurationMs(hours * 60 * 60 * 1000);
 }
 
-function parseDeviceTimeToMs(timeStr) {
-  if (timeStr === undefined || timeStr === null) return NaN;
-  const s = String(timeStr).trim();
-  if (!s.length) return NaN;
-
-  const m = s.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(AM|PM)$/i);
-  if (!m) return NaN;
-
-  let hours = Number(m[1]);
-  const minutes = Number(m[2]);
-  const seconds = m[3] !== undefined ? Number(m[3]) : 0;
-  const ampm = String(m[4]).toUpperCase();
-
-  if (!Number.isFinite(hours) || !Number.isFinite(minutes) || !Number.isFinite(seconds)) return NaN;
-  if (ampm === 'PM' && hours !== 12) hours += 12;
-  if (ampm === 'AM' && hours === 12) hours = 0;
-
-  return (hours * 3600 + minutes * 60 + seconds) * 1000;
-}
-
-const MS_PER_DAY = 24 * 60 * 60 * 1000;
-
-function sameDayMsFromDate(d) {
-  if (!(d instanceof Date) || Number.isNaN(d.getTime())) return NaN;
-  return (d.getHours() * 3600 + d.getMinutes() * 60 + d.getSeconds()) * 1000 + d.getMilliseconds();
-}
-
-function elapsedMsSameDay(startMs, endMs) {
-  if (!Number.isFinite(startMs) || !Number.isFinite(endMs)) return NaN;
-  let totalMs = endMs - startMs;
-  if (totalMs < 0) totalMs += MS_PER_DAY;
-  return totalMs;
-}
-
-function computeAvgLapHours(startMs, endMs, completedLaps) {
-  const totalMs = elapsedMsSameDay(startMs, endMs);
-  if (!Number.isFinite(totalMs) || !(completedLaps > 0)) return NaN;
-  return (totalMs / completedLaps) / (60 * 60 * 1000);
-}
-
-function eventTimeMs(ev) {
-  const fromDevice = parseDeviceTimeToMs(ev?.deviceTime);
-  if (Number.isFinite(fromDevice)) return fromDevice;
-  return sameDayMsFromDate(new Date(ev?.timestamp));
-}
-
-function extremeEventMs(events, pick) {
-  let best = NaN;
+function lapStatsFromEvents(events) {
+  const lapStartMs = new Map();
+  const lapEndMs = new Map();
   for (const ev of events) {
-    const t = eventTimeMs(ev);
+    const lap = Number(ev.lapCount || 0);
+    if (!Number.isFinite(lap) || lap <= 0) continue;
+    const t = new Date(ev.timestamp).getTime();
     if (!Number.isFinite(t)) continue;
-    if (!Number.isFinite(best) || (pick === 'max' ? t > best : t < best)) best = t;
+    if (!lapStartMs.has(lap)) {
+      lapStartMs.set(lap, t);
+      lapEndMs.set(lap, t);
+    } else {
+      lapStartMs.set(lap, Math.min(lapStartMs.get(lap), t));
+      lapEndMs.set(lap, Math.max(lapEndMs.get(lap), t));
+    }
   }
-  return best;
+  return { lapStartMs, lapEndMs };
 }
 
-function resolveStartEndMs(participant, events) {
-  let startMs = parseDeviceTimeToMs(participant?.startTime?.deviceTime);
-  let endMs = parseDeviceTimeToMs(participant?.finishTime?.deviceTime);
+function computeAvgLapHoursFromEvents(events) {
+  const { lapStartMs, lapEndMs } = lapStatsFromEvents(events);
+  if (!lapStartMs.size) return NaN;
 
-  if (events.length) {
-    const earliest = extremeEventMs(events, 'min');
-    const latest = extremeEventMs(events, 'max');
-    if (!Number.isFinite(startMs) && Number.isFinite(earliest)) startMs = earliest;
-    if (!Number.isFinite(endMs) && Number.isFinite(latest)) endMs = latest;
+  const durationsMs = [];
+  const laps = [...lapStartMs.keys()].sort((a, b) => a - b);
+
+  for (const lap of laps) {
+    const nextStart = lapStartMs.get(lap + 1);
+    if (nextStart !== undefined) {
+      durationsMs.push(nextStart - lapStartMs.get(lap));
+    }
   }
-  if (!Number.isFinite(endMs)) endMs = sameDayMsFromDate(new Date());
 
-  return { startMs, endMs };
+  // No finished laps yet: use elapsed time on the current in-progress lap.
+  if (!durationsMs.length) {
+    const lap = laps[laps.length - 1];
+    const startMs = lapStartMs.get(lap);
+    const endMs = lapEndMs.get(lap);
+    if (Number.isFinite(startMs) && Number.isFinite(endMs) && endMs >= startMs) {
+      durationsMs.push(endMs - startMs);
+    }
+  }
+
+  if (!durationsMs.length) return NaN;
+  const avgMs = durationsMs.reduce((sum, d) => sum + d, 0) / durationsMs.length;
+  return avgMs / (60 * 60 * 1000);
 }
 
 async function resolveAvgLapHours(bibNo, obstaclesCompleted) {
-  const completedLaps = obstaclesCompleted / 12;
-  if (!(completedLaps > 0)) return NaN;
+  if (!(obstaclesCompleted > 0)) return NaN;
 
   try {
-    const participantResp = await fetch(`/participant?bibNo=${bibNo}`, { method: 'GET', cache: 'no-store' });
-    if (!participantResp.ok) return NaN;
+    const resultsResp = await fetch(apiUrl(`/scoring/results/${bibNo}/all`), { method: 'GET', cache: 'no-store' });
+    if (!resultsResp.ok) return NaN;
 
-    const participantData = await participantResp.json();
-    const participant = participantData?.participants?.[0] || null;
-
-    const hasStart = Number.isFinite(parseDeviceTimeToMs(participant?.startTime?.deviceTime));
-    const hasFinish = Number.isFinite(parseDeviceTimeToMs(participant?.finishTime?.deviceTime));
-
-    let events = [];
-    if (!hasStart || !hasFinish) {
-      const resultsResp = await fetch(`/scoring/results/${bibNo}/all`, { method: 'GET', cache: 'no-store' });
-      if (resultsResp.ok) {
-        const resultsData = await resultsResp.json();
-        events = resultsData?.participantResults || [];
-      }
-    }
-
-    const { startMs, endMs } = resolveStartEndMs(participant, events);
-    return computeAvgLapHours(startMs, endMs, completedLaps);
+    const resultsData = await resultsResp.json();
+    const events = resultsData?.participantResults || [];
+    return computeAvgLapHoursFromEvents(events);
   } catch (e) {
     return NaN;
   }
@@ -312,9 +290,9 @@ async function openLapModal(p) {
   try {
     // Fetch start/finish (strings) + per-lap timestamps (ISO dates) from existing APIs.
     const [participantResp, resultsResp, obstacleResp] = await Promise.all([
-      fetch(`/participant?bibNo=${bibNo}`),
-      fetch(`/scoring/results/${bibNo}/all`),
-      fetch('/obstacle-details')
+      fetch(apiUrl(`/participant?bibNo=${bibNo}`)),
+      fetch(apiUrl(`/scoring/results/${bibNo}/all`)),
+      fetch(apiUrl('/obstacle-details'))
     ]);
 
     const participantData = await participantResp.json();
@@ -591,7 +569,7 @@ async function fetchOnce() {
   statusEl.textContent = 'Loading…';
 
   const startedAt = Date.now();
-  const resp = await fetch(API_URL, { method: 'GET', cache: 'no-store' });
+  const resp = await fetch(apiUrl(G8_LEADERBOARD_PATH), { method: 'GET', cache: 'no-store' });
   if (!resp.ok) {
     throw new Error(`API error: ${resp.status}`);
   }
@@ -640,6 +618,14 @@ async function tick() {
 
 function wireUi() {
   $('pollInterval').textContent = String(pollMs / 1000);
+
+  const apiBase = getApiBase();
+  const footerEl = document.querySelector('.footerInner');
+  if (footerEl) {
+    const target = apiBase || 'same origin';
+    footerEl.innerHTML = `G8 real-time dashboard polling <code>${apiUrl(G8_LEADERBOARD_PATH)}</code> (${target}).`;
+  }
+
   $('btnAll').addEventListener('click', () => setActiveTab('ALL'));
   $('btnM').addEventListener('click', () => setActiveTab('M'));
   $('btnF').addEventListener('click', () => setActiveTab('F'));

@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>G8 Real-Time Scoring</title>
+    <title>G8 Real-Time Scoring (Local → Production)</title>
     <link rel="stylesheet" href="style.css" />
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   </head>
@@ -16,6 +16,9 @@
         </div>
 
         <div class="metaRow">
+          <div class="metaItem">
+            Mode: <strong>Local UI → production API</strong>
+          </div>
           <div class="metaItem">
             Polling every <strong><span id="pollInterval">15</span>s</strong>
           </div>
@@ -140,12 +143,12 @@
 
       <footer class="footer">
         <div class="footerInner">
-          G8 real-time dashboard polling <code>/api/scoring/g8</code>.
+          G8 real-time dashboard polling production API.
         </div>
       </footer>
     </div>
 
+    <script src="local.config.js"></script>
     <script src="g8.js"></script>
   </body>
 </html>
-
