@@ -515,6 +515,10 @@
     topTeamsBody.innerHTML = html;
   }
 
+  function isDavidCourseComplete(p) {
+    return p.next === 99 || p.progress === 'Course Complete';
+  }
+
   function renderDavids(participants) {
     if (!participants || participants.length === 0) {
       davidsList.innerHTML = '<li class="empty">None yet</li>';
@@ -674,7 +678,7 @@
         var men = results[0].participantScores || [];
         var women = results[1].participantScores || [];
         var teams = results[2].teamScores || [];
-        var davids = results[3].participantScores || [];
+        var davids = (results[3].participantScores || []).filter(isDavidCourseComplete);
 
         renderParticipants(menBody, men);
         renderParticipants(womenBody, women);
