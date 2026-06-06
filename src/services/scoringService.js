@@ -64,7 +64,7 @@ function updateTeamScore(teamID){
 								totScore= totScore + results[result].score;
 						}
 						// start write score logic
-						Participant.count({teamID:teamID, bibNo:{ $gt:0}, finishTime:null}).then((count) => {
+						Participant.countDocuments({teamID:teamID, bibNo:{ $gt:0}, finishTime:null}).then((count) => {
 							if (newScore == true){
 
 								// if this is the first result for the team, write a new score.
