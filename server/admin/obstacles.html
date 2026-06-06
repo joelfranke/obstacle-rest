@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<meta charset='utf-8'>
+<html>
+  <head>
+    <link rel="shortcut icon" href="https://static.wixstatic.com/media/31b0eb_50b696c341a04b4796f8bdf45cc48e24.jpeg/v1/fill/w_32%2Ch_32%2Clg_1%2Cusm_0.66_1.00_0.01/31b0eb_50b696c341a04b4796f8bdf45cc48e24.jpeg" type="image/png"/>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <script src="https://cdn.datatables.net/1.10.16/js/jquery.dataTables.min.js"></script>
+    <link rel='stylesheet' href='https://cdn.datatables.net/1.10.16/css/jquery.dataTables.min.css'>
+    <script type='text/javascript' src='obstacle-import.js'></script>
+    <style>
+      body { font-family: sans-serif; max-width: 1200px; margin: 0 auto; padding: 20px; }
+      .nav { margin-bottom: 20px; }
+      .nav a { margin-right: 16px; }
+      #status { margin: 16px 0; padding: 12px; display: none; }
+      #status.success { background: #e6f4ea; color: #1e4620; }
+      #status.error { background: #fce8e6; color: #5f2120; }
+      #status.info { background: #e8f0fe; color: #174ea6; }
+      .upload-row { margin: 20px 0; }
+      .changed { background-color: #fff3cd; }
+      .new { background-color: #e6f4ea; }
+      .unchanged { color: #666; }
+    </style>
+  </head>
+  <body>
+    <img alt="" src="https://static.wixstatic.com/media/31b0eb_897c23eccf174cc0b77f617aaf0ba9c3.png/v1/fill/w_167,h_105,al_c,usm_0.66_1.00_0.01/31b0eb_897c23eccf174cc0b77f617aaf0ba9c3.png" style="width: 167px; height: 105px; object-fit: cover; display: block; margin: 0 auto 20px;">
+
+    <div class="nav">
+      <a href="index.html">Registration Admin</a>
+      <strong>Obstacle Import</strong>
+    </div>
+
+    <p>Upload an obstacle JSON file to update <code>sequence</code>, <code>coordinate</code>, <code>rules</code>, <code>obstacleDescription</code>, and <code>recordable</code> in the database. Obstacles are matched by <code>name</code>; new obstacles are added automatically.</p>
+
+    <div class="upload-row">
+      <input type="file" id="json-file" accept=".json,application/json"/>
+      <button type="button" id="previewButton" disabled>Preview Changes</button>
+      <button type="button" id="applyButton" disabled>Apply Updates</button>
+    </div>
+
+    <div id="status"></div>
+
+    <div id="summary" style="display:none; margin-bottom: 16px;"></div>
+
+    <div id="datatable">
+      <table id="preview-table" class="display" width="100%"></table>
+    </div>
+  </body>
+</html>

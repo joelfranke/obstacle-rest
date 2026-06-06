@@ -113,6 +113,7 @@ registerLegacyRoutes(app, {
   logEvent,
   logTime,
   registration,
+  countObstacles,
 });
 
 // Scoring dashboards (before static so routes are not shadowed)

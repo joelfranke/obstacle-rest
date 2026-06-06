@@ -21,6 +21,114 @@ module.exports = function registerLegacyRoutes(app, deps) {
   var logTime = deps.logTime;
   var registration = deps.registration;
   var getPerson = deps.getPerson;
+  var countObstacles = deps.countObstacles;
+
+  function mapJsonObstacleToDb(jsonObstacle) {
+    var update = {};
+
+    if (jsonObstacle.sequence !== undefined && jsonObstacle.sequence !== null) {
+      update.sequence = Number(jsonObstacle.sequence);
+    }
+    if (jsonObstacle.coordinate !== undefined) {
+      update.coordinate = jsonObstacle.coordinate;
+    }
+    if (jsonObstacle.version !== undefined) {
+      update.version = jsonObstacle.version;
+    }
+    if (jsonObstacle.attemptsAllowed !== undefined) {
+      update.attemptsAllowed = jsonObstacle.attemptsAllowed;
+    }
+    if (jsonObstacle.rules !== undefined) {
+      update.rules = jsonObstacle.rules;
+    }
+    if (jsonObstacle.sponsor !== undefined) {
+      update.sponsor = jsonObstacle.sponsor;
+    }
+    if (jsonObstacle.obstacleDescription !== undefined) {
+      update.description = jsonObstacle.obstacleDescription;
+    } else if (jsonObstacle.description !== undefined) {
+      update.description = jsonObstacle.description;
+    }
+    if (jsonObstacle.recordable !== undefined) {
+      update.scored = jsonObstacle.recordable;
+    } else if (jsonObstacle.scored !== undefined) {
+      update.scored = jsonObstacle.scored;
+    }
+
+    return update;
+  }
+
+  function coordinatesEqual(a, b) {
+    if (!a && !b) return true;
+    if (!a || !b || a.length < 2 || b.length < 2) return false;
+    return Number(a[0]) === Number(b[0]) && Number(a[1]) === Number(b[1]);
+  }
+
+  function getExistingDescription(existing) {
+    if (existing.description !== undefined && existing.description !== null) {
+      return existing.description;
+    }
+    if (existing.obstacleDescription !== undefined && existing.obstacleDescription !== null) {
+      return existing.obstacleDescription;
+    }
+    return '';
+  }
+
+  function getExistingRecordable(existing) {
+    if (existing.scored !== undefined) {
+      return Boolean(existing.scored);
+    }
+    if (existing.recordable !== undefined) {
+      return Boolean(existing.recordable);
+    }
+    return true;
+  }
+
+  function buildFieldsToUpdate(existing, jsonObstacle) {
+    var update = mapJsonObstacleToDb(jsonObstacle);
+    var fieldsToUpdate = {};
+
+    if (update.sequence !== undefined && Number(existing.sequence) !== Number(update.sequence)) {
+      fieldsToUpdate.sequence = update.sequence;
+    }
+    if (update.coordinate !== undefined && !coordinatesEqual(existing.coordinate, update.coordinate)) {
+      fieldsToUpdate.coordinate = update.coordinate;
+    }
+    if (update.rules !== undefined && (existing.rules || '') !== update.rules) {
+      fieldsToUpdate.rules = update.rules;
+    }
+    if (update.description !== undefined && getExistingDescription(existing) !== update.description) {
+      fieldsToUpdate.description = update.description;
+      fieldsToUpdate.obstacleDescription = update.description;
+    }
+    if (update.scored !== undefined && getExistingRecordable(existing) !== Boolean(update.scored)) {
+      fieldsToUpdate.scored = update.scored;
+      fieldsToUpdate.recordable = update.scored;
+    }
+
+    return fieldsToUpdate;
+  }
+
+  function buildNewObstacleDocument(jsonObstacle) {
+    var doc = mapJsonObstacleToDb(jsonObstacle);
+    doc.name = jsonObstacle.name;
+    if (doc.attemptsAllowed === undefined) {
+      doc.attemptsAllowed = 1;
+    }
+    if (doc.scored === undefined) {
+      doc.scored = true;
+      doc.recordable = true;
+    } else {
+      doc.recordable = doc.scored;
+    }
+    if (doc.description !== undefined) {
+      doc.obstacleDescription = doc.description;
+    }
+    if (doc.coordinate === undefined) {
+      doc.coordinate = jsonObstacle.coordinate || null;
+    }
+    return doc;
+  }
 
   
 // Endpoint for POSTing results from tracker app
@@ -1411,6 +1519,63 @@ Participant.countDocuments({}).then((registrations) => {
 							console.log('This fails in the first query')
 							res.status(500).send(e);
 				})
+})
+
+app.post('/obstacle-import', (req, res) => {
+	var body = req.body;
+	var obstacleList = body.obstacle;
+
+	if (!Array.isArray(obstacleList)) {
+		return res.status(400).send({ message: 'Expected obstacle array in request body.' });
+	}
+
+	var results = [];
+
+	obstacles.find({}).then((existingObstacles) => {
+		var byName = {};
+		for (var i = 0; i < existingObstacles.length; i++) {
+			byName[existingObstacles[i].name] = existingObstacles[i];
+		}
+
+		var updatePromises = obstacleList.map((jsonObst) => {
+			if (!jsonObst || !jsonObst.name) {
+				return Promise.resolve({ name: '', status: 'skipped', message: 'Missing name' });
+			}
+
+			var existing = byName[jsonObst.name];
+			if (!existing) {
+				var newDoc = buildNewObstacleDocument(jsonObst);
+				return obstacles.create(newDoc).then(() => {
+					return { name: jsonObst.name, status: 'added' };
+				});
+			}
+
+			var fieldsToUpdate = buildFieldsToUpdate(existing, jsonObst);
+
+			if (Object.keys(fieldsToUpdate).length === 0) {
+				return Promise.resolve({ name: jsonObst.name, status: 'unchanged' });
+			}
+
+			return obstacles.findByIdAndUpdate(existing._id, fieldsToUpdate, { new: true }).then(() => {
+				return {
+					name: jsonObst.name,
+					status: 'updated',
+					fields: Object.keys(fieldsToUpdate)
+				};
+			});
+		});
+
+		return Promise.all(updatePromises).then((updateResults) => {
+			results = updateResults;
+			if (countObstacles) {
+				countObstacles();
+			}
+			return res.status(200).send({ results: results });
+		});
+	}).catch((e) => {
+		console.log('Something went wrong trying to import obstacles.');
+		res.status(500).send(e);
+	});
 })
 
 app.get('/obstacle-details', (req, res) => {
