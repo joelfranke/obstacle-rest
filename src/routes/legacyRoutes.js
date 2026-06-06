@@ -1500,13 +1500,29 @@ Participant.countDocuments({}).then((registrations) => {
 						//registrations = total registered including new, onsite registrations
 						console.log(newRegistrations)
 						var checkedInPercent = (checkins/registrations)*100
-												var successfulPost = ({
-													registered: registrations,
-													checkedIn: checkins,
-													newRegistrations: newRegistrations,
-													checkedInPercent: checkedInPercent
-													});
-													return res.status(200).send(successfulPost);
+						Participant.countDocuments({ finishTime: { $ne: null }, bibNo: { $ne: null } }).then((checkedInFinished) => {
+							Participant.countDocuments({ startTime: { $ne: null }, bibNo: { $ne: null } }).then((checkedInStarted) => {
+								var checkedInFinishedPercent = checkedInStarted > 0
+									? (checkedInFinished / checkedInStarted) * 100
+									: 0;
+								var successfulPost = ({
+									registered: registrations,
+									checkedIn: checkins,
+									newRegistrations: newRegistrations,
+									checkedInPercent: checkedInPercent,
+									checkedInFinished: checkedInFinished,
+									checkedInStarted: checkedInStarted,
+									checkedInFinishedPercent: checkedInFinishedPercent
+								});
+								return res.status(200).send(successfulPost);
+							}).catch((e) => {
+								console.log('This fails in the checked-in started query')
+								res.status(500).send(e);
+							})
+						}).catch((e) => {
+							console.log('This fails in the checked-in finished query')
+							res.status(500).send(e);
+						})
 													}).catch((e) => {
 														console.log('This fails in the new registration query')
 														res.status(500).send(e);
