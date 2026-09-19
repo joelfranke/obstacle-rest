@@ -46,7 +46,7 @@ var scoringService = createScoringService({
   teamScoring,
   eventResults,
 });
-var { countObstacles, updateTeamScore, updateScore } = scoringService;
+var { countObstacles, updateTeamScore, updateScore, computeG8TotalsFromEvents } = scoringService;
 
 var authService = createAuthService({
   counters,
@@ -114,6 +114,7 @@ registerLegacyRoutes(app, {
   logTime,
   registration,
   countObstacles,
+  computeG8TotalsFromEvents,
 });
 
 // Scoring dashboards (before static so routes are not shadowed)

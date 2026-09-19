@@ -22,6 +22,7 @@ module.exports = function registerLegacyRoutes(app, deps) {
   var registration = deps.registration;
   var getPerson = deps.getPerson;
   var countObstacles = deps.countObstacles;
+  var computeG8TotalsFromEvents = deps.computeG8TotalsFromEvents;
 
   function mapJsonObstacleToDb(jsonObstacle) {
     var update = {};
@@ -931,42 +932,44 @@ app.get('/scoring/teams', (req, res) => {
 
 // G8 leaderboard API (used by the G8 dashboard UI)
 app.get('/api/scoring/g8', (req, res) => {
-	Scoring.aggregate( [
-	// First Stage, find only g8 items
-			{
-			    $match : { "g8": true}
-			},
-	// Second Stage, combine items and update scores
-			{
-                            $group : {
-                                _id : { bibNo: "$bibNo" },
-                                firstName: { $first: "$firstName" },
-                                lastName: { $first: "$lastName" },
-                                group: { $first: "$group" },
-                                gender: { $first: "$gender" },
-                                g1: { $sum: "$g1"},
-                                g2: { $sum: "$g2"},
-                                g3: { $sum: "$g3"},
-                                score: { $sum: "$score"},
-                                obstaclesCompleted: {$sum: "$obstaclesCompleted"}
-    		}
-			},
-		// Third Stage
-			{
-				$sort : { score: -1 }
-			},
-                // Fourth Stage, filter out ID and project values
-                        { $project: { "_id": 0, "bibNo": "$_id.bibNo", "firstName" : "$firstName", "lastName":"$lastName", "group":"$group", "gender":"$gender", "g1": 1, "g2": 1, "g3":1,"score":1,"obstaclesCompleted":1 } }
-		]
-)
-.then((participantScores) => {
-		// we could iterate through this array and create an array consistent with the other scoring objects...
-			res.send({participantScores});
-		}, (e) => {
-			console.log(e);
-			res.status(400).send(e);
-	    });
-   });
+	Promise.all([
+		Scoring.find({ g8: true }).lean().exec(),
+		eventResults.find({ g8: true }).sort({ bibNo: 1, lapCount: 1, obstID: 1, points: -1 }).lean().exec()
+	]).then(([scoringRows, allEvents]) => {
+		var eventsByBib = {};
+		for (var i = 0; i < allEvents.length; i++) {
+			var ev = allEvents[i];
+			if (!eventsByBib[ev.bibNo]) {
+				eventsByBib[ev.bibNo] = [];
+			}
+			eventsByBib[ev.bibNo].push(ev);
+		}
+
+		var participantScores = scoringRows.map(function(row) {
+			var events = eventsByBib[row.bibNo] || [];
+			var totals = computeG8TotalsFromEvents(events);
+			return {
+				bibNo: row.bibNo,
+				firstName: row.firstName,
+				lastName: row.lastName,
+				group: row.group,
+				gender: row.gender,
+				g1: totals.g1,
+				g2: totals.g2,
+				g3: totals.g3,
+				score: totals.score,
+				obstaclesCompleted: totals.obstaclesCompleted
+			};
+		}).sort(function(a, b) {
+			return b.score - a.score;
+		});
+
+		res.send({ participantScores: participantScores });
+	}, (e) => {
+		console.log(e);
+		res.status(400).send(e);
+	});
+});
 
 app.get('/scoring/teams/:team', (req, res) => {
 // only one parameter is considered (regardless of how many are passed), in this order or precedence, gender, teamscores, team, onTeam, davids, bibNo, recent, otherwise all results are sent

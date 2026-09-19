@@ -411,20 +411,20 @@ async function main() {
     );
   }
 
-  // Re-fetch sorted events for scoring calculation (max points per obstID).
-  // (We do this after printing lap stats so lap computations remain order-independent.)
+  // Re-fetch sorted events for scoring calculation (best attempt per obstID per lap for G8).
   const insertedEventsForScoring = await EventResults.find({ bibNo })
-    .sort({ obstID: 1, points: -1 })
+    .sort({ lapCount: 1, obstID: 1, points: -1 })
     .lean()
     .exec();
 
   let g1 = 0;
   let g2 = 0;
   let g3 = 0;
-  let currentObstID = null;
+  let currentObstKey = null;
   for (const ev of insertedEventsForScoring) {
-    if (ev.obstID === currentObstID) continue;
-    currentObstID = ev.obstID;
+    const obstKey = `${ev.lapCount}:${ev.obstID}`;
+    if (obstKey === currentObstKey) continue;
+    currentObstKey = obstKey;
 
     if (ev.success === true && ev.countScore === true) {
       if (Number(ev.tier) === 1) g1++;

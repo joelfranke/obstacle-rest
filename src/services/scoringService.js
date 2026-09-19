@@ -135,15 +135,18 @@ function updateScore(bibNo,tiebreaker){
 					 var g8 = participant.g8;
 					 var lapScore = participant.lapScore
            var participantName = "<a href='/individual/?id=" +personBib+"'>" + lastName + ', ' + firstName+"</a>";
-					 //.sort( { obstID: 1, points: -1 } ) to sort by obstID and desc for points, to take the max score per obstacle ID
-           eventResults.find({bibNo: personBib}).sort( { obstID: 1, points: -1 } ).then((events) => {
+					 // Best attempt per obstacle; for G8, best attempt per obstacle per lap (sum all laps).
+           var eventSort = g8
+							? { lapCount: 1, obstID: 1, points: -1 }
+							: { obstID: 1, points: -1 };
+           eventResults.find({bibNo: personBib}).sort(eventSort).then((events) => {
                var g1 = 0;
                var g2 = 0;
                var g3 = 0;
                var totScore = 0;
                var totEvents = 0
 							 var next
-							 var currentObstID = 0
+							 var currentObstKey = null
 							 var obstID
 							 var points
 							 var countScore
@@ -155,10 +158,11 @@ function updateScore(bibNo,tiebreaker){
 								 countScore = events[event].countScore
 								 var success = events[event].success
 								 var tier = events[event].tier
-								 var success = events[event].success
-								 var tier = events[event].tier
-								//console.log(currentObstID,g1,g2,g3)
-								 if (obstID == currentObstID){
+								 var obstKey = g8
+									? String(events[event].lapCount) + ':' + String(obstID)
+									: String(obstID)
+								//console.log(currentObstKey,g1,g2,g3)
+								 if (obstKey == currentObstKey){
 										 continue
 								 } else {
 									 //this logic handles regular scores/existing code where there is no redundant obstID
@@ -176,7 +180,7 @@ function updateScore(bibNo,tiebreaker){
 									 } else {
 										 totEvents = totEvents + 1
 									 }
-									 currentObstID = obstID
+									 currentObstKey = obstKey
 								 }
                }
 						 	//point values would need to be pulled in on a per-obstacle basis
@@ -270,6 +274,40 @@ function updateScore(bibNo,tiebreaker){
   });
 }
 
-  return {countObstacles, updateTeamScore, updateScore};
+function computeG8TotalsFromEvents(events) {
+	var g1 = 0;
+	var g2 = 0;
+	var g3 = 0;
+	var currentObstKey = null;
+
+	for (var i = 0; i < events.length; i++) {
+		var ev = events[i];
+		var obstKey = String(ev.lapCount) + ':' + String(ev.obstID);
+		if (obstKey === currentObstKey) {
+			continue;
+		}
+		currentObstKey = obstKey;
+
+		if (ev.success === true && ev.countScore === true) {
+			if (ev.tier == 1) {
+				g1 = g1 + 1;
+			} else if (ev.tier == 2) {
+				g2 = g2 + 1;
+			} else if (ev.tier == 3) {
+				g3 = g3 + 1;
+			}
+		}
+	}
+
+	return {
+		g1: g1,
+		g2: g2,
+		g3: g3,
+		score: (g1 * 1.0000001) + (g2 * 3.00001) + (g3 * 5.001),
+		obstaclesCompleted: events.length
+	};
+}
+
+  return {countObstacles, updateTeamScore, updateScore, computeG8TotalsFromEvents};
 }
 

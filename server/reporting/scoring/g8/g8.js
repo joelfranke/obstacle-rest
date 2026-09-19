@@ -148,7 +148,7 @@ function makeTr({ rank, p, trendClass }) {
   tr.appendChild(tdObs);
 
   const tdAvgLap = document.createElement('td');
-  tdAvgLap.textContent = formatHours(p.avgLapHours);
+  tdAvgLap.textContent = formatLapMinutes(p.avgLapMs);
   tr.appendChild(tdAvgLap);
 
   return tr;
@@ -156,6 +156,54 @@ function makeTr({ rank, p, trendClass }) {
 
 function pad2(n) {
   return String(n).padStart(2, '0');
+}
+
+function parseDeviceTimeToMs(timeStr) {
+  if (timeStr === undefined || timeStr === null) return NaN;
+  const s = String(timeStr).trim();
+  if (!s.length) return NaN;
+
+  const m = s.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(AM|PM)$/i);
+  if (!m) return NaN;
+
+  let hours = Number(m[1]);
+  const minutes = Number(m[2]);
+  const seconds = m[3] !== undefined ? Number(m[3]) : 0;
+  const ampm = String(m[4]).toUpperCase();
+
+  if (!Number.isFinite(hours) || !Number.isFinite(minutes) || !Number.isFinite(seconds)) return NaN;
+  if (ampm === 'PM' && hours !== 12) hours += 12;
+  if (ampm === 'AM' && hours === 12) hours = 0;
+
+  return (hours * 3600 + minutes * 60 + seconds) * 1000;
+}
+
+function deviceTimeToEpochMs(deviceTime, refTimestampMs) {
+  const msFromMidnight = parseDeviceTimeToMs(deviceTime);
+  if (!Number.isFinite(msFromMidnight) || !Number.isFinite(refTimestampMs)) return NaN;
+  const ref = new Date(refTimestampMs);
+  const dayStart = new Date(ref.getFullYear(), ref.getMonth(), ref.getDate()).getTime();
+  return dayStart + msFromMidnight;
+}
+
+function participantStartMs(participant, events) {
+  const deviceTime = participant?.startTime?.deviceTime;
+  if (!deviceTime || !events.length) return NaN;
+  const refTs = new Date(events[0].timestamp).getTime();
+  return deviceTimeToEpochMs(deviceTime, refTs);
+}
+
+function participantFinishMs(participant, events) {
+  const deviceTime = participant?.finishTime?.deviceTime;
+  if (!deviceTime || !events.length) return NaN;
+  let refTs = NaN;
+  for (const ev of events) {
+    const t = new Date(ev.timestamp).getTime();
+    if (!Number.isFinite(t)) continue;
+    refTs = Number.isFinite(refTs) ? Math.max(refTs, t) : t;
+  }
+  if (!Number.isFinite(refTs)) return NaN;
+  return deviceTimeToEpochMs(deviceTime, refTs);
 }
 
 function formatDurationMs(ms) {
@@ -168,19 +216,25 @@ function formatDurationMs(ms) {
   return `${m}:${pad2(s)}`;
 }
 
-function formatHours(hours) {
-  if (!Number.isFinite(hours)) return '—';
-  return formatDurationMs(hours * 60 * 60 * 1000);
+/** Leaderboard lap column: always total minutes (never H:MM:SS). */
+function formatLapMinutes(ms) {
+  if (!Number.isFinite(ms)) return '—';
+  const totalSec = Math.max(0, Math.floor(ms / 1000));
+  const m = Math.floor(totalSec / 60);
+  const s = totalSec % 60;
+  return `${m}:${pad2(s)}`;
 }
 
 function lapStatsFromEvents(events) {
   const lapStartMs = new Map();
   const lapEndMs = new Map();
+  const lapEventCount = new Map();
   for (const ev of events) {
     const lap = Number(ev.lapCount || 0);
     if (!Number.isFinite(lap) || lap <= 0) continue;
     const t = new Date(ev.timestamp).getTime();
     if (!Number.isFinite(t)) continue;
+    lapEventCount.set(lap, (lapEventCount.get(lap) || 0) + 1);
     if (!lapStartMs.has(lap)) {
       lapStartMs.set(lap, t);
       lapEndMs.set(lap, t);
@@ -189,48 +243,92 @@ function lapStatsFromEvents(events) {
       lapEndMs.set(lap, Math.max(lapEndMs.get(lap), t));
     }
   }
-  return { lapStartMs, lapEndMs };
+  return { lapStartMs, lapEndMs, lapEventCount };
 }
 
-function computeAvgLapHoursFromEvents(events) {
-  const { lapStartMs, lapEndMs } = lapStatsFromEvents(events);
-  if (!lapStartMs.size) return NaN;
+/**
+ * Lap timing (matches test-g8-user.js):
+ * - lap start = earliest obstacle scan on lap L (lap 1 uses start-line time when only one scan so far)
+ * - lap finish (complete) = earliest scan on lap L+1
+ * - lap finish (final lap, course done) = participant finishTime when set
+ * - lap finish (in progress) = latest scan on lap L
+ */
+function buildLapDurations(events, participant) {
+  const { lapStartMs, lapEndMs, lapEventCount } = lapStatsFromEvents(events);
+  if (!lapStartMs.size) return [];
 
-  const durationsMs = [];
+  const startLineMs = participantStartMs(participant, events);
+  const finishLineMs = participantFinishMs(participant, events);
   const laps = [...lapStartMs.keys()].sort((a, b) => a - b);
+  const lastLap = laps[laps.length - 1];
+  const rows = [];
 
   for (const lap of laps) {
-    const nextStart = lapStartMs.get(lap + 1);
-    if (nextStart !== undefined) {
-      durationsMs.push(nextStart - lapStartMs.get(lap));
+    const firstEventMs = lapStartMs.get(lap);
+    const lastEventMs = lapEndMs.get(lap);
+    const nextLapStartMs = lapStartMs.get(lap + 1);
+    const eventCount = lapEventCount.get(lap) || 0;
+
+    let startMs = firstEventMs;
+    if (lap === 1 && eventCount <= 1 && Number.isFinite(startLineMs)) {
+      startMs = startLineMs;
     }
+
+    let endMs;
+    let complete;
+    if (nextLapStartMs !== undefined) {
+      endMs = nextLapStartMs;
+      complete = true;
+    } else if (lap === lastLap && Number.isFinite(finishLineMs)) {
+      endMs = finishLineMs;
+      complete = true;
+    } else {
+      endMs = lastEventMs;
+      complete = false;
+    }
+
+    if (!Number.isFinite(startMs) || !Number.isFinite(endMs) || endMs < startMs) continue;
+
+    rows.push({
+      lap,
+      durationMs: endMs - startMs,
+      complete,
+      startMs,
+      endMs,
+    });
   }
 
-  // No finished laps yet: use elapsed time on the current in-progress lap.
-  if (!durationsMs.length) {
-    const lap = laps[laps.length - 1];
-    const startMs = lapStartMs.get(lap);
-    const endMs = lapEndMs.get(lap);
-    if (Number.isFinite(startMs) && Number.isFinite(endMs) && endMs >= startMs) {
-      durationsMs.push(endMs - startMs);
-    }
-  }
-
-  if (!durationsMs.length) return NaN;
-  const avgMs = durationsMs.reduce((sum, d) => sum + d, 0) / durationsMs.length;
-  return avgMs / (60 * 60 * 1000);
+  return rows;
 }
 
-async function resolveAvgLapHours(bibNo, obstaclesCompleted) {
+function computeAvgLapMs(events, participant) {
+  const rows = buildLapDurations(events, participant);
+  if (!rows.length) return NaN;
+
+  const completed = rows.filter((row) => row.complete);
+  const pool = completed.length ? completed : [rows[rows.length - 1]];
+  const avgMs = pool.reduce((sum, row) => sum + row.durationMs, 0) / pool.length;
+  return avgMs;
+}
+
+async function resolveAvgLapMs(bibNo, obstaclesCompleted) {
   if (!(obstaclesCompleted > 0)) return NaN;
 
   try {
-    const resultsResp = await fetch(apiUrl(`/scoring/results/${bibNo}/all`), { method: 'GET', cache: 'no-store' });
+    const [resultsResp, participantResp] = await Promise.all([
+      fetch(apiUrl(`/scoring/results/${bibNo}/all`), { method: 'GET', cache: 'no-store' }),
+      fetch(apiUrl(`/participant?bibNo=${bibNo}`), { method: 'GET', cache: 'no-store' }),
+    ]);
     if (!resultsResp.ok) return NaN;
 
     const resultsData = await resultsResp.json();
     const events = resultsData?.participantResults || [];
-    return computeAvgLapHoursFromEvents(events);
+    let participant = null;
+    if (participantResp.ok) {
+      const participantData = await participantResp.json();
+      participant = participantData?.participants?.[0] || null;
+    }
+    return computeAvgLapMs(events, participant);
   } catch (e) {
     return NaN;
   }
@@ -309,8 +407,6 @@ async function openLapModal(p) {
       obstacleNameBySeq.set(seq, textOrDash(ob.name));
     }
 
-    const lapStartMs = new Map(); // lap -> earliest timestamp (ms)
-    const lapEndMs = new Map(); // lap -> latest timestamp (ms)
     const lapEvents = new Map(); // lap -> array of events
     for (const ev of events) {
       const lap = Number(ev.lapCount || 0);
@@ -318,23 +414,14 @@ async function openLapModal(p) {
       if (!Number.isFinite(lap) || !Number.isFinite(t)) continue;
       if (!lapEvents.has(lap)) lapEvents.set(lap, []);
       lapEvents.get(lap).push(ev);
-
-      if (!lapStartMs.has(lap)) {
-        lapStartMs.set(lap, t);
-        lapEndMs.set(lap, t);
-        continue;
-      }
-
-      const prevStart = lapStartMs.get(lap);
-      const prevEnd = lapEndMs.get(lap);
-      lapStartMs.set(lap, Math.min(prevStart, t));
-      lapEndMs.set(lap, Math.max(prevEnd, t));
     }
 
-    const lapKeys = [...lapStartMs.keys()].sort((a, b) => a - b);
+    const lapRows = buildLapDurations(events, participant);
+    const lapKeys = lapRows.map((row) => row.lap);
     const highestLapSeen = lapKeys.length ? lapKeys[lapKeys.length - 1] : 0;
     const participantLapCount = participant && Number.isFinite(Number(participant.lapCount)) ? Number(participant.lapCount) : 0;
     const maxLap = Math.max(highestLapSeen, participantLapCount);
+    const lapRowByLap = new Map(lapRows.map((row) => [row.lap, row]));
 
     const startDeviceTime = participant?.startTime?.deviceTime || null;
     const finishDeviceTime = participant?.finishTime?.deviceTime || null;
@@ -452,24 +539,20 @@ async function openLapModal(p) {
     };
 
     for (let lap = 1; lap <= maxLap; lap++) {
-      const startMs = lapStartMs.get(lap);
-      const finishMsFromNextLap = lapStartMs.get(lap + 1);
-      const endMsFallback = lapEndMs.get(lap);
-
-      const status = finishMsFromNextLap !== undefined ? 'Complete' : 'In progress';
-      const finishMs = finishMsFromNextLap !== undefined ? finishMsFromNextLap : endMsFallback;
+      const row = lapRowByLap.get(lap);
 
       const tr = document.createElement('tr');
       tr.dataset.lap = String(lap);
       tr.addEventListener('click', () => selectLap(lap));
-      if (startMs === undefined) {
+      if (!row) {
         tr.innerHTML = `<td>${lap}</td><td>—</td><td>—</td><td>—</td><td class="muted">—</td>`;
       } else {
+        const status = row.complete ? 'Complete' : 'In progress';
         tr.innerHTML = `
           <td>${lap}</td>
-          <td>${formatTimeMs(startMs)}</td>
-          <td>${formatTimeMs(finishMs)}</td>
-          <td>${formatDurationMs(finishMs - startMs)}</td>
+          <td>${formatTimeMs(row.startMs)}</td>
+          <td>${formatTimeMs(row.endMs)}</td>
+          <td>${formatDurationMs(row.durationMs)}</td>
           <td><span class="${getStatusChipClass(status)}">${status}</span></td>
         `;
       }
@@ -576,11 +659,11 @@ async function fetchOnce() {
   const data = await resp.json();
   const list = (data && data.participantScores) ? data.participantScores : [];
 
-  // Normalize and enrich with per-participant average lap time in hours.
+  // Enrich with per-participant average lap time (ms).
   latestParticipants = await Promise.all(list.map(async (p) => {
     const bibNo = safeNumber(p.bibNo);
     const obstaclesCompleted = safeNumber(p.obstaclesCompleted);
-    const avgLapHours = await resolveAvgLapHours(bibNo, obstaclesCompleted);
+    const avgLapMs = await resolveAvgLapMs(bibNo, obstaclesCompleted);
 
     return {
       bibNo,
@@ -593,7 +676,7 @@ async function fetchOnce() {
       g3: safeNumber(p.g3),
       score: safeNumber(p.score),
       obstaclesCompleted,
-      avgLapHours,
+      avgLapMs,
     };
   }));
 
