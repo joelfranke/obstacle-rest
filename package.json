@@ -15,17 +15,17 @@
     "test:event:prove-node": "node scripts/event-day-check.js --prove-node"
   },
   "engines": {
-    "node": "18.x"
+    "node": ">=20.19.0"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "body-parser": "^1.15.2",
-    "compression": "^1.7.2",
-    "date-and-time": "^3.1.1",
-    "express": "^4.14.0",
-    "lodash": "^4.15.0",
-    "mongodb": "^4",
-    "mongoose": ">=5.12.10"
+    "body-parser": "^2.3.0",
+    "compression": "^1.8.2",
+    "date-and-time": "^4.5.2",
+    "express": "^5.2.1",
+    "lodash": "^4.18.1",
+    "mongodb": "^7.6.0",
+    "mongoose": "^9.10.1"
   }
 }

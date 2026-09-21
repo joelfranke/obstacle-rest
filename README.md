@@ -16,4 +16,4 @@ Swagger documentation is available [here](docs/goliathon_swagger.yaml).
 
 `npm run test:event:prove-node` runs the local day on Node 18 and again on a newer Node. Node 18 has to pass. On today's code the newer Node is expected to error the first time a team score is calculated. That result is reported and does not fail the command.
 
-`npm install` installs a git hook that runs the Node 18 local check before `git push` to Heroku. The push is aborted if that check fails. Pushes to GitHub are not gated. Set `NODE_18` if the Node 18 binary is not installed through nvm.
+`npm install` installs a git hook that runs the local check with Node 20.19 or newer before `git push` to Heroku. The push is aborted if that check fails. Pushes to GitHub are not gated. Set `NODE_NEW` if that binary is not installed through nvm.

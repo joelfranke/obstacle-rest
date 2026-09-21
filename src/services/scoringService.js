@@ -104,24 +104,38 @@ function updateTeamScore(teamID){
 		res.status(400).send(e);
 	});
 }
-function updateScore(bibNo,tiebreaker){
+var scoreQueue = {};
+
+function updateScore(bibNo, tiebreaker) {
+	var key = String(bibNo);
+	var previous = scoreQueue[key] || Promise.resolve();
+	var job = previous.then(function () {
+		return applyScoreUpdate(bibNo, tiebreaker);
+	}, function () {
+		return applyScoreUpdate(bibNo, tiebreaker);
+	});
+	scoreQueue[key] = job.catch(function () {});
+	return job;
+}
+
+function applyScoreUpdate(bibNo,tiebreaker){
 	var newScore
 	var update
-	Scoring.find({bibNo: bibNo}).then((scores) => {
+	return Scoring.find({bibNo: bibNo}).then((scores) => {
 		 if(!scores || scores.length ==0){
 			 newScore = true
 		 } else {
 			 newScore = false
 		 }
+		 return eventResults.find({bibNo: bibNo});
 	}, (e) => {
     console.log('trouble')
-  });
-	eventResults.find({bibNo: bibNo}).then((results) => {
+  }).then((results) => {
     if (!results || results.length == 0) {
 		}
 	//
 	// start of getting all participant data
-	Participant.findOne({bibNo: bibNo}).then((participant) => {
+	return Participant.findOne({bibNo: bibNo}).then((participant) => {
 
 					var timestamp = Date.now()
            var gender = participant.gender;
@@ -139,7 +153,7 @@ function updateScore(bibNo,tiebreaker){
            var eventSort = g8
 							? { lapCount: 1, obstID: 1, points: -1 }
 							: { obstID: 1, points: -1 };
-           eventResults.find({bibNo: personBib}).sort(eventSort).then((events) => {
+           return eventResults.find({bibNo: personBib}).sort(eventSort).then((events) => {
                var g1 = 0;
                var g2 = 0;
                var g3 = 0;
@@ -206,62 +220,33 @@ function updateScore(bibNo,tiebreaker){
 									next = totEvents + 1
 							}
 
-			if (newScore == true){
-				if (tiebreaker){
-					tiebreaker = tiebreaker
-				} else {
-					tiebreaker = 999.99
-				}
-				// if this is the first result for the participant, write a new score.
-				var score = new Scoring({
-							participant: participantName,
-                firstName: firstName,
-				 			 	lastName: lastName,
-				 				gender: gender,
-								group: group,
-                bibNo: personBib,
-								g8:g8,
-								lapScore:lapScore,
-				 			 	isDavid: isDavid,
-                teamID: teamName,
-                g1:g1,
-                g2:g2,
-                g3:g3,
-                score:totScore,
-				 			 	updatedOn: timestamp,
-                progress:progress,
-								obstaclesCompleted:totEvents,
-								next: next,
-								tiebreaker: tiebreaker
-          });
-          score.save().then((doc) => {
-						if (teamName && teamName.length > 0) {
-							updateTeamScore(teamName)
-						}
-
-			//console.log(doc)
-          }, (e) => {
-            console.log(e);
-            //log the error
-          });
-			} else {
-			// if this is an update to a person's score, update
 			if (tiebreaker){
 				update = {'updatedOn': timestamp,'tiebreaker':tiebreaker}
-				//console.log(bibNo,update);
 			} else {
 				update = {'g1':g1,'g2':g2,'g3':g3,'score':totScore,'updatedOn': timestamp,'progress':progress, 'next': next,'obstaclesCompleted':totEvents, 'isDavid':isDavid}
 			}
-			//Scoring.findOneAndUpdate({ bibNo:bibNo }, { $set: {'g1':g1,'g2':g2,'g3':g3,'score':totScore,'updatedOn': timestamp,'progress':progress, 'next': next}} , {returnNewDocument : true}).then((doc) => {
-			Scoring.findOneAndUpdate({ bibNo:bibNo }, { $set: update} , {returnNewDocument : true}).then((doc) => {
-
+			var write = { $set: update };
+			if (newScore == true && !tiebreaker) {
+				write.$setOnInsert = {
+					participant: participantName,
+					firstName: firstName,
+					lastName: lastName,
+					gender: gender,
+					group: group,
+					bibNo: personBib,
+					g8: g8,
+					lapScore: lapScore,
+					teamID: teamName,
+					tiebreaker: 999.99
+				};
+			}
+			return Scoring.findOneAndUpdate({ bibNo: bibNo }, write, { upsert: newScore == true, returnDocument: 'after' }).then((doc) => {
 				if (teamName && teamName.length > 0) {
 					updateTeamScore(teamName)
 				}
 			}, (e) => {
-            console.log(e);
+				console.log(e);
 			});
-			}
              }, (e) => {
                //res.status(400).send(e);
              });
