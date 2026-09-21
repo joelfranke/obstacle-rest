@@ -6,7 +6,13 @@
   "scripts": {
     "start": "node server/server.js",
     "g8:local": "npx --yes serve server/reporting/scoring/g8 -l 5173 --no-port-switching",
-    "g8:dev": "node server/reporting/scoring/g8/dev-server.js"
+    "g8:dev": "node server/reporting/scoring/g8/dev-server.js",
+    "prepare": "node scripts/install-git-hook.js",
+    "test:event": "node scripts/event-day-check.js",
+    "test:event:local": "node scripts/event-day-check.js --target local",
+    "test:event:dev": "node scripts/event-day-check.js --target dev",
+    "test:event:prod": "node scripts/event-day-check.js --target prod",
+    "test:event:prove-node": "node scripts/event-day-check.js --prove-node"
   },
   "engines": {
     "node": "18.x"

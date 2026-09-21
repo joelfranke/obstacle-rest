@@ -1,0 +1,39 @@
+#!/bin/sh
+# Installed into .git/hooks/pre-push by `npm run prepare`.
+# Runs the local event day only when the push remote is Heroku.
+
+remote_url="$2"
+case "$remote_url" in
+  *heroku.com*) ;;
+  *) exit 0 ;;
+esac
+
+ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+cd "$ROOT" || exit 1
+
+NODE_BIN=""
+if [ -n "$NODE_18" ] && [ -x "$NODE_18" ]; then
+  NODE_BIN="$NODE_18"
+elif [ -d "$HOME/.nvm/versions/node" ]; then
+  NODE_BIN=$(ls -d "$HOME"/.nvm/versions/node/v18.*/bin/node 2>/dev/null | tail -n 1)
+fi
+
+if [ -z "$NODE_BIN" ] && command -v node >/dev/null 2>&1; then
+  major=$(node -p 'process.versions.node.split(".")[0]' 2>/dev/null)
+  if [ "$major" = "18" ]; then
+    NODE_BIN=$(command -v node)
+  fi
+fi
+
+if [ -z "$NODE_BIN" ]; then
+  echo "Heroku push blocked: Node 18 was not found. Install it or set NODE_18 to the node binary."
+  exit 1
+fi
+
+echo "Running the local event-day check with $NODE_BIN before pushing to Heroku..."
+"$NODE_BIN" scripts/event-day-check.js --target local
+status=$?
+if [ "$status" -ne 0 ]; then
+  echo "Local event-day check failed. Heroku push aborted."
+  exit "$status"
+fi

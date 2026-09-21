@@ -7,6 +7,7 @@ const _ = require('lodash');
 const express = require('express');
 const bodyParser = require('body-parser');
 const {ObjectID} = require('mongodb');
+const fs = require('fs');
 const path = require('path');
 const compression = require('compression');
 let timeDate = require('date-and-time');
@@ -115,6 +116,28 @@ registerLegacyRoutes(app, {
   registration,
   countObstacles,
   computeG8TotalsFromEvents,
+});
+
+app.get('/health', (req, res) => {
+  var names = ['express', 'mongoose', 'mongodb', 'date-and-time', 'body-parser', 'lodash', 'compression'];
+  var dependencies = {};
+  names.forEach(function (name) {
+    try {
+      var file = require.resolve(name);
+      var dir = path.dirname(file);
+      var pkgPath = path.join(dir, 'package.json');
+      if (!fs.existsSync(pkgPath)) {
+        pkgPath = path.join(dir, '..', 'package.json');
+      }
+      dependencies[name] = JSON.parse(fs.readFileSync(pkgPath, 'utf8')).version;
+    } catch (e) {
+      dependencies[name] = null;
+    }
+  });
+  res.send({
+    node: process.version,
+    dependencies: dependencies
+  });
 });
 
 // Scoring dashboards (before static so routes are not shadowed)
