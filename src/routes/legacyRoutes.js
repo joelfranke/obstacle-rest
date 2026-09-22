@@ -183,67 +183,102 @@ app.post('/update-score', (req, res) => {
   }
 });
 
+function parsePositiveLimit(req, fallback, max) {
+  var n = parseInt(req.query.limit, 10);
+  if (isNaN(n) || n <= 0) return fallback;
+  return Math.min(n, max);
+}
+
+function uniqueBibsFromResults(rows) {
+  var seen = {};
+  var bibs = [];
+  rows.forEach(function (row) {
+    var bib = row.bibNo;
+    if (bib != null && !seen[bib]) {
+      seen[bib] = true;
+      bibs.push(bib);
+    }
+  });
+  return bibs;
+}
+
+function enrichResultsWithScores(participantResults, callback, errorCallback) {
+  var bibs = uniqueBibsFromResults(participantResults);
+  if (bibs.length === 0) {
+    return callback(participantResults);
+  }
+  Scoring.find({ bibNo: { $in: bibs } }).then((scores) => {
+    var byBib = {};
+    scores.forEach(function (score) {
+      byBib[score.bibNo] = score;
+    });
+    var enriched = participantResults.map(function (row) {
+      var obj = typeof row.toObject === 'function' ? row.toObject() : row;
+      if (obj._id != null) obj._id = String(obj._id);
+      var score = byBib[obj.bibNo];
+      if (score) {
+        obj.firstName = score.firstName;
+        obj.lastName = score.lastName;
+        obj.totalScore = score.score;
+        obj.teamID = score.teamID;
+        obj.progress = score.progress;
+      }
+      return obj;
+    });
+    callback(enriched);
+  }, errorCallback);
+}
+
+function sendEventResults(req, res) {
+  var delta = req.query.d;
+  var _id = req.query.id;
+  var recent = req.query.recent;
+
+  if (delta !== undefined) {
+    eventResults.find({ resultID: { $gt: delta } }).then((participantResults) => {
+      res.send({participantResults});
+    }, (e) => {
+      console.log(e);
+      res.status(400).send(e);
+    });
+  } else if (_id !== undefined) {
+    eventResults.find({ _id: _id }).then((participantResults) => {
+      res.send({participantResults});
+    }, (e) => {
+      console.log(e);
+      res.status(400).send(e);
+    });
+  } else if (recent === 'true') {
+    var n = parsePositiveLimit(req, 50, 200);
+    eventResults.find().sort({ resultID: -1 }).limit(n).then((participantResults) => {
+      enrichResultsWithScores(participantResults, function (enriched) {
+        res.send({ participantResults: enriched });
+      }, function (e) {
+        console.log(e);
+        res.send({ participantResults: participantResults });
+      });
+    }, (e) => {
+      console.log(e);
+      res.status(400).send(e);
+    });
+  } else {
+    eventResults.find().then((participantResults) => {
+      res.send({participantResults});
+    }, (e) => {
+      console.log(e);
+      res.status(400).send(e);
+    });
+  }
+}
+
 //Complete GET ALL results
 // includes logic to send delta results based on an optional query value "q"
-app.get('/results', (req, res) => {
-  var delta = req.query.d
-	var _id = req.query.id
-  if (delta !==undefined) {
-  eventResults.find({ resultID: { $gt: delta } }).then((participantResults) => {
-    res.send({participantResults});
-  }, (e) => {
-    console.log(e);
-    res.status(400).send(e);
-    });
-  } else if (_id!==undefined) {
-		eventResults.find({ _id: _id }).then((participantResults) => {
-			res.send({participantResults});
-		}, (e) => {
-			console.log(e);
-			res.status(400).send(e);
-			});
-	}
-  else {
-  eventResults.find().then((participantResults) => {
-    res.send({participantResults});
-  }, (e) => {
-    console.log(e);
-    res.status(400).send(e);
-  });
-
-  }
-});
+// recent=true returns the newest recordings (optional limit, default 50)
+app.get('/results', sendEventResults);
 
 //Complete GET ALL results
 // includes logic to send delta results based on an optional query value "q"
-app.get('/scoring/results', (req, res) => {
-  var delta = req.query.d
-	var _id = req.query.id
-  if (delta !==undefined) {
-  eventResults.find({ resultID: { $gt: delta } }).then((participantResults) => {
-    res.send({participantResults});
-  }, (e) => {
-    console.log(e);
-    res.status(400).send(e);
-    });
-  } else if (_id!==undefined) {
-		eventResults.find({ _id: _id }).then((participantResults) => {
-			res.send({participantResults});
-		}, (e) => {
-			console.log(e);
-			res.status(400).send(e);
-			});
-	}
-  else {
-  eventResults.find().then((participantResults) => {
-    res.send({participantResults});
-  }, (e) => {
-    console.log(e);
-    res.status(400).send(e);
-  });
-
-  }
-});
+app.get('/scoring/results', sendEventResults);
 // includes logic to send delta results based on an optional query value "q"
 app.get('/heats', (req, res) => {
 
@@ -1451,6 +1486,16 @@ app.post('/groupupdate', (req, res) => {
 	})
 })
 
+function raceCloseTimestamp() {
+	var closedAt = timeDate.format(new Date(), 'h:mm:ss A');
+	return closedAt.replace('a.m.', 'AM').replace('p.m.', 'PM');
+}
+
+// A missing time, a null parent, or a schema default of { deviceTime: null } is not a real scan.
+function hasNoDeviceTime(field) {
+	return { [field + '.deviceTime']: { $in: [null, ''] } };
+}
+
 app.get('/endofracebutton', (req, res) => {
 	var key = req.query.k
 
@@ -1461,25 +1506,39 @@ app.get('/endofracebutton', (req, res) => {
 				if (token ===false){
 					return res.status(401).send(invalidToken);
 				} else {
-					//TODO: this only sets the obstacles completed to 12 for non-g8-ers
-					Scoring.updateMany({g8:false}, {$set: {progress: "Course Complete", obstaclesCompleted: Number(process.env.totalObstacleCount), next: 99.0}}).then((doc) => {
-						console.log(doc)
-						teamScoring.updateMany({}, {$set: {onCourse: 0}}).then((teamDoc) => {
-							// TODO: {url}/oncourse is actually looking at {startTime:{$exists:true},finishTime:{$exists:false}}. You would need to update the finish time of these records with the race complete timestamp.
-							var successfulPost = ({
-								message: 'Race day complete.'
-							});
-
-
-							console.log(teamDoc)
-								return res.status(200).send(successfulPost);
-						}).catch((e) => {
-							console.log('Something went wrong trying to close out race day.');
-						})
-
-							//return res.status(200).send(successfulPost);
+					var closedAt = raceCloseTimestamp();
+					var scoreUpdate = { progress: 'Course Complete', next: 99.0 };
+					var obstacleCount = Number(process.env.totalObstacleCount);
+					if (isFinite(obstacleCount)) {
+						scoreUpdate.obstaclesCompleted = obstacleCount;
+					}
+					// g8:false misses scores where g8 was never set. $ne:true includes those.
+					// Checked-in athletes without a start or finish scan (including G8) get a
+					// closeout time so Race Day counts them started and finished.
+					var checkedIn = { bibNo: { $ne: null } };
+					Promise.all([
+						Scoring.updateMany(
+							{ g8: { $ne: true } },
+							{ $set: scoreUpdate }
+						),
+						Participant.updateMany(
+							Object.assign({}, checkedIn, hasNoDeviceTime('startTime')),
+							{ $set: { startTime: { deviceTime: closedAt, bibFromBand: false } } }
+						),
+						Participant.updateMany(
+							Object.assign({}, checkedIn, hasNoDeviceTime('finishTime')),
+							{ $set: { finishTime: { deviceTime: closedAt, bibFromBand: false } } }
+						),
+						teamScoring.updateMany({}, { $set: { onCourse: 0 } })
+					]).then((results) => {
+						console.log(results);
+						return res.status(200).send({
+							message: 'Race day complete.'
+						});
 					}).catch((e) => {
 						console.log('Something went wrong trying to close out race day.');
+						console.log(e);
+						return res.status(500).send(e);
 					})
 				}
 		}).catch((e) => {
@@ -1503,8 +1562,8 @@ Participant.countDocuments({}).then((registrations) => {
 						//registrations = total registered including new, onsite registrations
 						console.log(newRegistrations)
 						var checkedInPercent = (checkins/registrations)*100
-						Participant.countDocuments({ finishTime: { $ne: null }, bibNo: { $ne: null } }).then((checkedInFinished) => {
-							Participant.countDocuments({ startTime: { $ne: null }, bibNo: { $ne: null } }).then((checkedInStarted) => {
+						Participant.countDocuments({ bibNo: { $ne: null }, 'finishTime.deviceTime': { $nin: [null, ''] } }).then((checkedInFinished) => {
+							Participant.countDocuments({ bibNo: { $ne: null }, 'startTime.deviceTime': { $nin: [null, ''] } }).then((checkedInStarted) => {
 								var checkedInFinishedPercent = checkedInStarted > 0
 									? (checkedInFinished / checkedInStarted) * 100
 									: 0;
