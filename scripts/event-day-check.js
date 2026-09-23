@@ -12,6 +12,10 @@
  * --prove-node runs the local event day on Node 18 (must pass) and on a
  * newer Node. A server error on the first team score is the known newer-Node
  * failure and does not fail this command.
+ *
+ * Writes and iOS-shaped GETs follow scripts/ios-client-requests.js (Goliathon,
+ * Check In, Recorder). Nested /scoring/participants, /scoring/teams, and
+ * /scoring/results paths used by dashboards stay covered too.
  */
 
 const crypto = require('crypto');
@@ -22,6 +26,7 @@ const { spawn, spawnSync } = require('child_process');
 
 const ROOT = path.join(__dirname, '..');
 const PKG = require(path.join(ROOT, 'package.json'));
+const ios = require('./ios-client-requests');
 const MONGO_URL = 'mongodb://127.0.0.1:27017/goliathon-results';
 const HEAT = '10:00 AM';
 const DEVICE_TIME = '10:00:00 AM';
@@ -131,8 +136,10 @@ function checkDependencyMap(dependencies) {
 
 async function request(method, urlPath, options) {
   const opts = options || {};
-  const headers = {};
-  if (opts.body !== undefined) headers['Content-Type'] = 'application/json';
+  const headers = Object.assign({}, opts.headers || {});
+  if (opts.ios || opts.body !== undefined) {
+    if (!headers['Content-Type']) headers['Content-Type'] = 'application/json';
+  }
   if (opts.token) headers.k = opts.token;
   let res;
   try {
@@ -224,7 +231,7 @@ function athlete(bibNo, teamID, gender, label) {
     email: 'smoke@example.com',
     heat: HEAT,
     group: 'SMOKE',
-    birthdate: '01/01/1990',
+    birthdate: '1/1/1990',
     address1: '1 Test St',
     address2: '',
     city: 'Test',
@@ -235,24 +242,18 @@ function athlete(bibNo, teamID, gender, label) {
 }
 
 function registrationBody(person) {
-  const body = {
-    bibNo: person.bibNo,
-    heat: person.heat,
-    lastName: person.lastName,
-    firstName: person.firstName,
-    email: person.email,
-    gender: person.gender,
-    group: person.group,
-    birthdate: person.birthdate,
-    address1: person.address1,
-    address2: person.address2,
-    city: person.city,
-    state: person.state,
-    phone: person.phone,
-    zip: person.zip,
-  };
-  if (person.teamID) body.teamID = person.teamID;
-  return body;
+  return ios.registrationBody(person);
+}
+
+function iosGet(urlPath) {
+  return request('GET', urlPath, { token, ios: true });
+}
+
+function expectWrapper(res, urlPath, wrapper) {
+  if (res.status !== 200 || !res.json || !Array.isArray(res.json[wrapper])) {
+    throw new Error('GET ' + urlPath + ' returned HTTP ' + res.status + (res.text ? ' ' + res.text.slice(0, 200) : ''));
+  }
+  return res.json[wrapper];
 }
 
 async function provisionLocal() {
@@ -407,7 +408,7 @@ function closeEnough(actual, expected) {
 async function registerAll(people) {
   for (let i = 0; i < people.length; i++) {
     const person = people[i];
-    const res = await request('POST', '/registration', { token, body: registrationBody(person) });
+    const res = await request('POST', ios.registrationUrl(), { token, ios: true, body: registrationBody(person) });
     if (res.status === 409) {
       throw new Error('Bib ' + person.bibNo + ' is already registered. Rerun to pick a new bib range.');
     }
@@ -420,14 +421,10 @@ async function registerAll(people) {
 async function startAll(people) {
   for (let i = 0; i < people.length; i++) {
     const person = people[i];
-    const res = await request('POST', '/timing', {
+    const res = await request('POST', ios.timingUrl(), {
       token,
-      body: {
-        bibNo: person.bibNo,
-        location: 'start',
-        deviceTime: DEVICE_TIME,
-        bibFromBand: true,
-      },
+      ios: true,
+      body: ios.timingBody(person, 'start', { deviceTime: DEVICE_TIME, bibFromBand: true }),
     });
     if (res.status !== 200) {
       throw new Error('Start failed for bib ' + person.bibNo + ' with HTTP ' + res.status + ' ' + (res.text || ''));
@@ -436,16 +433,10 @@ async function startAll(people) {
 }
 
 async function postResult(person, obstacle, tier, success) {
-  const res = await request('POST', '/post-result', {
+  const res = await request('POST', ios.postResultUrl(), {
     token,
-    body: {
-      bibNo: person.bibNo,
-      obstID: Number(obstacle.sequence),
-      tier,
-      success,
-      bibFromBand: true,
-      deviceTime: DEVICE_TIME,
-    },
+    ios: true,
+    body: ios.postResultBody(person, obstacle, tier, success, { deviceTime: DEVICE_TIME, bibFromBand: true }),
   });
   if (res.status !== 200) {
     throw new Error(
@@ -496,6 +487,170 @@ async function scoreAthlete(person, obstacles, expected, markTeamWatch) {
   await postResult(person, { sequence: 9001 }, 3, false);
   await waitForIndividual(person, expected);
   await waitForResults(person, obstacles.map((item) => item.sequence));
+}
+
+function findByBib(rows, bibNo) {
+  return (rows || []).find((row) => Number(row.bibNo) === Number(bibNo));
+}
+
+async function assertIosClientRoutes(people, qualifyingTeam, dnqTeam, expectedOne, expectedTeam, sequences) {
+  const person = people[0];
+  const solo = people[people.length - 1];
+  const qualifying = people.filter((row) => row.teamID === qualifyingTeam);
+
+  const scorePath = ios.scoringUrl({ bibNo: person.bibNo });
+  const scores = expectWrapper(await iosGet(scorePath), scorePath, 'participantScores');
+  const score = scores[0];
+  if (!score) throw new Error('GET ' + scorePath + ' returned no participantScores.');
+  if (Number(score.g1) !== expectedOne.g1 || Number(score.g2) !== expectedOne.g2 || Number(score.g3) !== expectedOne.g3) {
+    throw new Error('GET ' + scorePath + ' g1/g2/g3 did not match the nested scoring route.');
+  }
+  if (!closeEnough(score.score, expectedOne.score)) {
+    throw new Error('GET ' + scorePath + ' score did not match the nested scoring route.');
+  }
+
+  const resultsPath = ios.resultsUrl(person.bibNo);
+  const results = expectWrapper(await iosGet(resultsPath), resultsPath, 'participantResults');
+  const missing = sequences.some((sequence) => results.every((row) => Number(row.obstID) !== Number(sequence)));
+  if (missing) throw new Error('GET ' + resultsPath + ' was missing a posted obstacle.');
+
+  const teamPath = ios.scoringUrl({ team: qualifyingTeam });
+  const teamScores = expectWrapper(await iosGet(teamPath), teamPath, 'teamScores');
+  const teamRow = teamScores[0];
+  if (!teamRow) throw new Error('GET ' + teamPath + ' returned no teamScores.');
+  if (Number(teamRow.g1) !== expectedTeam.g1 || Number(teamRow.g3) !== expectedTeam.g3) {
+    throw new Error('GET ' + teamPath + ' g1/g3 did not match the nested team route.');
+  }
+  if (!closeEnough(teamRow.score, expectedTeam.score)) {
+    throw new Error('GET ' + teamPath + ' score did not match the nested team route.');
+  }
+
+  const onTeamPath = ios.scoringUrl({ onTeam: qualifyingTeam });
+  const onTeam = expectWrapper(await iosGet(onTeamPath), onTeamPath, 'participantScores');
+  if (onTeam.length !== qualifying.length) {
+    throw new Error('GET ' + onTeamPath + ' returned ' + onTeam.length + ' scores, expected ' + qualifying.length);
+  }
+
+  const dnqPath = ios.scoringUrl({ team: dnqTeam });
+  const dnq = await iosGet(dnqPath);
+  if (dnq.status === 200) {
+    throw new Error(dnqTeam + ' produced a team score on GET ' + dnqPath);
+  }
+  if (dnq.status !== 404) {
+    throw new Error('GET ' + dnqPath + ' returned HTTP ' + dnq.status + ', expected 404.');
+  }
+
+  const byBib = ios.participantUrl({ bibNo: person.bibNo });
+  const participants = expectWrapper(await iosGet(byBib), byBib, 'participants');
+  if (!findByBib(participants, person.bibNo)) {
+    throw new Error('GET ' + byBib + ' did not include bib ' + person.bibNo);
+  }
+
+  const byName = ios.participantUrl({ lastName: person.lastName });
+  const named = expectWrapper(await iosGet(byName), byName, 'participants');
+  if (!named.some((row) => row.lastName === person.lastName && Number(row.bibNo) === Number(person.bibNo))) {
+    throw new Error('GET ' + byName + ' did not include ' + person.lastName);
+  }
+
+  const byBday = ios.participantUrl({ bday: person.birthdate });
+  const birthdays = expectWrapper(await iosGet(byBday), byBday, 'participants');
+  if (!findByBib(birthdays, person.bibNo)) {
+    throw new Error('GET ' + byBday + ' did not include bib ' + person.bibNo);
+  }
+
+  const rosterPath = ios.participantUrl({ onTeam: qualifyingTeam });
+  const roster = expectWrapper(await iosGet(rosterPath), rosterPath, 'participants');
+  if (roster.length !== qualifying.length) {
+    throw new Error('GET ' + rosterPath + ' returned ' + roster.length + ' participants, expected ' + qualifying.length);
+  }
+
+  const menPath = ios.scoringUrl({ gender: 'M', limit: 1000 });
+  const men = expectWrapper(await iosGet(menPath), menPath, 'participantScores');
+  if (!findByBib(men, person.bibNo)) {
+    throw new Error('GET ' + menPath + ' did not include bib ' + person.bibNo);
+  }
+
+  const womenPath = ios.scoringUrl({ gender: 'F', limit: 1000 });
+  const women = expectWrapper(await iosGet(womenPath), womenPath, 'participantScores');
+  const woman = qualifying.find((row) => row.gender === 'F');
+  if (!findByBib(women, woman.bibNo)) {
+    throw new Error('GET ' + womenPath + ' did not include bib ' + woman.bibNo);
+  }
+
+  const davidsPath = ios.scoringUrl({ davids: true });
+  expectWrapper(await iosGet(davidsPath), davidsPath, 'participantScores');
+
+  const allTeamsPath = ios.scoringUrl({ teamScores: true });
+  const allTeams = expectWrapper(await iosGet(allTeamsPath), allTeamsPath, 'teamScores');
+  if (!allTeams.some((row) => row.teamID === qualifyingTeam)) {
+    throw new Error('GET ' + allTeamsPath + ' did not include ' + qualifyingTeam);
+  }
+
+  const heatsPath = ios.heatsUrl();
+  const heats = expectWrapper(await iosGet(heatsPath), heatsPath, 'heatTimes');
+  if (!heats.some((row) => row.heat === HEAT)) {
+    throw new Error('GET ' + heatsPath + ' did not include heat ' + HEAT);
+  }
+
+  const teamsPath = ios.teamsUrl();
+  const teamsRes = await request('GET', teamsPath);
+  const teams = expectWrapper(teamsRes, teamsPath, 'teams');
+  const hasQualifying = teams.some((row) => {
+    const id = row.teamID || (row._id && row._id.teamID);
+    return id === qualifyingTeam;
+  });
+  if (!hasQualifying) throw new Error('GET ' + teamsPath + ' did not include ' + qualifyingTeam);
+
+  const record = participants[0];
+  const checkIn = await request('POST', ios.registrationUrl(), {
+    token,
+    ios: true,
+    body: ios.checkInBody({
+      _id: record._id,
+      bibNo: person.bibNo,
+      heat: person.heat,
+      firstName: person.firstName,
+    }),
+  });
+  if (checkIn.status !== 409) {
+    throw new Error(
+      'Check In existing-registrant POST expected 409 for a taken bib, got HTTP ' + checkIn.status + ' ' + (checkIn.text || '')
+    );
+  }
+
+  const finish = await request('POST', ios.timingUrl(), {
+    token,
+    ios: true,
+    body: ios.timingBody(solo, 'finish', { deviceTime: DEVICE_TIME, bibFromBand: true }),
+  });
+  if (finish.status !== 200) {
+    throw new Error('Recorder finish POST returned HTTP ' + finish.status + ' ' + (finish.text || ''));
+  }
+
+  const climbTime = 12.34;
+  const climb = await request('POST', ios.timingUrl(), {
+    token,
+    ios: true,
+    body: ios.timingBody(solo, 'tiebreaker', { deviceTime: DEVICE_TIME, bibFromBand: true, time: climbTime }),
+  });
+  if (climb.status !== 200) {
+    throw new Error('Recorder tiebreaker POST returned HTTP ' + climb.status + ' ' + (climb.text || ''));
+  }
+
+  const soloScorePath = ios.scoringUrl({ bibNo: solo.bibNo });
+  await poll('tiebreaker on GET ' + soloScorePath, async () => {
+    const rows = expectWrapper(await iosGet(soloScorePath), soloScorePath, 'participantScores');
+    if (!rows[0] || !closeEnough(rows[0].tiebreaker, climbTime)) return null;
+    return rows[0];
+  });
+
+  const timingPath = ios.timingUrl();
+  const timingRows = expectWrapper(await iosGet(timingPath), timingPath, 'participants');
+  if (!findByBib(timingRows, solo.bibNo)) {
+    throw new Error('GET ' + timingPath + ' did not include bib ' + solo.bibNo);
+  }
+
+  console.log('iOS client routes passed (Goliathon / Check In / Recorder).');
 }
 
 async function waitForTeam(teamName, expected) {
@@ -590,6 +745,15 @@ async function runEventDay(obstacles) {
     await sleep(400);
   }
 
+  await assertIosClientRoutes(
+    people,
+    qualifyingTeam,
+    dnqTeam,
+    expectedOne,
+    expectedTeam,
+    obstacles.map((item) => item.sequence)
+  );
+
   console.log('Event day passed.');
   console.log('  Qualifying team ' + qualifyingTeam + ' score ' + teamRow.score + ' (g1=' + teamRow.g1 + ', g3=' + teamRow.g3 + ')');
   console.log('  DNQ team ' + dnqTeam + ' correctly has no team score.');
@@ -624,6 +788,15 @@ async function runProdProbe() {
   if (recent.status !== 200 || !recent.json || !Array.isArray(recent.json.participantResults)) {
     throw new Error('GET /scoring/results?recent=true did not return participantResults.');
   }
+  const leadersPath = ios.scoringUrl({ gender: 'M', limit: 1 });
+  expectWrapper(await iosGet(leadersPath), leadersPath, 'participantScores');
+  const appTeamsPath = ios.scoringUrl({ teamScores: true });
+  expectWrapper(await iosGet(appTeamsPath), appTeamsPath, 'teamScores');
+  const heatsPath = ios.heatsUrl();
+  expectWrapper(await iosGet(heatsPath), heatsPath, 'heatTimes');
+  const teamsListPath = ios.teamsUrl();
+  expectWrapper(await request('GET', teamsListPath), teamsListPath, 'teams');
+  expectWrapper(await iosGet(ios.timingUrl()), ios.timingUrl(), 'participants');
   await expectUnauthorized();
   console.log('Read-only probe passed for ' + baseUrl);
 }
